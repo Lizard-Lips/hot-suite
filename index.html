@@ -622,6 +622,145 @@
 
 
 
+/* ── subsync ── */
+#panel-subsync { --add:#4ade80; --del:#f87171; --sub:#fb923c; }
+#panel-subsync * { box-sizing:border-box; margin:0; padding:0; }
+#panel-subsync { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; display:flex; flex-direction:column; }
+#panel-subsync header { padding:24px 40px; border-bottom:1px solid var(--border); display:flex; align-items:baseline; justify-content:space-between; }
+#panel-subsync header h1 { font-size:18px; font-weight:800; letter-spacing:-0.02em; color:var(--accent); }
+#panel-subsync header span { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:0.08em; }
+#panel-subsync main { flex:1; display:flex; flex-direction:column; align-items:center; padding:40px; gap:20px; }
+#panel-subsync .steps { width:100%; max-width:880px; display:flex; gap:0; margin-bottom:4px; }
+#panel-subsync .step { flex:1; font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:8px 0; border-top:2px solid var(--border); transition:color .2s,border-color .2s; }
+#panel-subsync .step.active { color:var(--accent); border-top-color:var(--accent); }
+#panel-subsync .step.done { color:var(--add); border-top-color:var(--add); }
+#panel-subsync .step i { font-style:normal; opacity:0.6; margin-right:6px; }
+#panel-subsync .panel { width:100%; max-width:880px; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:22px; display:flex; flex-direction:column; gap:16px; }
+#panel-subsync .panel-title { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.12em; color:var(--accent2); display:flex; align-items:center; gap:8px; }
+#panel-subsync .panel-title .num { color:var(--muted); }
+#panel-subsync .two-up { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:680px) {
+#panel-subsync .two-up { grid-template-columns:1fr; }
+ 
+}
+#panel-subsync .drop-col { display:flex; flex-direction:column; gap:8px; }
+#panel-subsync .drop-label { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+#panel-subsync .dz { border:1.5px dashed var(--border); border-radius:4px; padding:24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+#panel-subsync .dz:hover, #panel-subsync .dz.drag { border-color:var(--accent); background:rgba(232,255,71,0.03); }
+#panel-subsync .dz-title { font-family:var(--mono); font-size:13px; color:var(--text); }
+#panel-subsync .dz-sub { font-family:var(--mono); font-size:10px; color:var(--muted); }
+#panel-subsync .dz.loaded { border-color:var(--add); border-style:solid; }
+#panel-subsync .dz .fn { font-family:var(--mono); font-size:11px; color:var(--add); word-break:break-all; }
+#panel-subsync input[type=file] { display:none; }
+#panel-subsync .mode-tabs { display:flex; gap:4px; margin-bottom:6px; }
+#panel-subsync .mode-tab { font-family:var(--mono); font-size:10px; padding:5px 12px; border:1px solid var(--border); background:var(--bg); color:var(--muted); cursor:pointer; border-radius:3px; transition:color .15s,border-color .15s; }
+#panel-subsync .mode-tab:hover { color:var(--text); }
+#panel-subsync .mode-tab.active { color:var(--accent); border-color:var(--accent); background:rgba(232,255,71,0.04); }
+#panel-subsync .script-paste { width:100%; min-height:100px; resize:vertical; background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:12px; line-height:1.6; padding:10px 12px; border-radius:4px; outline:none; }
+#panel-subsync .script-paste:focus { border-color:var(--accent); }
+#panel-subsync .script-paste::placeholder { color:var(--muted); opacity:0.55; }
+#panel-subsync .btn { font-family:var(--mono); font-size:12px; padding:10px 18px; border-radius:3px; border:1px solid var(--accent); background:var(--accent); color:var(--bg); cursor:pointer; font-weight:500; letter-spacing:0.03em; transition:opacity .15s; }
+#panel-subsync .btn:hover { opacity:0.85; }
+#panel-subsync .btn:disabled { opacity:0.3; cursor:not-allowed; }
+#panel-subsync .btn-ghost { background:none; color:var(--accent); }
+#panel-subsync .btn-sm { padding:7px 13px; font-size:11px; }
+#panel-subsync .btn-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+#panel-subsync .spinner { font-family:var(--mono); font-size:11px; color:var(--accent2); }
+#panel-subsync .hint { font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; }
+#panel-subsync .hidden { display:none !important; }
+#panel-subsync /* Review */
+  .review-top { display:flex; align-items:center; justify-content:space-between; font-family:var(--mono); font-size:12px; }
+#panel-subsync /* two-column conform view */
+  .conform { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media (max-width:680px) {
+#panel-subsync .conform { grid-template-columns:1fr; }
+ 
+}
+#panel-subsync .col { border:1px solid var(--border); border-radius:4px; overflow:hidden; display:flex; flex-direction:column; }
+#panel-subsync .col-head { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent2); padding:9px 12px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); }
+#panel-subsync .col-hint { color:var(--muted); text-transform:none; letter-spacing:0; margin-left:6px; font-size:9px; }
+#panel-subsync .col-scroll { height:340px; overflow-y:auto; padding:6px; }
+#panel-subsync .col-scroll::-webkit-scrollbar { width:6px; }
+#panel-subsync .col-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+#panel-subsync /* SRT cue rows */
+  .cue-row { padding:8px 10px; border-radius:3px; font-family:var(--mono); font-size:12px; line-height:1.5; cursor:pointer; border-left:2px solid transparent; margin-bottom:2px; transition:background .1s; }
+#panel-subsync .cue-row:hover { background:rgba(255,255,255,0.03); }
+#panel-subsync .cue-row.clean { color:var(--muted); }
+#panel-subsync .cue-row.flagged { color:var(--text); border-left-color:var(--sub); }
+#panel-subsync .cue-row.flagged.done { border-left-color:var(--add); }
+#panel-subsync .cue-row.active { background:rgba(71,200,255,0.08); border-left-color:var(--accent2); }
+#panel-subsync .cue-row .cue-tc { font-size:9px; color:var(--muted); display:block; margin-bottom:2px; }
+#panel-subsync .cue-row .edit-pencil { color:var(--muted); opacity:0; cursor:pointer; margin-left:6px; transition:opacity .1s; }
+#panel-subsync .cue-row:hover .edit-pencil { opacity:0.7; }
+#panel-subsync .cue-row .edit-pencil:hover { opacity:1; color:var(--accent2); }
+#panel-subsync .cue-row.edited { border-left-color:var(--accent2); }
+#panel-subsync .cue-row.edited .cue-tc::after { content:" edited"; color:var(--accent2); }
+#panel-subsync .cue-edit-input { width:100%; background:var(--bg); border:1px solid var(--accent2); color:var(--text); font-family:var(--mono); font-size:12px; padding:6px 8px; border-radius:3px; outline:none; margin-top:2px; }
+#panel-subsync .cue-edit-actions { display:flex; gap:6px; margin-top:6px; }
+#panel-subsync .cue-edit-actions button { font-family:var(--mono); font-size:10px; padding:3px 9px; border-radius:3px; cursor:pointer; border:1px solid var(--border); background:var(--bg); color:var(--muted); }
+#panel-subsync .cue-edit-actions .cue-save { border-color:var(--add); color:var(--add); }
+#panel-subsync .cue-edit-actions button:hover { color:var(--text); }
+#panel-subsync .cue-row .flag-dot { color:var(--sub); margin-right:5px; }
+#panel-subsync .cue-row.done .flag-dot { color:var(--add); }
+#panel-subsync .cue-row .applied-text { color:var(--add); }
+#panel-subsync /* script column words */
+  #script-col { font-family:var(--mono); font-size:12px; line-height:1.9; user-select:none; }
+#panel-subsync .sw { padding:1px 3px; border-radius:2px; color:var(--muted); cursor:pointer; transition:background .08s,color .08s; }
+#panel-subsync .sw-hit { background:rgba(232,255,71,0.22); color:var(--text); }
+#panel-subsync .sw-region { color:var(--text); }
+#panel-subsync .sw:hover { background:rgba(71,200,255,0.15); color:var(--text); }
+#panel-subsync /* fix action bar */
+  .fixbar { display:flex; align-items:center; gap:16px; padding:14px 16px; border:1px solid var(--sub); border-radius:4px; background:rgba(251,146,60,0.05); }
+#panel-subsync .fixbar-info { flex:1; display:flex; flex-direction:column; gap:4px; }
+#panel-subsync .fixbar-note { font-family:var(--mono); font-size:11px; color:var(--sub); }
+#panel-subsync .fixbar-correction { font-family:var(--mono); font-size:14px; color:var(--add); }
+#panel-subsync .fixbar-actions { display:flex; gap:8px; }
+#panel-subsync .review-count { color:var(--muted); }
+#panel-subsync .review-count b { color:var(--accent); }
+#panel-subsync .progress-track { flex:1; height:3px; background:var(--border); border-radius:2px; margin:0 16px; overflow:hidden; }
+#panel-subsync .progress-fill { height:100%; background:var(--accent); width:0%; transition:width .2s; }
+#panel-subsync .card { border:1px solid var(--border); border-radius:4px; padding:0; overflow:hidden; }
+#panel-subsync .card-tc { font-family:var(--mono); font-size:11px; color:var(--accent2); padding:10px 16px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); display:flex; justify-content:space-between; }
+#panel-subsync .card-tc .cue-n { color:var(--muted); }
+#panel-subsync .card-body { padding:18px 16px; display:flex; flex-direction:column; gap:14px; }
+#panel-subsync .diff-block { display:flex; flex-direction:column; gap:5px; }
+#panel-subsync .kind-tag { font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:0.02em; }
+#panel-subsync .kind-tag .kind-desc { color:var(--muted); font-weight:400; }
+#panel-subsync .low-conf { font-family:var(--mono); font-size:11px; color:var(--sub); background:rgba(251,146,60,0.08); border:1px solid rgba(251,146,60,0.3); border-radius:3px; padding:8px 10px; line-height:1.5; }
+#panel-subsync .card-low { border-color:rgba(251,146,60,0.4); }
+#panel-subsync .repick { color:var(--accent2); font-size:10px; }
+#panel-subsync .pane-hint { color:var(--muted); font-weight:400; font-size:9px; }
+#panel-subsync .script-pane { max-height:150px; overflow-y:auto; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-family:var(--mono); font-size:13px; line-height:2; user-select:none; }
+#panel-subsync .script-pane::-webkit-scrollbar { width:6px; }
+#panel-subsync .script-pane::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+#panel-subsync .sw { padding:2px 3px; border-radius:2px; color:var(--muted); cursor:pointer; transition:background .08s,color .08s; }
+#panel-subsync .sw-hit { background:rgba(232,255,71,0.22); color:var(--text); }
+#panel-subsync .sw:hover { background:rgba(71,200,255,0.15); color:var(--text); }
+#panel-subsync .script-empty { font-family:var(--mono); font-size:11px; color:var(--muted); padding:10px; }
+#panel-subsync .diff-lbl { font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }
+#panel-subsync .diff-text { font-family:var(--mono); font-size:14px; line-height:1.7; }
+#panel-subsync .w-eq { color:var(--text); }
+#panel-subsync .w-sub-from { color:var(--del); text-decoration:line-through; opacity:0.75; }
+#panel-subsync .w-sub-to { color:var(--add); }
+#panel-subsync .w-del { color:var(--del); text-decoration:line-through; opacity:0.75; }
+#panel-subsync .w-add { color:var(--add); }
+#panel-subsync .card-actions { display:flex; gap:10px; padding:14px 16px; border-top:1px solid var(--border); align-items:center; }
+#panel-subsync .card-actions .info { font-family:var(--mono); font-size:10px; color:var(--muted); margin-left:auto; }
+#panel-subsync .btn-accept { border-color:var(--add); background:var(--add); color:var(--bg); }
+#panel-subsync .btn-reject { border-color:var(--border); background:none; color:var(--muted); }
+#panel-subsync .btn-reject:hover { color:var(--text); border-color:var(--muted); }
+#panel-subsync .btn-edit { border-color:var(--accent2); background:none; color:var(--accent2); }
+#panel-subsync .edit-field { width:100%; background:var(--bg); border:1px solid var(--accent2); color:var(--text); font-family:var(--mono); font-size:14px; padding:8px 10px; border-radius:3px; outline:none; }
+#panel-subsync .summary-line { font-family:var(--mono); font-size:13px; display:flex; gap:18px; padding:6px 0; }
+#panel-subsync .summary-line .s-acc { color:var(--add); }
+#panel-subsync .summary-line .s-rej { color:var(--muted); }
+#panel-subsync .summary-line .s-left { color:var(--accent2); }
+#panel-subsync .done-msg { font-family:var(--mono); font-size:13px; color:var(--add); text-align:center; padding:10px; }
+#panel-subsync footer { padding:16px 40px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--muted); }
+#panel-subsync .footer-disclaimer { color:var(--sub); opacity:0.85; }
+
+
+
   /* ─────────── SHARED TOOL-FRAME NORMALISATION ───────────
      One layout + type language across every tool panel, so tools match in
      form as well as colour. These rules come AFTER each tool's own scoped
@@ -738,7 +877,7 @@
       <div class="nav-cat">W.I.P</div>
       <button class="nav-item" data-tool="shotlogger" data-built="1"><span class="nav-dot">●</span><span class="nav-body"><span class="nav-label">Shot Logger<span class="nav-wip">WIP</span></span><span class="nav-tag">Scene detection · frame capture</span></span></button>
       <button class="nav-item" data-tool="speccheck" data-built="1"><span class="nav-dot">●</span><span class="nav-body"><span class="nav-label">Spec Checker<span class="nav-wip">WIP</span></span><span class="nav-tag">Delivery QC · spec vs asset</span></span></button>
-      <button class="nav-item" data-tool="script" data-built="0"><span class="nav-dot">○</span><span class="nav-body"><span class="nav-label">Script</span><span class="nav-tag">New tool — spec pending</span></span></button>
+      <button class="nav-item" data-tool="subsync" data-built="1"><span class="nav-dot">●</span><span class="nav-body"><span class="nav-label">Sub Sync<span class="nav-wip">WIP</span></span><span class="nav-tag">Subtitle QC · SRT vs script</span></span></button>
 
   <div class="sidebar-foot">
     <span>runs entirely in-browser</span>
@@ -1241,21 +1380,128 @@
 </footer>
 </div>
   </div>
+  <div class="tool-host" id="host-subsync">
+<div class="tool-panel" id="panel-subsync">
+<header>
+  <h1>SUB SYNC</h1>
+  <span>Subtitle QC · SRT vs script</span>
+</header>
+
+<main>
+  <div class="steps" id="steps">
+    <div class="step active" data-step="1"><i>01</i>Load files</div>
+    <div class="step" data-step="2"><i>02</i>Align</div>
+    <div class="step" data-step="3"><i>03</i>Review discrepancies</div>
+    <div class="step" data-step="4"><i>04</i>Export SRT</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="panel" id="panel-load">
+    <div class="panel-title"><span class="num">01</span> Load subtitle &amp; script</div>
+    <div class="two-up">
+      <div class="drop-col">
+        <div class="drop-label">Subtitle file (.srt)</div>
+        <div class="dz" id="dz-srt">
+          <div class="dz-title">Drop .srt here</div>
+          <div class="dz-sub">Premiere transcript export</div>
+          <div class="fn" id="srt-fn"></div>
+        </div>
+        <input type="file" id="srt-input" accept=".srt,.vtt,.txt">
+      </div>
+      <div class="drop-col">
+        <div class="drop-label">Script</div>
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-smode="upload">Upload</button>
+          <button class="mode-tab" data-smode="paste">Paste</button>
+        </div>
+        <div class="dz" id="dz-script">
+          <div class="dz-title">Drop script here</div>
+          <div class="dz-sub">TXT · DOCX · PDF</div>
+          <div class="fn" id="script-fn"></div>
+        </div>
+        <textarea id="script-paste" class="script-paste hidden" placeholder="Paste the script here — dialogue lines, character names and directions are fine, the tool strips non-spoken text."></textarea>
+        <input type="file" id="script-input" accept=".txt,.docx,.pdf,.fdx">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="align-btn" disabled>Align &amp; find discrepancies &rarr;</button>
+      <span class="spinner hidden" id="align-spin">aligning…</span>
+    </div>
+    <div class="hint" id="load-hint"></div>
+  </div>
+
+  <!-- STEP 3 review -->
+  <div class="panel hidden" id="panel-review">
+    <div class="panel-title"><span class="num">02</span> Review discrepancies</div>
+    <div class="review-top">
+      <span class="review-count"><b id="rev-current">0</b> / <span id="rev-total">0</span> fixes<span id="manual-count"></span></span>
+      <div class="progress-track"><div class="progress-fill" id="rev-progress"></div></div>
+      <span class="review-count" id="rev-remaining"></span>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end;margin-top:-6px">
+      <button class="btn btn-ghost btn-sm" id="finish-btn">Finish &amp; export &rarr;</button>
+    </div>
+
+    <!-- two synced columns -->
+    <div class="conform">
+      <div class="col col-srt">
+        <div class="col-head">Subtitle (SRT) <span class="col-hint">click ✎ or double-click any line to edit</span></div>
+        <div class="col-scroll" id="srt-col"></div>
+      </div>
+      <div class="col col-script">
+        <div class="col-head">Script <span class="col-hint">click a line, or click a word then another to extend</span></div>
+        <div class="col-scroll" id="script-col"></div>
+      </div>
+    </div>
+
+    <!-- action bar for the focused fix -->
+    <div class="fixbar hidden" id="fixbar">
+      <div class="fixbar-info">
+        <div class="fixbar-note" id="fixbar-note"></div>
+        <div class="fixbar-correction" id="fixbar-correction"></div>
+      </div>
+      <div class="fixbar-actions">
+        <button class="btn btn-sm btn-accept" id="fb-accept">✓ Apply &amp; continue</button>
+        <button class="btn btn-sm btn-reject" id="fb-skip">Skip</button>
+        <button class="btn btn-sm btn-edit" id="fb-edit">✎ Edit</button>
+      </div>
+    </div>
+    <input class="edit-field hidden" id="fb-edit-field" placeholder="corrected subtitle text">
+
+    <div class="summary-line hidden" id="rev-summary"></div>
+  </div>
+
+  <!-- STEP 4 export -->
+  <div class="panel hidden" id="panel-export">
+    <div class="panel-title"><span class="num">03</span> Export</div>
+    <div class="done-msg" id="export-msg"></div>
+    <div class="btn-row">
+      <button class="btn" id="export-btn">Download corrected .srt</button>
+      <button class="btn btn-ghost btn-sm" id="restart-btn">Start over</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-disclaimer">&#9888; Alignment is a best guess — every change needs your approval, nothing auto-applies</span>
+  <span>Lizard Lips · Sub Sync</span>
+</footer>
+</div>
+  </div>
 </div>
 
 
-
 <script>
-  const TOOLS = [["cutlogger", "Cut Logger", "Premiere XML \u2192 edit log spreadsheet", "Tools", true], ["loudness", "Loudness Analyser", "Broadcast QC \u00b7 EBU R128", "Tools", true], ["shotlogger", "Shot Logger", "Scene detection \u00b7 frame capture", "W.I.P", true], ["speccheck", "Spec Checker", "Delivery QC \u00b7 spec vs asset", "W.I.P", true], ["script", "Script", "New tool \u2014 spec pending", "W.I.P", false]];
-  const NATIVE = ["cutlogger", "loudness", "shotlogger", "speccheck"];
+  const TOOLS = [["cutlogger", "Cut Logger", "Premiere XML \u2192 edit log spreadsheet", "Tools", true], ["loudness", "Loudness Analyser", "Broadcast QC \u00b7 EBU R128", "Tools", true], ["shotlogger", "Shot Logger", "Scene detection \u00b7 frame capture", "W.I.P", true], ["speccheck", "Spec Checker", "Delivery QC \u00b7 spec vs asset", "W.I.P", true], ["subsync", "Sub Sync", "Subtitle QC \u00b7 SRT vs script", "W.I.P", true]];
+  const BUILT = ["cutlogger", "loudness", "shotlogger", "speccheck", "subsync"];   // keys of tools with a native panel in the DOM
   const stage   = document.getElementById('stage');
   const landing = document.getElementById('landing');
-  const hosts = {}; const loaded = {};
+  const hosts = {}; const placed = {};
 
-  // Native panels already have a host div in the DOM; grab them.
-  NATIVE.forEach(key => { hosts[key] = document.getElementById('host-'+key); loaded[key] = true; });
-  // Non-native built tools + placeholders need a host created.
-  TOOLS.forEach(([key,,,,built]) => {
+  // Built tools already have their panel host in the DOM.
+  BUILT.forEach(key => { hosts[key] = document.getElementById('host-'+key); placed[key] = true; });
+  // Unbuilt tools get an empty host created for their placeholder.
+  TOOLS.forEach(([key]) => {
     if (hosts[key]) return;
     const host = document.createElement('div');
     host.className = 'tool-host'; host.id = 'host-'+key;
@@ -1285,30 +1531,21 @@
   }
 
   // ── routing ────────────────────────────────────────────────────────
-  function injectFallback(key){
-    if (loaded[key]) return;
-    const el = document.getElementById('src-'+key);
-    if (el && el.getAttribute('data-built')==='1'){
-      const b64=(el.textContent||'').trim();
-      const bin=atob(b64); const bytes=new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-      const src=new TextDecoder('utf-8').decode(bytes);
-      const f=document.createElement('iframe');
-      f.style.cssText='width:100%;height:100%;border:0;background:var(--bg)';
-      f.setAttribute('srcdoc', src);
-      hosts[key].appendChild(f);
-    } else {
-      const meta=TOOLS.find(t=>t[0]===key);
-      hosts[key].innerHTML='<div class="placeholder"><pre>\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502  MODULE PENDING  \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518</pre><h2>'+meta[1]+'</h2><p>not wired in yet.</p></div>';
-    }
-    loaded[key]=true;
+  function showPlaceholder(key){
+    if (placed[key]) return;
+    const meta = TOOLS.find(t => t[0] === key);
+    hosts[key].innerHTML =
+      '<div class="placeholder">'+
+      '<pre>\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502  MODULE PENDING  \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518</pre>'+
+      '<h2>'+meta[1]+'</h2><p>not wired in yet.</p></div>';
+    placed[key] = true;
   }
   function setActiveNav(key){ document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.getAttribute('data-tool')===key)); }
   function go(key){
     landing.classList.remove('active');
     Object.values(hosts).forEach(h=>h && h.classList.remove('active'));
     if (key==='home' || !key){ landing.classList.add('active'); setActiveNav('home'); if(location.hash!=='#home') history.replaceState(null,'','#home'); return; }
-    if (!NATIVE.includes(key)) injectFallback(key);
+    if (!BUILT.includes(key)) showPlaceholder(key);
     if (hosts[key]) hosts[key].classList.add('active');
     setActiveNav(key);
     if (location.hash!=='#'+key) history.replaceState(null,'','#'+key);
@@ -4018,6 +4255,607 @@ document.getElementById("check-btn").addEventListener("click", async function(){
 
 document.getElementById("export-csv").addEventListener("click", exportCSV);
 document.getElementById("reset-btn").addEventListener("click", function(){ location.reload(); });
+
+})();
+
+/* ── subsync ── */
+(function(){
+  const __root = window.document.getElementById('panel-subsync');
+  // scoped document facade — named __doc then aliased so the tool's own
+  // `document.*` references resolve here without a TDZ self-reference.
+  const __doc = new Proxy(window.document, {
+    get(target, prop) {
+      if (prop === 'getElementById') return (id) => __root ? __root.querySelector('#' + (window.CSS && CSS.escape ? CSS.escape(id) : id)) : null;
+      if (prop === 'querySelector') return (sel) => __root ? __root.querySelector(sel) : null;
+      if (prop === 'querySelectorAll') return (sel) => __root ? __root.querySelectorAll(sel) : [];
+      const v = target[prop];
+      return typeof v === 'function' ? v.bind(target) : v;
+    }
+  });
+  const document = __doc;
+
+"use strict";
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+// ── STATE ──
+var srtText="", scriptText="", scriptMode="upload";
+var cues=[];          // parsed SRT cues
+var discrepancies=[]; // {cueIdx, ops, corrected, decision:'pending'|'accept'|'reject', editedText}
+var reviewPos=0;
+
+// ── step rail ──
+function setStep(n){
+  document.querySelectorAll(".step").forEach(function(s){
+    var sn=+s.getAttribute("data-step");
+    s.classList.toggle("active",sn===n);
+    s.classList.toggle("done",sn<n);
+  });
+}
+
+// ── drop wiring ──
+function wireDrop(dz,input,onFile){
+  dz.addEventListener("click",function(){input.click();});
+  dz.addEventListener("dragover",function(e){e.preventDefault();dz.classList.add("drag");});
+  dz.addEventListener("dragleave",function(){dz.classList.remove("drag");});
+  dz.addEventListener("drop",function(e){e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])onFile(e.dataTransfer.files[0]);});
+  input.addEventListener("change",function(e){if(e.target.files[0])onFile(e.target.files[0]);});
+}
+
+// ── file readers ──
+async function readText(file){ return await file.text(); }
+async function readScript(file){
+  var n=file.name.toLowerCase();
+  if(n.endsWith(".txt")||n.endsWith(".srt")||n.endsWith(".fdx")||n.endsWith(".vtt")) return await file.text();
+  if(n.endsWith(".pdf")){
+    var buf=await file.arrayBuffer(); var pdf=await pdfjsLib.getDocument({data:buf}).promise; var out=[];
+    for(var i=1;i<=pdf.numPages;i++){var pg=await pdf.getPage(i);var tc=await pg.getTextContent();out.push(tc.items.map(function(it){return it.str;}).join(" "));}
+    return out.join("\n");
+  }
+  if(n.endsWith(".docx")){var ab=await file.arrayBuffer();var r=await mammoth.extractRawText({arrayBuffer:ab});return r.value;}
+  return await file.text();
+}
+
+// ── SRT parse ──
+function parseSRT(txt){
+  var blocks=txt.replace(/\r/g,"").split(/\n\n+/),out=[];
+  blocks.forEach(function(b){
+    var lines=b.split("\n").filter(function(l){return l.trim();});
+    if(lines.length<2)return;
+    var idx=lines[0].match(/^\d+$/)?lines.shift():String(out.length+1);
+    var m=lines.shift().match(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,.]\d{3})/);
+    if(!m)return;
+    out.push({index:+idx,start:m[1],end:m[2],text:lines.join(" ").trim()});
+  });
+  return out;
+}
+
+// ── script clean ──
+function cleanScript(txt){
+  var lines=txt.replace(/\r/g,"").split("\n"),kept=[];
+  lines.forEach(function(l){
+    var s=l.trim(); if(!s)return;
+
+    // ── strip leading line numbers / cue numbers that broadcast scripts add ──
+    // e.g. "15  Yes! Dad loves the movie" → "Yes! Dad loves the movie"
+    s=s.replace(/^\d{1,4}[.:)\s]+/,"");
+    // bare line-number-only lines
+    if(/^\d{1,4}$/.test(s))return;
+
+    if(!s)return;
+
+    // ── document metadata / headers ──
+    if(/^(as\s+broadcast|broadcast\s+script|shooting\s+script|final\s+draft|draft|revision|rev\.?|page|scene|episode|ep\.?|series|prod(uction)?\.?\s*(no|number|#)|©|copyright|confidential|property of)/i.test(s))return;
+    // date-only lines (07/07/25, 7 July 2025, etc.)
+    if(/^\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}$/.test(s))return;
+    if(/^\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{2,4}$/i.test(s))return;
+    // page markers ("Page 3", "3.", "- 3 -")
+    if(/^-?\s*page\s+\d+\s*-?$/i.test(s))return;
+    if(/^-\s*\d+\s*-$/.test(s))return;
+    // standalone timecode lines
+    if(/^\d{1,2}:\d{2}(:\d{2})?([.,]\d+)?$/.test(s))return;
+
+    // ── scene headings / transitions ──
+    if(/^(INT\.|EXT\.|INT\/EXT|I\/E|FADE|CUT TO|DISSOLVE|SMASH CUT|MATCH CUT|WIPE|BLACK|TITLE|SUPER|VO|V\.O\.|O\.S\.)/i.test(s))return;
+
+    // ── parentheticals / stage directions on their own line ──
+    if(/^\(.*\)$/.test(s))return;
+    if(/^\[.*\]$/.test(s))return;
+
+    // ── lone character name / all-caps heading line ──
+    if(/^[A-Z][A-Z0-9 .'&\-]{1,30}$/.test(s) && s.length<32)return;
+
+    // ── inline cleanups on dialogue lines ──
+    s=s.replace(/^[A-Z][A-Z0-9 .'&\-]{1,30}:\s*/,"");   // "SARAH:" prefix
+    s=s.replace(/\([^)]*\)/g," ");                        // inline (parentheticals)
+    s=s.replace(/\[[^\]]*\]/g," ");                        // inline [directions]
+
+    s=s.trim();
+    if(s)kept.push(s);
+  });
+  return kept.join(" ").replace(/\s+/g," ").trim();
+}
+
+// ── tokens ──
+function norm(w){ return w.toLowerCase().replace(/[^a-z0-9]/g,""); }
+function cueTokens(cs){ var a=[]; cs.forEach(function(c,ci){ c.text.split(/\s+/).filter(Boolean).forEach(function(w){ if(norm(w))a.push({raw:w,norm:norm(w),cue:ci}); }); }); return a; }
+function scriptTokens(s){ return s.split(/\s+/).filter(Boolean).map(function(w){return {raw:w,norm:norm(w)};}).filter(function(t){return t.norm;}); }
+
+// ── alignment: anchor-based (robust at full-episode scale) ──
+// A full global DP over thousands of words drifts and mis-aligns. Instead we
+// pin the two streams together at "anchor" words (words appearing exactly once
+// in each, in monotonic order) and only run a small local alignment in the
+// gaps between anchors. Fast and accurate on real dialogue.
+
+function alignSmall(A,B){
+  var n=A.length,m=B.length,GAP=-1,MATCH=2,MIS=-1;
+  if(n===0&&m===0) return [];
+  if(n===0) return B.map(function(b){return {a:null,b:b};});
+  if(m===0) return A.map(function(a){return {a:a,b:null};});
+  var dp=[]; for(var i=0;i<=n;i++){ dp.push(new Float32Array(m+1)); }
+  for(i=0;i<=n;i++)dp[i][0]=i*GAP;
+  for(var j=0;j<=m;j++)dp[0][j]=j*GAP;
+  for(i=1;i<=n;i++)for(j=1;j<=m;j++){var s=A[i-1].norm===B[j-1].norm?MATCH:MIS;dp[i][j]=Math.max(dp[i-1][j-1]+s,dp[i-1][j]+GAP,dp[i][j-1]+GAP);}
+  var al=[];i=n;j=m;
+  while(i>0&&j>0){
+    var s2=A[i-1].norm===B[j-1].norm?MATCH:MIS;
+    if(dp[i][j]===dp[i-1][j-1]+s2){al.unshift({a:A[i-1],b:B[j-1]});i--;j--;}
+    else if(dp[i][j]===dp[i][j-1]+GAP){al.unshift({a:null,b:B[j-1]});j--;}
+    else{al.unshift({a:A[i-1],b:null});i--;}
+  }
+  while(i>0)al.unshift({a:A[--i],b:null});
+  while(j>0)al.unshift({a:null,b:B[--j]});
+  return al;
+}
+
+function findAnchors(A,B){
+  var countA={},countB={},posA={},posB={};
+  A.forEach(function(t,i){countA[t.norm]=(countA[t.norm]||0)+1;posA[t.norm]=i;});
+  B.forEach(function(t,i){countB[t.norm]=(countB[t.norm]||0)+1;posB[t.norm]=i;});
+  var cand=[];
+  Object.keys(countA).forEach(function(w){
+    if(w.length>=3 && countA[w]===1 && countB[w]===1) cand.push({ai:posA[w],bi:posB[w]});
+  });
+  cand.sort(function(x,y){return x.ai-y.ai;});
+  // longest increasing subsequence on bi → keep monotonic anchor chain
+  var tails=[],parent=[];
+  cand.forEach(function(c,idx){
+    var lo=0,hi=tails.length;
+    while(lo<hi){var mid=(lo+hi)>>1; if(cand[tails[mid]].bi<c.bi)lo=mid+1; else hi=mid;}
+    parent[idx]=lo>0?tails[lo-1]:-1;
+    if(lo===tails.length)tails.push(idx); else tails[lo]=idx;
+  });
+  var seq=[],k=tails.length?tails[tails.length-1]:-1;
+  while(k>=0){seq.unshift(cand[k]);k=parent[k];}
+  return seq;
+}
+
+function align(A,B){
+  var anchors=findAnchors(A,B);
+  // If almost no anchors (unrelated texts, or tiny), fall back to one small align.
+  if(anchors.length < 2) return alignSmall(A,B);
+  var out=[],ai=0,bi=0;
+  anchors.forEach(function(anc){
+    alignSmall(A.slice(ai,anc.ai), B.slice(bi,anc.bi)).forEach(function(c){out.push(c);});
+    out.push({a:A[anc.ai],b:B[anc.bi]});
+    ai=anc.ai+1; bi=anc.bi+1;
+  });
+  alignSmall(A.slice(ai), B.slice(bi)).forEach(function(c){out.push(c);});
+  return out;
+}
+
+// ── build per-cue op lists ──
+function buildDiscrepancies(){
+  var scriptClean = cleanScript(scriptText);
+  var B = scriptTokens(scriptClean);
+  var A = cueTokens(cues);
+  // GUARD: if the script produced almost nothing, extraction/cleaning failed —
+  // don't emit a wall of false "delete everything" cards.
+  window._diag = { scriptChars: scriptText.length, scriptCleanWords: B.length, cueWords: A.length, sample: scriptClean.slice(0,160) };
+  if (B.length < 5) {
+    throw new Error("The script came through nearly empty ("+B.length+" words). It may not have extracted — try pasting the script text instead of uploading.");
+  }
+  // Sanity: how much of the SRT actually overlaps the script?
+  var scriptSet={}; B.forEach(function(t){scriptSet[t.norm]=1;});
+  var hit=0; A.forEach(function(t){ if(scriptSet[t.norm])hit++; });
+  var overlap = A.length ? hit/A.length : 0;
+  window._diag.overlap = overlap;
+  if (overlap < 0.15) {
+    throw new Error("Only "+Math.round(overlap*100)+"% of subtitle words appear in the script — they may not match (wrong script/episode?), or the script didn't read correctly.");
+  }
+
+  var al = align(A,B);
+  // Track, per cue: the ops, and the min/max script-token index it aligned to,
+  // so each card can show and highlight the exact script passage it drew from.
+  var per=cues.map(function(){return {ops:[], bMin:Infinity, bMax:-1, matched:0, total:0};});
+  var lastCue=0, bIdx=0;
+  al.forEach(function(col){
+    var ci=col.a?col.a.cue:lastCue;
+    if(col.a)lastCue=col.a.cue;
+    // bIdx tracks position in B (script) as we walk the alignment
+    if(col.b){
+      per[ci].bMin=Math.min(per[ci].bMin,bIdx);
+      per[ci].bMax=Math.max(per[ci].bMax,bIdx);
+    }
+    if(col.a&&col.b){
+      var same=col.a.norm===col.b.norm;
+      per[ci].ops.push(same?{op:"=",raw:col.b.raw}:{op:"~",from:col.a.raw,to:col.b.raw});
+      per[ci].total++; if(same)per[ci].matched++;
+    } else if(col.a&&!col.b){ per[ci].ops.push({op:"-",raw:col.a.raw}); per[ci].total++; }
+    else if(!col.a&&col.b){ per[ci].ops.push({op:"+",raw:col.b.raw}); }
+    if(col.b)bIdx++;
+  });
+  // trim leading/trailing pure inserts (neighbour bleed)
+  per.forEach(function(p){
+    while(p.ops.length&&p.ops[p.ops.length-1].op==="+")p.ops.pop();
+    while(p.ops.length&&p.ops[0].op==="+")p.ops.shift();
+  });
+  window._scriptToks = B;   // expose cleaned script tokens for the script column
+  // Per-cue script span (for ALL cues, not just flagged) so the two-column
+  // view can scroll the script to wherever any cue maps.
+  window._cueSpans = per.map(function(p){
+    return { lo: p.bMin===Infinity?-1:p.bMin, hi: p.bMax<0?-1:p.bMax };
+  });
+  var out=[];
+  per.forEach(function(p,ci){
+    var ops=p.ops;
+    var changed=ops.some(function(o){return o.op!=="=";});
+    if(!changed)return;
+    // Confidence: fraction of the cue's words that actually matched the script.
+    var conf = p.total ? p.matched/p.total : 0;
+    var kind = classifyOps(ops);
+    var lowConf = conf < 0.4;   // below this the "correction" is unreliable
+    var corrected=ops.filter(function(o){return o.op!=="-";}).map(function(o){return o.op==="~"?o.to:o.raw;}).join(" ");
+    // human-readable note of what changed (instead of red/green soup)
+    var note = describeChange(ops);
+    var spanLo = p.bMin===Infinity ? -1 : p.bMin;
+    var spanHi = p.bMax<0 ? -1 : p.bMax;
+    out.push({
+      cueIdx:ci, ops:ops, corrected:corrected, kind:kind, note:note,
+      conf:conf, lowConf:lowConf,
+      spanLo:spanLo, spanHi:spanHi,
+      decision:"pending", editedText:null, customSpan:null
+    });
+  });
+  return out;
+}
+
+// Plain-language description of what changed — replaces the red/green diff.
+function describeChange(ops){
+  var subs=ops.filter(function(o){return o.op==="~";});
+  var dels=ops.filter(function(o){return o.op==="-";});
+  var adds=ops.filter(function(o){return o.op==="+";});
+  var parts=[];
+  if(subs.length){
+    if(subs.length<=2) subs.forEach(function(o){ parts.push('“'+o.from+'” → “'+o.to+'”'); });
+    else parts.push(subs.length+' words changed');
+  }
+  if(adds.length){
+    if(adds.length<=2) parts.push('added '+adds.map(function(o){return '“'+o.raw+'”';}).join(', '));
+    else parts.push(adds.length+' words added from script');
+  }
+  if(dels.length){
+    if(dels.length<=2) parts.push('removed '+dels.map(function(o){return '“'+o.raw+'”';}).join(', '));
+    else parts.push(dels.length+' words removed');
+  }
+  return parts.join(' · ');
+}
+
+// Label a discrepancy by what kind of change dominates.
+function classifyOps(ops){
+  var subs=ops.filter(function(o){return o.op==="~";}).length;
+  var dels=ops.filter(function(o){return o.op==="-";}).length;
+  var adds=ops.filter(function(o){return o.op==="+";}).length;
+  if(adds>0 && subs===0 && dels===0) return "missing";   // script has words the SRT dropped
+  if(dels>0 && subs===0 && adds===0) return "extra";     // SRT has words not in script
+  if(subs>0 && dels===0 && adds===0) return "wording";   // word swaps (mishears)
+  return "mixed";
+}
+
+function spanText(lo,hi){
+  var toks=window._scriptToks||[]; var out=[];
+  for(var i=lo;i<=hi && i<toks.length;i++) out.push(toks[i].raw);
+  return out.join(" ");
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TWO-COLUMN CONFORM VIEW
+// Left: every SRT cue (flagged ones marked). Right: full script, click to
+// re-point. A fix bar shows the focused correction; Continue jumps to next fix.
+// ─────────────────────────────────────────────────────────────────────────────
+var flaggedByCue = {};   // cueIdx -> discrepancy
+var manualEdits = {};    // cueIdx -> manually-edited text (any cue, flagged or not)
+var scriptWordEls = [];  // script column word spans
+var selAnchor = null;    // click-extend anchor in script column
+
+function buildReviewView(){
+  discrepancies.forEach(function(d){ flaggedByCue[d.cueIdx]=d; });
+  renderSRTColumn();
+  renderScriptColumn();
+  focusFix(0);   // focus first flagged cue
+  document.getElementById("rev-total").textContent=discrepancies.length;
+}
+
+function cueDisplayText(ci){
+  // priority: manual edit > accepted correction > original
+  if(manualEdits[ci]!=null) return manualEdits[ci];
+  var d=flaggedByCue[ci];
+  if(d && d.decision==="accept") return d.editedText!=null?d.editedText:d.corrected;
+  return cues[ci].text;
+}
+
+function renderSRTColumn(){
+  var col=document.getElementById("srt-col");
+  col.innerHTML = cues.map(function(cue,ci){
+    var d=flaggedByCue[ci];
+    var edited = manualEdits[ci]!=null;
+    var cls="cue-row "+(d?"flagged":"clean")+(edited?" edited":"")+((d&&d.decision==="accept")?" done":"");
+    var dot = d ? '<span class="flag-dot">●</span>' : '';
+    var applied=(d && d.decision==="accept") || edited;
+    var txt=cueDisplayText(ci);
+    var shownText = applied
+      ? '<span class="applied-text">'+esc(txt)+'</span>'
+      : esc(txt);
+    return '<div class="'+cls+'" data-cue="'+ci+'" id="cue-row-'+ci+'">'+
+             '<span class="cue-tc">'+cue.start+' <span class="edit-pencil" title="edit this line">✎</span></span>'+
+             '<span class="cue-text">'+dot+shownText+'</span>'+
+           '</div>';
+  }).join("");
+  col.querySelectorAll(".cue-row").forEach(function(row){
+    var ci=+row.getAttribute("data-cue");
+    // pencil or double-click → inline edit any line
+    var pencil=row.querySelector(".edit-pencil");
+    if(pencil) pencil.addEventListener("click",function(e){ e.stopPropagation(); editCueInline(ci); });
+    row.addEventListener("dblclick",function(){ editCueInline(ci); });
+    // single click → if flagged, focus its fix; otherwise just select/scroll
+    row.addEventListener("click",function(){
+      if(flaggedByCue[ci]){ focusFix(discrepancies.indexOf(flaggedByCue[ci])); }
+      else {
+        document.querySelectorAll(".cue-row").forEach(function(r){r.classList.remove("active");});
+        row.classList.add("active");
+      }
+    });
+  });
+}
+
+// Inline-edit any cue's text directly in the SRT column.
+function editCueInline(ci){
+  var row=document.getElementById("cue-row-"+ci);
+  if(!row || row.querySelector(".cue-edit-input")) return;
+  var textSpan=row.querySelector(".cue-text");
+  var current=cueDisplayText(ci);
+  textSpan.innerHTML='<input class="cue-edit-input" value="'+esc(current).replace(/"/g,"&quot;")+'">'+
+                     '<div class="cue-edit-actions"><button class="cue-save">save</button><button class="cue-cancel">cancel</button>'+
+                     (manualEdits[ci]!=null?'<button class="cue-revert">revert</button>':'')+'</div>';
+  var input=textSpan.querySelector(".cue-edit-input");
+  input.focus(); input.select();
+  function save(){
+    var v=input.value;
+    if(v.trim()==="" || v===cues[ci].text){ delete manualEdits[ci]; }
+    else { manualEdits[ci]=v; }
+    renderSRTColumn(); refreshCounts();
+  }
+  function cancel(){ renderSRTColumn(); }
+  textSpan.querySelector(".cue-save").addEventListener("click",function(e){ e.stopPropagation(); save(); });
+  textSpan.querySelector(".cue-cancel").addEventListener("click",function(e){ e.stopPropagation(); cancel(); });
+  var rev=textSpan.querySelector(".cue-revert");
+  if(rev) rev.addEventListener("click",function(e){ e.stopPropagation(); delete manualEdits[ci]; renderSRTColumn(); refreshCounts(); });
+  input.addEventListener("keydown",function(e){
+    if(e.key==="Enter"){ e.preventDefault(); save(); }
+    if(e.key==="Escape"){ e.preventDefault(); cancel(); }
+  });
+  input.addEventListener("click",function(e){ e.stopPropagation(); });
+}
+
+// keep the "X edits" counter honest across manual edits + accepted fixes
+function refreshCounts(){
+  var manual=Object.keys(manualEdits).length;
+  var acc=discrepancies.filter(function(d){return d.decision==="accept";}).length;
+  var el=document.getElementById("manual-count");
+  if(el) el.textContent = manual>0 ? (" · "+manual+" manual edit"+(manual===1?"":"s")) : "";
+}
+
+function renderScriptColumn(){
+  var col=document.getElementById("script-col");
+  var toks=window._scriptToks||[];
+  col.innerHTML = toks.map(function(t,i){
+    return '<span class="sw" data-i="'+i+'">'+esc(t.raw)+'</span> ';
+  }).join("");
+  scriptWordEls=[].slice.call(col.querySelectorAll(".sw"));
+  // click-to-extend selection, and click-a-line via double context
+  col.addEventListener("click",function(e){
+    var el=e.target;
+    if(!el.classList||!el.classList.contains("sw"))return;
+    var i=+el.getAttribute("data-i");
+    if(selAnchor===null){ selAnchor=i; paintScript(i,i); applySpan(i,i); }
+    else { var lo=Math.min(selAnchor,i),hi=Math.max(selAnchor,i); paintScript(lo,hi); applySpan(lo,hi); selAnchor=null; }
+  });
+}
+
+function paintScript(lo,hi){
+  scriptWordEls.forEach(function(w){ var i=+w.getAttribute("data-i"); w.classList.toggle("sw-hit", i>=lo && i<=hi); });
+}
+
+// apply a chosen script span to the currently focused fix
+function applySpan(lo,hi){
+  if(currentFixIdx<0)return;
+  var d=discrepancies[currentFixIdx];
+  d.customSpan=[lo,hi];
+  var txt=spanText(lo,hi);
+  document.getElementById("fixbar-correction").textContent=txt;
+  document.getElementById("fixbar-note").textContent="Re-pointed to script selection";
+  var ef=document.getElementById("fb-edit-field"); if(ef) ef.value=txt;
+}
+
+var currentFixIdx=-1;
+function focusFix(idx){
+  if(idx>=discrepancies.length){ finishReview(); return; }
+  currentFixIdx=idx;
+  selAnchor=null;
+  var d=discrepancies[idx];
+  var cue=cues[d.cueIdx];
+
+  // highlight active cue row, scroll it into view
+  document.querySelectorAll(".cue-row").forEach(function(r){ r.classList.remove("active"); });
+  var row=document.getElementById("cue-row-"+d.cueIdx);
+  if(row){ row.classList.add("active"); row.scrollIntoView({block:"center",behavior:"smooth"}); }
+
+  // highlight + scroll the script column to the matched span
+  var lo = d.customSpan?d.customSpan[0]:d.spanLo, hi = d.customSpan?d.customSpan[1]:d.spanHi;
+  if(lo>=0){ paintScript(lo,hi);
+    var firstHit=document.querySelector('#script-col .sw[data-i="'+lo+'"]');
+    if(firstHit) firstHit.scrollIntoView({block:"center",behavior:"smooth"});
+  } else { paintScript(-1,-1); }
+
+  // fill the fix bar
+  var fb=document.getElementById("fixbar"); fb.classList.remove("hidden");
+  var confPct=Math.round(d.conf*100);
+  var noteText = d.lowConf
+    ? "⚠ Low confidence ("+confPct+"% match) — check the script selection is right"
+    : (d.note || "Correction from script");
+  document.getElementById("fixbar-note").textContent=noteText;
+  document.getElementById("fixbar-correction").textContent = d.customSpan ? spanText(d.customSpan[0],d.customSpan[1]) : d.corrected;
+  var ef=document.getElementById("fb-edit-field");
+  ef.value = d.customSpan ? spanText(d.customSpan[0],d.customSpan[1]) : d.corrected;
+  ef.classList.add("hidden");
+
+  // progress
+  document.getElementById("rev-current").textContent=(idx+1);
+  document.getElementById("rev-remaining").textContent=(discrepancies.length-idx-1)+" left";
+  document.getElementById("rev-progress").style.width=(idx/discrepancies.length*100)+"%";
+}
+
+function resolveFix(kind){
+  if(currentFixIdx<0)return;
+  var d=discrepancies[currentFixIdx];
+  d.decision=kind;
+  if(kind==="accept"){
+    var ef=document.getElementById("fb-edit-field");
+    if(!ef.classList.contains("hidden") && ef.value.trim()!==""){ d.editedText=ef.value; }
+    else if(d.customSpan){ d.editedText=spanText(d.customSpan[0],d.customSpan[1]); }
+  }
+  // re-render the SRT column so the row reflects its new state consistently
+  renderSRTColumn(); refreshCounts();
+  // advance to next unresolved fix
+  var next=currentFixIdx+1;
+  focusFix(next);
+}
+
+function finishReview(){
+  currentFixIdx=-1;
+  document.getElementById("fixbar").classList.add("hidden");
+  document.getElementById("fb-edit-field").classList.add("hidden");
+  document.getElementById("rev-progress").style.width="100%";
+  document.getElementById("rev-current").textContent=discrepancies.length;
+  document.getElementById("rev-remaining").textContent="done";
+  var acc=discrepancies.filter(function(d){return d.decision==="accept";}).length;
+  var skip=discrepancies.filter(function(d){return d.decision!=="accept";}).length;
+  var s=document.getElementById("rev-summary");
+  s.classList.remove("hidden");
+  var manual=Object.keys(manualEdits).length;
+  s.innerHTML='<span class="s-acc">'+acc+' applied</span><span class="s-rej">'+skip+' skipped</span>'+(manual?'<span class="s-left">'+manual+' manual edit'+(manual===1?"":"s")+'</span>':'');
+  document.getElementById("panel-export").classList.remove("hidden");
+  var totalChanges=acc+manual;
+  document.getElementById("export-msg").textContent=totalChanges+" change"+(totalChanges===1?"":"s")+" will be applied ("+acc+" from script, "+manual+" manual). Timecodes unchanged.";
+  setStep(4);
+  document.getElementById("panel-export").scrollIntoView({behavior:"smooth"});
+}
+
+// ── build corrected SRT ──
+function buildSRT(){
+  // map cueIdx -> applied text. Priority: a manual per-cue edit wins over an
+  // accepted flagged correction, which wins over the original.
+  var applied={};
+  discrepancies.forEach(function(d){
+    if(d.decision==="accept") applied[d.cueIdx]= d.editedText!=null ? d.editedText : d.corrected;
+  });
+  Object.keys(manualEdits).forEach(function(ci){ applied[ci]=manualEdits[ci]; });
+  return cues.map(function(c,ci){
+    var text = applied[ci]!=null ? applied[ci] : c.text;
+    return (ci+1)+"\n"+c.start+" --> "+c.end+"\n"+text;
+  }).join("\n\n")+"\n";
+}
+
+// ── WIRING ──
+wireDrop(document.getElementById("dz-srt"),document.getElementById("srt-input"),async function(file){
+  srtText=await readText(file);
+  document.getElementById("srt-fn").textContent=file.name;
+  document.getElementById("dz-srt").classList.add("loaded");
+  window._srtLoaded=true; checkReady();
+});
+
+document.querySelectorAll(".mode-tab").forEach(function(tab){
+  tab.addEventListener("click",function(){
+    scriptMode=tab.getAttribute("data-smode");
+    document.querySelectorAll(".mode-tab").forEach(function(t){t.classList.toggle("active",t===tab);});
+    var paste=scriptMode==="paste";
+    document.getElementById("dz-script").classList.toggle("hidden",paste);
+    document.getElementById("script-paste").classList.toggle("hidden",!paste);
+    checkReady();
+  });
+});
+document.getElementById("script-paste").addEventListener("input",function(){
+  scriptText=this.value; window._scriptLoaded=this.value.trim()!==""; checkReady();
+});
+wireDrop(document.getElementById("dz-script"),document.getElementById("script-input"),async function(file){
+  scriptText=await readScript(file);
+  document.getElementById("script-fn").textContent=file.name;
+  document.getElementById("dz-script").classList.add("loaded");
+  window._scriptLoaded=true; checkReady();
+});
+
+function checkReady(){
+  var ready = window._srtLoaded && window._scriptLoaded;
+  document.getElementById("align-btn").disabled=!ready;
+}
+
+document.getElementById("align-btn").addEventListener("click",function(){
+  var spin=document.getElementById("align-spin"); spin.classList.remove("hidden");
+  var hint=document.getElementById("load-hint");
+  setTimeout(function(){
+    try{
+      cues=parseSRT(srtText);
+      if(!cues.length){ hint.innerHTML='<span style="color:var(--del)">No cues found — is this a valid .srt?</span>'; spin.classList.add("hidden"); return; }
+      discrepancies=buildDiscrepancies();
+      flaggedByCue={}; currentFixIdx=-1; selAnchor=null;
+      var d=window._diag||{};
+      var diagLine='<span style="color:var(--muted)">read '+d.scriptCleanWords+' script words · '+cues.length+' cues · '+Math.round((d.overlap||0)*100)+'% overlap</span>';
+      if(!discrepancies.length){
+        hint.innerHTML='<span style="color:var(--add)">No discrepancies found — the subtitle already matches the script.</span><br>'+diagLine;
+        spin.classList.add("hidden"); return;
+      }
+      hint.innerHTML=diagLine;
+      document.getElementById("panel-review").classList.remove("hidden");
+      setStep(3);
+      buildReviewView();
+      document.getElementById("panel-review").scrollIntoView({behavior:"smooth"});
+    }catch(err){
+      var d2=window._diag||{};
+      var diag = d2.scriptChars!==undefined
+        ? '<br><span style="color:var(--muted)">diagnostic: script file was '+d2.scriptChars+' chars, cleaned to '+d2.scriptCleanWords+' words. First words read: “'+esc((d2.sample||"").trim())+'”</span>'
+        : '';
+      hint.innerHTML='<span style="color:var(--del)">'+esc(err.message)+'</span>'+diag;
+    }
+    spin.classList.add("hidden");
+  },30);
+});
+
+document.getElementById("export-btn").addEventListener("click",function(){
+  var srt=buildSRT();
+  var blob=new Blob([srt],{type:"text/plain"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="corrected.srt"; a.click();
+});
+document.getElementById("restart-btn").addEventListener("click",function(){ location.reload(); });
+
+// fix-bar actions (two-column review)
+document.getElementById("fb-accept").addEventListener("click",function(){ resolveFix("accept"); });
+document.getElementById("fb-skip").addEventListener("click",function(){ resolveFix("skip"); });
+document.getElementById("fb-edit").addEventListener("click",function(){
+  var ef=document.getElementById("fb-edit-field");
+  ef.classList.toggle("hidden");
+  if(!ef.classList.contains("hidden")) ef.focus();
+});
+document.getElementById("finish-btn").addEventListener("click",function(){ finishReview(); });
 
 })();
 </script>
