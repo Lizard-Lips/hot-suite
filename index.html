@@ -4307,13 +4307,98 @@ async function readScript(file){
   var n=file.name.toLowerCase();
   if(n.endsWith(".txt")||n.endsWith(".srt")||n.endsWith(".fdx")||n.endsWith(".vtt")) return await file.text();
   if(n.endsWith(".pdf")){
-    var buf=await file.arrayBuffer(); var pdf=await pdfjsLib.getDocument({data:buf}).promise; var out=[];
-    for(var i=1;i<=pdf.numPages;i++){var pg=await pdf.getPage(i);var tc=await pg.getTextContent();out.push(tc.items.map(function(it){return it.str;}).join(" "));}
-    return out.join("\n");
+    var buf=await file.arrayBuffer();
+    var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    var pages=[];
+    for(var i=1;i<=pdf.numPages;i++){
+      var pg=await pdf.getPage(i);
+      var tc=await pg.getTextContent();
+      pages.push(reconstructPage(tc.items));
+    }
+    var joined=pages.join("\n\n");
+    // If a PDF yields almost no text, its pages are images (scanned or
+    // picture-per-page export). There's no text layer to read — flag it so the
+    // UI can offer OCR instead of failing with an empty script.
+    var wc=joined.split(/\s+/).filter(Boolean).length;
+    window._pdfNeedsOCR = (wc < 20);
+    window._ocrFile = window._pdfNeedsOCR ? file : null;
+    window._ocrPages = pdf.numPages;
+    return joined;
   }
   if(n.endsWith(".docx")){var ab=await file.arrayBuffer();var r=await mammoth.extractRawText({arrayBuffer:ab});return r.value;}
   return await file.text();
 }
+
+// OCR an image-only PDF: render each page to a canvas, then read the text off
+// the pixels with Tesseract. Slower than text extraction, but it's the only way
+// to get script text out of a scanned document.
+async function ocrPDF(file, onProgress){
+  var buf=await file.arrayBuffer();
+  var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  var worker=await Tesseract.createWorker("eng");
+  var out=[];
+  try{
+    for(var i=1;i<=pdf.numPages;i++){
+      if(onProgress) onProgress(i, pdf.numPages);
+      var pg=await pdf.getPage(i);
+      var viewport=pg.getViewport({scale:2.0});   // 2x for legible OCR
+      var cv=document.createElement("canvas");
+      cv.width=Math.floor(viewport.width); cv.height=Math.floor(viewport.height);
+      await pg.render({canvasContext:cv.getContext("2d"), viewport:viewport}).promise;
+      var res=await worker.recognize(cv);
+      out.push((res && res.data && res.data.text) ? res.data.text : "");
+    }
+  } finally {
+    try{ await worker.terminate(); }catch(e){}
+  }
+  return out.join("\n\n");
+}
+
+// Rebuild readable lines from a PDF page's positioned text fragments.
+// PDFs store text as fragments with (x,y) transforms, NOT as lines — so we
+// group fragments by their vertical position into rows, sort each row left→right,
+// and join with spaces. This preserves the line structure cleanScript needs.
+function reconstructPage(items){
+  var frags=[];
+  items.forEach(function(it){
+    if(!it.str) return;
+    // transform = [a,b,c,d,e,f]; e = x, f = y (baseline position)
+    var tr=it.transform||[1,0,0,1,0,0];
+    var x=tr[4], y=tr[5];
+    // pdf.js also gives a hasEOL flag on some builds
+    frags.push({str:it.str, x:x, y:y, eol:!!it.hasEOL});
+  });
+  if(!frags.length) return "";
+  // group into rows by y (allow small jitter within a line)
+  frags.sort(function(a,b){ return b.y-a.y || a.x-b.x; }); // top→bottom, then left→right
+  var rows=[], cur=null, lastY=null;
+  var Y_TOL=3; // points of vertical tolerance for "same line"
+  frags.forEach(function(f){
+    if(cur===null || Math.abs(f.y-lastY)>Y_TOL){
+      cur={y:f.y, items:[f]}; rows.push(cur); lastY=f.y;
+    } else {
+      cur.items.push(f);
+    }
+  });
+  // within each row, sort left→right and join; insert a space when there's an x-gap
+  var lines=rows.map(function(row){
+    row.items.sort(function(a,b){return a.x-b.x;});
+    var out="";
+    for(var k=0;k<row.items.length;k++){
+      var it=row.items[k];
+      if(k>0){
+        var prev=row.items[k-1];
+        var gap=it.x-(prev.x+approxWidth(prev.str));
+        // big gap → treat as spacing (common in two-column / tabbed scripts)
+        if(gap>8) out+="  "; else if(!/\s$/.test(out) && !/^\s/.test(it.str)) out+=" ";
+      }
+      out+=it.str;
+    }
+    return out.replace(/\s+/g," ").trim();
+  }).filter(function(l){return l;});
+  return lines.join("\n");
+}
+function approxWidth(s){ return (s?s.length:0)*5; } // rough per-char width in points
 
 // ── SRT parse ──
 function parseSRT(txt){
@@ -4802,6 +4887,39 @@ wireDrop(document.getElementById("dz-script"),document.getElementById("script-in
   document.getElementById("script-fn").textContent=file.name;
   document.getElementById("dz-script").classList.add("loaded");
   window._scriptLoaded=true; checkReady();
+  // Image-only PDF? Offer OCR rather than letting alignment fail on empty text.
+  var hint=document.getElementById("load-hint");
+  if(window._pdfNeedsOCR && window._ocrFile){
+    window._scriptLoaded=false; checkReady();   // not usable until OCR runs
+    hint.innerHTML='<span style="color:var(--sub)">This PDF has no text layer &mdash; '+
+      (window._ocrPages===1 ? 'its page is an image' : 'its '+window._ocrPages+' pages are images')+
+      ' (scanned or picture-per-page export), so there\'s nothing to read directly.</span><br>'+
+      '<button class="btn btn-sm" id="ocr-btn" style="margin-top:8px">Read text with OCR</button> '+
+      '<span class="hint" id="ocr-status" style="margin-left:8px"></span>';
+    document.getElementById("ocr-btn").addEventListener("click",async function(){
+      var btn=this, status=document.getElementById("ocr-status");
+      btn.disabled=true;
+      status.textContent="starting OCR…";
+      try{
+        scriptText=await ocrPDF(window._ocrFile,function(p,total){
+          status.textContent="reading page "+p+" of "+total+"…";
+        });
+        var words=scriptText.split(/\s+/).filter(Boolean).length;
+        if(words<20){
+          status.innerHTML='<span style="color:var(--del)">OCR found very little text ('+words+' words). The scan may be too low-quality &mdash; pasting the script text is the reliable route.</span>';
+          btn.disabled=false; return;
+        }
+        window._pdfNeedsOCR=false;
+        window._scriptLoaded=true; checkReady();
+        status.innerHTML='<span style="color:var(--add)">OCR complete &mdash; read '+words+' words. Ready to align.</span>';
+      }catch(err){
+        status.innerHTML='<span style="color:var(--del)">OCR failed: '+esc(err.message)+'</span>';
+        btn.disabled=false;
+      }
+    });
+  } else {
+    if(hint) hint.innerHTML="";
+  }
 });
 
 function checkReady(){
