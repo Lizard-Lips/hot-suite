@@ -57,7 +57,13 @@
   #landing { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px; gap:26px; cursor:default; }
   #landing.active { display:flex; }
   #landing .suite-eyebrow { color:var(--phos); font-size:12px; letter-spacing:0.42em; text-align:center; margin-bottom:14px; opacity:0.85; text-indent:0.42em; }
-  #landing .suite-mark { color:var(--accent); font-size:clamp(6px,1.35vw,13px); line-height:1.02; text-shadow:var(--glow); white-space:pre; text-align:center; }
+  #landing .suite-mark { color:var(--accent); font-size:clamp(6px,1.35vw,13px); line-height:1.02; text-shadow:var(--glow); text-align:center; }
+  /* Split at mid-height with the lower half displaced sideways, so the lettering
+     tears through the middle the way the flush version did — but with the letter
+     spacing kept. Offset in em so it scales with the responsive font size. */
+  #landing .mk-in { display:inline-block; text-align:left; }
+  #landing .mk-r { display:block; white-space:pre; }
+  #landing .mk-shift { transform:translateX(0.45em); }
   .lizard-stage { position:relative; display:flex; flex-direction:column; align-items:center; gap:10px; }
   .lizard { color:var(--phos); font-size:clamp(9px,1.5vw,15px); line-height:1.06; white-space:pre; text-shadow:0 0 7px rgba(143,255,106,0.5); }
   .landing-hint { font-size:11px; color:var(--muted); letter-spacing:0.08em; text-align:center; line-height:1.9; }
@@ -604,6 +610,10 @@
 #panel-speccheck .rep-row.pass { background:rgba(74,222,128,0.07); }
 #panel-speccheck .rep-row.fail { background:rgba(248,113,113,0.08); }
 #panel-speccheck .rep-row.flag { background:rgba(251,146,60,0.07); }
+#panel-speccheck .rep-row.na { background:rgba(255,255,255,0.02); opacity:0.55; }
+#panel-speccheck .verdict.na { color:var(--muted); }
+#panel-speccheck .summary .s-na { color:var(--muted); }
+#panel-speccheck .summary .s-kind { color:var(--accent2); margin-left:auto; }
 #panel-speccheck .verdict { font-weight:500; }
 #panel-speccheck .verdict.pass { color:var(--pass); }
 #panel-speccheck .verdict.fail { color:var(--fail); }
@@ -888,12 +898,10 @@
 <div id="stage">
   <div id="landing" class="active">
     <div class="suite-eyebrow">LIZARD LIPS</div>
-    <div class="suite-mark"> ██╗  ██╗ ██████╗ ████████╗    ███████╗██╗   ██╗██╗████████╗███████╗
- ██║  ██║██╔═══██╗╚══██╔══╝    ██╔════╝██║   ██║██║╚══██╔══╝██╔════╝
- ███████║██║   ██║   ██║       ███████╗██║   ██║██║   ██║   █████╗
- ██╔══██║██║   ██║   ██║       ╚════██║██║   ██║██║   ██║   ██╔══╝
- ██║  ██║╚██████╔╝   ██║       ███████║╚██████╔╝██║   ██║   ███████╗
- ╚═╝  ╚═╝ ╚═════╝    ╚═╝       ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   ╚══════╝</div>
+    <div class="suite-mark"><span class="mk-in"><span class="mk-r">██╗  ██╗   ██████╗   ████████╗      ███████╗  ██╗   ██╗  ██╗  ████████╗  ███████╗
+██║  ██║  ██╔═══██╗  ╚══██╔══╝      ██╔════╝  ██║   ██║  ██║  ╚══██╔══╝  ██╔════╝</span><span class="mk-r mk-shift">███████║  ██║   ██║     ██║         ███████╗  ██║   ██║  ██║     ██║     █████╗  
+██╔══██║  ██║   ██║     ██║         ╚════██║  ██║   ██║  ██║     ██║     ██╔══╝  </span><span class="mk-r">██║  ██║  ╚██████╔╝     ██║         ███████║  ╚██████╔╝  ██║     ██║     ███████╗
+╚═╝  ╚═╝   ╚═════╝      ╚═╝         ╚══════╝   ╚═════╝   ╚═╝     ╚═╝     ╚══════╝</span></span></div>
     <div class="lizard-stage">
       <pre class="lizard" id="lizard"></pre>
     </div>
@@ -1349,7 +1357,7 @@
     <div class="panel-title"><span class="num">03</span> Analyse asset against spec</div>
     <div class="dz" id="dz-asset">
       <div class="dz-title">Drop asset here</div>
-      <div class="dz-sub">video · audio · image — MediaInfo reads it in your browser</div>
+      <div class="dz-sub">video · audio · stills — read in your browser, nothing uploaded</div>
       <div class="fn" id="asset-fn"></div>
     </div>
     <input type="file" id="asset-input" accept="video/*,audio/*,image/*,.mxf,.mov,.mp4,.wav,.mp3">
@@ -3790,8 +3798,9 @@ function extractRules(text){
   function add(field, op, value, conf){ found.push({field:field, op:op, value:String(value), enabled:true, conf:conf||"hi"}); }
   function has(field){ return found.some(function(r){return r.field===field;}); }
 
-  // Resolution — explicit WxH
-  var mRes = t.match(/(\d{3,4})\s?[x×]\s?(\d{3,4})/);
+  // Resolution — explicit WxH in PIXELS. Guard against physical sizes (mm/in/cm)
+  // being mistaken for a pixel resolution, e.g. "297x420mm" is A3, not pixels.
+  var mRes = t.match(/(\d{3,5})\s?[x×]\s?(\d{3,5})(?!\s?(?:mm|cm|in\b|inch|"))/i);
   if (mRes) add("Resolution","=", mRes[1]+"x"+mRes[2], "hi");
   else {
     if (/\b(3840\s?[x×]\s?2160|\buhd\b|\b4k\b|2160p)\b/i.test(t)) add("Resolution","=","3840x2160","lo");
@@ -3873,6 +3882,38 @@ function extractRules(text){
   var mAtc = t.match(/\b(\d)\s?(?:audio\s?tracks?|discrete\s?tracks?)\b/i);
   if (mAtc) add("Audio tracks","=", mAtc[1], "lo");
 
+  // ── STATIC / PRINT specs ──
+  // DPI / PPI ("300dpi", "300 ppi", "at least 150dpi")
+  var mDpi = t.match(/(\d{2,4})\s?(?:dpi|ppi)\b/i);
+  if (mDpi) add("DPI","≥", mDpi[1], "hi");
+
+  // Colour space (print vs digital — the most common delivery failure)
+  if (/\bcmyk\b/i.test(t)) add("Colour space","=","CMYK","hi");
+  else if (/\b(srgb|adobe\s?rgb|rgb)\b/i.test(t)) add("Colour space","=","RGB","hi");
+  else if (/\b(greyscale|grayscale|mono(chrome)?)\b/i.test(t)) add("Colour space","=","Greyscale","lo");
+
+  // Physical dimensions (mm or inches) — e.g. "6000x3000mm", "A3", "48 sheet"
+  var mMm = t.match(/(\d{2,5})\s?[x×]\s?(\d{2,5})\s?mm\b/i);
+  if (mMm) add("Physical size mm","=", mMm[1]+"x"+mMm[2]+" mm", "hi");
+  else {
+    var mIn = t.match(/(\d{1,3}(?:\.\d)?)\s?[x×]\s?(\d{1,3}(?:\.\d)?)\s?(?:in|inch(?:es)?|")\b/i);
+    if (mIn) add("Physical size","=", mIn[1]+"x"+mIn[2]+" in", "hi");
+    else {
+      // common paper sizes → mm
+      var paper = {A0:"841x1189",A1:"594x841",A2:"420x594",A3:"297x420",A4:"210x297",A5:"148x210"};
+      var mPaper = t.match(/\bA([0-5])\b/);
+      if (mPaper && paper["A"+mPaper[1]]) add("Physical size mm","=", paper["A"+mPaper[1]]+" mm", "lo");
+    }
+  }
+
+  // File size ceiling ("max 5MB", "under 2 MB", "no larger than 500KB")
+  var mFs = t.match(/(?:max(?:imum)?|under|no larger than|less than|≤|<)\s?(\d{1,4}(?:\.\d)?)\s?(mb|kb)\b/i);
+  if (mFs) add("File size","≤", mFs[1]+" "+mFs[2].toUpperCase(), "hi");
+
+  // Bleed ("3mm bleed", "5 mm bleed all round")
+  var mBleed = t.match(/(\d{1,2}(?:\.\d)?)\s?mm\s?bleed\b/i);
+  if (mBleed) add("Bleed","=", mBleed[1]+" mm", "lo");
+
   // Video bit rate
   var mBr = t.match(/(\d{1,4})\s?(?:mb(?:it)?(?:ps|\/s)|mbps)\b/i);
   if (mBr) add("Video bitrate","≥", mBr[1]+" Mbps", "lo");
@@ -3887,7 +3928,7 @@ function extractRules(text){
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP 3 — render editable checklist
 // ─────────────────────────────────────────────────────────────────────────────
-var FIELDS = ["Resolution","Frame rate","Video codec","Container","Scan","Aspect ratio","Bit depth","Chroma","Video bitrate","Audio codec","Audio channels","Audio layout","Sample rate","Audio bit depth","Audio bitrate","Audio tracks","Loudness","Duration"];
+var FIELDS = ["Resolution","Frame rate","Video codec","Container","Scan","Aspect ratio","Bit depth","Chroma","Video bitrate","Audio codec","Audio channels","Audio layout","Sample rate","Audio bit depth","Audio bitrate","Audio tracks","Loudness","Duration","DPI","Colour space","Physical size","Physical size mm","File size","Compression","Bleed"];
 var OPS = ["=","≥","≤","∈"];
 
 function renderRules(){
@@ -3938,20 +3979,240 @@ function readChunk(file){
   };
 }
 
-async function analyseAsset(file){
-  // image path — use native decode
-  if (/^image\//.test(file.type)) {
-    return await new Promise(function(resolve){
-      var img = new Image();
-      img.onload = function(){
-        resolve({ _type:"image",
-          "Resolution": img.naturalWidth+"x"+img.naturalHeight,
-          "Container": (file.name.split(".").pop()||"").toUpperCase()
-        });
-      };
-      img.onerror = function(){ resolve({_type:"image","Container":(file.name.split(".").pop()||"").toUpperCase()}); };
-      img.src = URL.createObjectURL(file);
+// ─────────────────────────────────────────────────────────────────────────────
+// STATIC ASSET ANALYSIS (stills: JPEG / PNG / TIFF / WebP / GIF)
+// ─────────────────────────────────────────────────────────────────────────────
+async function analyseStatic(file){
+  var out = { _type:"static" };
+  var buf = await file.arrayBuffer();
+  var bytes = new Uint8Array(buf);
+
+  // 1) MediaInfo for format, dimensions, colour space, bit depth, compression
+  try {
+    var ns = window.MediaInfo || window.mediaInfoFactory;
+    var factory = (typeof ns==="function") ? ns : (ns && (ns.mediaInfoFactory||ns.default));
+    if (typeof factory === "function") {
+      var mi = await factory({ format:"object", locateFile:function(p){ return "https://cdn.jsdelivr.net/npm/mediainfo.js@0.3.1/dist/"+p; } });
+      var result = await mi.analyzeData(function(){return file.size;}, readChunk(file));
+      try{ mi.close(); }catch(e){}
+      var gen = track(result,"General"), img = track(result,"Image");
+      if (img.Width && img.Height) out["Resolution"] = Math.round(img.Width)+"x"+Math.round(img.Height);
+      if (gen.Format || img.Format) out["Container"] = normaliseStillFormat(gen.Format||img.Format, file);
+      if (img.BitDepth) out["Bit depth"] = img.BitDepth+"-bit";
+      if (img.ColorSpace) out["Colour space"] = normaliseColourSpace(img.ColorSpace);
+      if (img.ChromaSubsampling) out["Chroma"] = img.ChromaSubsampling;
+      if (img.Compression_Mode) out["Compression"] = img.Compression_Mode;
+    }
+  } catch(e){ /* fall through to header parsing */ }
+
+  // 2) Fallback dimensions via native decode if MediaInfo gave nothing
+  if (!out["Resolution"]) {
+    var dim = await new Promise(function(resolve){
+      var im=new Image();
+      im.onload=function(){ resolve(im.naturalWidth+"x"+im.naturalHeight); };
+      im.onerror=function(){ resolve(null); };
+      im.src=URL.createObjectURL(file);
     });
+    if (dim) out["Resolution"]=dim;
+    if (!out["Container"]) out["Container"]=(file.name.split(".").pop()||"").toUpperCase();
+  }
+
+  // 3) Density (DPI) — parse from the file header; MediaInfo doesn't expose it
+  var dens = readDensity(bytes, file.name);
+  if (dens && dens.dpi) {
+    out["DPI"] = String(Math.round(dens.dpi));
+    out._dpiSource = dens.from;
+    // physical size = pixels / dpi
+    if (out["Resolution"]) {
+      var wh = out["Resolution"].split("x").map(Number);
+      var wIn = wh[0]/dens.dpi, hIn = wh[1]/dens.dpi;
+      out["Physical size"] = (Math.round(wIn*10)/10)+"x"+(Math.round(hIn*10)/10)+" in";
+      out["Physical size mm"] = Math.round(wIn*25.4)+"x"+Math.round(hIn*25.4)+" mm";
+    }
+  } else {
+    // No embedded density. This is normal for web/video-derived images, and DPI
+    // metadata is often meaningless anyway — what matters for print is whether
+    // there are ENOUGH PIXELS for the required physical size. We record the
+    // reason, and compare() derives an effective DPI when the spec gives a size.
+    out._dpiAbsent = true;
+    out._dpiAbsentNote = (dens && dens.note) ? dens.note : "no density metadata";
+  }
+
+  // 4) CMYK detection (JPEG SOF component count is definitive)
+  var cmyk = detectCMYK(bytes, file.name);
+  if (cmyk !== null) out["Colour space"] = cmyk ? "CMYK" : (out["Colour space"]||"RGB");
+
+  // 5) File size — often specced as a ceiling for digital/social delivery
+  out["File size"] = fmtBytes(file.size);
+  out._fileSizeBytes = file.size;
+  return out;
+}
+
+function normaliseStillFormat(f, file){
+  f=String(f||"").toLowerCase();
+  if(/jpeg|jpg/.test(f)) return "JPEG";
+  if(/png/.test(f)) return "PNG";
+  if(/tiff/.test(f)) return "TIFF";
+  if(/webp/.test(f)) return "WEBP";
+  if(/gif/.test(f)) return "GIF";
+  return (file.name.split(".").pop()||f).toUpperCase();
+}
+function normaliseColourSpace(cs){
+  cs=String(cs).toUpperCase();
+  if(/YUVK|CMYK/.test(cs)) return "CMYK";
+  if(/RGBA?/.test(cs)) return "RGB";
+  if(/Y{1,3}|GREY|GRAY/.test(cs) && !/RGB/.test(cs)) return "Greyscale";
+  return cs;
+}
+
+// Read pixel density. Checks JFIF APP0, EXIF APP1, PNG pHYs and TIFF IFD.
+// Returns {dpi, from} or {absent:true} when the file simply carries no density
+// (very common for web/video-derived images) so the UI can say so precisely.
+function readDensity(b, name){
+  try{
+    if (b[0]===0xFF && b[1]===0xD8) {   // ── JPEG ──
+      var i=2, jfifSeen=false;
+      while(i < b.length-4){
+        if(b[i]!==0xFF){ i++; continue; }
+        var marker=b[i+1], seglen=(b[i+2]<<8)|b[i+3];
+        // JFIF APP0: units 1=inch, 2=cm, 0=aspect ratio only (no real DPI)
+        if(marker===0xE0 && b[i+4]===0x4A && b[i+5]===0x46 && b[i+6]===0x49 && b[i+7]===0x46){
+          jfifSeen=true;
+          var units=b[i+11], xd=(b[i+12]<<8)|b[i+13];
+          if(xd>0){
+            if(units===1) return {dpi:xd, from:"JFIF"};
+            if(units===2) return {dpi:xd*2.54, from:"JFIF (cm)"};
+          }
+        }
+        // EXIF APP1: XResolution (0x011A) + ResolutionUnit (0x0128) in a TIFF IFD
+        if(marker===0xE1 && b[i+4]===0x45 && b[i+5]===0x78 && b[i+6]===0x69 && b[i+7]===0x66){
+          var ex=readTiffResolution(b, i+10);
+          if(ex && ex.dpi) return {dpi:ex.dpi, from:"EXIF"};
+        }
+        if(marker===0xDA) break;
+        if(seglen<=0) break;
+        i += 2+seglen;
+      }
+      return {absent:true, note: jfifSeen ? "JPEG carries no real density (JFIF units = aspect ratio only)" : "no density metadata in the JPEG"};
+    }
+    if (b[0]===0x89 && b[1]===0x50) {   // ── PNG ──
+      var j=8;
+      while(j < b.length-12){
+        var ln=(b[j]<<24)|(b[j+1]<<16)|(b[j+2]<<8)|b[j+3];
+        var t=String.fromCharCode(b[j+4],b[j+5],b[j+6],b[j+7]);
+        if(t==="pHYs"){
+          var px=(b[j+8]<<24)|(b[j+9]<<16)|(b[j+10]<<8)|b[j+11];
+          var unit=b[j+16];
+          if(unit===1 && px>0) return {dpi: px*0.0254, from:"pHYs"};
+        }
+        if(t==="IEND") break;
+        if(ln<0) break;
+        j += 12+ln;
+      }
+      return {absent:true, note:"PNG has no pHYs density chunk"};
+    }
+    // ── TIFF (II / MM byte order) ──
+    if ((b[0]===0x49&&b[1]===0x49) || (b[0]===0x4D&&b[1]===0x4D)) {
+      var tf=readTiffResolution(b, 0);
+      if(tf && tf.dpi) return {dpi:tf.dpi, from:"TIFF"};
+      return {absent:true, note:"TIFF has no resolution tags"};
+    }
+  }catch(e){}
+  return {absent:true, note:"no density metadata found"};
+}
+
+// Parse XResolution/ResolutionUnit out of a TIFF header at `base`.
+function readTiffResolution(b, base){
+  try{
+    var le = (b[base]===0x49 && b[base+1]===0x49);
+    function u16(o){ return le ? (b[o]|(b[o+1]<<8)) : ((b[o]<<8)|b[o+1]); }
+    function u32(o){ return le ? (b[o]|(b[o+1]<<8)|(b[o+2]<<16)|(b[o+3]<<24)>>>0)
+                              : (((b[o]<<24)|(b[o+1]<<16)|(b[o+2]<<8)|b[o+3])>>>0); }
+    var ifdOff = u32(base+4);
+    var ifd = base + ifdOff;
+    var count = u16(ifd);
+    var xres=null, unit=2;   // default unit = inch
+    for(var k=0;k<count;k++){
+      var e = ifd+2+k*12;
+      var tag = u16(e), type = u16(e+2), valOff = u32(e+8);
+      if(tag===0x011A && type===5){          // XResolution, RATIONAL
+        var ro = base+valOff;
+        var num=u32(ro), den=u32(ro+4);
+        if(den) xres = num/den;
+      }
+      if(tag===0x0128 && type===3) unit = u16(e+8);  // ResolutionUnit: 2=inch, 3=cm
+    }
+    if(xres){
+      if(unit===3) return {dpi: xres*2.54};
+      return {dpi: xres};
+    }
+  }catch(e){}
+  return null;
+}
+
+// JPEG with 4 components in the SOF marker is CMYK. Returns true/false/null.
+function detectCMYK(b, name){
+  try{
+    if (b[0]===0xFF && b[1]===0xD8){
+      var i=2;
+      while(i < b.length-4){
+        if(b[i]!==0xFF){ i++; continue; }
+        var marker=b[i+1], seglen=(b[i+2]<<8)|b[i+3];
+        if(marker===0xC0||marker===0xC1||marker===0xC2||marker===0xC9||marker===0xCA){
+          return b[i+9]===4;
+        }
+        if(marker===0xDA) break;
+        if(seglen<=0) break;
+        i += 2+seglen;
+      }
+    }
+  }catch(e){}
+  return null;
+}
+
+// Work out the real pixels-per-inch the asset delivers across the physical size
+// the spec asks for. This is the print-relevant number when the file carries no
+// embedded density, which is very common.
+function effectiveDPI(assetInfo){
+  if(!assetInfo || !assetInfo["Resolution"]) return null;
+  var wh = assetInfo["Resolution"].split("x").map(Number);
+  if(!wh[0] || !wh[1]) return null;
+  // find a physical size among the enabled rules
+  var sizeRule = rules.filter(function(r){
+    return r.enabled && (r.field==="Physical size mm" || r.field==="Physical size");
+  })[0];
+  if(!sizeRule) return null;
+  var m = String(sizeRule.value).match(/([\d.]+)\s*[x×]\s*([\d.]+)/);
+  if(!m) return null;
+  var isMM = /mm/i.test(sizeRule.value);
+  var wUnit = parseFloat(m[1]), hUnit = parseFloat(m[2]);
+  var wIn = isMM ? wUnit/25.4 : wUnit;
+  var hIn = isMM ? hUnit/25.4 : hUnit;
+  if(!wIn || !hIn) return null;
+  // match orientation to the asset so we don't understate the result
+  var assetLandscape = wh[0] >= wh[1], sizeLandscape = wIn >= hIn;
+  if(assetLandscape !== sizeLandscape){ var t=wIn; wIn=hIn; hIn=t; }
+  // the limiting axis decides the effective dpi
+  var dpiW = wh[0]/wIn, dpiH = wh[1]/hIn;
+  var dpi = Math.min(dpiW, dpiH);
+  return { dpi: dpi, px: wh[0]+"x"+wh[1],
+           sizeLabel: isMM ? (Math.round(wIn*25.4)+"x"+Math.round(hIn*25.4)+"mm")
+                           : ((Math.round(wIn*10)/10)+"x"+(Math.round(hIn*10)/10)+"in") };
+}
+
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (Math.round(n/1024*10)/10)+" KB";
+  return (Math.round(n/(1024*1024)*10)/10)+" MB";
+}
+
+async function analyseAsset(file){
+  // ── STATIC ASSET path (stills) ──
+  // MediaInfo covers format/dimensions/colour space/bit depth, but NOT density,
+  // so we parse DPI (and CMYK) out of the file header ourselves and derive the
+  // physical size, which is what print/OOH specs actually call for.
+  if (/^image\//.test(file.type) || /\.(jpe?g|png|tiff?|webp|gif|bmp)$/i.test(file.name)) {
+    return await analyseStatic(file);
   }
   // video/audio path — MediaInfo WASM.
   // The UMD build exposes a namespace object, not the factory directly, so
@@ -4096,8 +4357,44 @@ function fmtDuration(sec){
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPARE — rule vs detected
 // ─────────────────────────────────────────────────────────────────────────────
+// Fields that only mean something for time-based media.
+var AV_ONLY = ["Frame rate","Video codec","Scan","Video bitrate","Audio codec","Audio channels",
+               "Audio layout","Sample rate","Audio bit depth","Audio bitrate","Audio tracks",
+               "Loudness","Duration"];
+// Fields that only mean something for stills.
+var STILL_ONLY = ["DPI","Physical size","Physical size mm","Bleed"];
+
 function compare(rule, got, assetInfo){
+  var isStatic = assetInfo && assetInfo._type==="static";
+  // Skip rules that can't apply to this asset type — clearer than a false flag.
+  if (isStatic && AV_ONLY.indexOf(rule.field)>=0)
+    return {verdict:"na", got:"—", note:"not applicable to a still"};
+  if (!isStatic && assetInfo && STILL_ONLY.indexOf(rule.field)>=0)
+    return {verdict:"na", got:"—", note:"not applicable to video/audio"};
+
   if (got===undefined || got===null || got==="") {
+    // DPI: embedded density is often absent or meaningless. What actually matters
+    // for print is whether there are enough pixels for the required physical
+    // size — so derive an effective DPI from the spec's size when we have one.
+    if (rule.field==="DPI" && assetInfo && assetInfo._dpiAbsent) {
+      var eff = effectiveDPI(assetInfo);
+      if (eff) {
+        var need = parseFloat(rule.value);
+        var verdict = isNaN(need) ? "flag" : (eff.dpi >= need-1 ? "pass" : "fail");
+        return { verdict: verdict, got: Math.round(eff.dpi)+" effective",
+                 note: "no embedded DPI; "+eff.px+"px across "+eff.sizeLabel };
+      }
+      return { verdict:"flag", got:"—",
+               note: assetInfo._dpiAbsentNote+" — add a physical size to the spec so effective DPI can be checked" };
+    }
+    // Physical size can only be derived from pixels + embedded density. Without
+    // density there's no intrinsic physical size — the effective DPI row covers it.
+    if ((rule.field==="Physical size" || rule.field==="Physical size mm") && assetInfo && assetInfo._dpiAbsent)
+      return {verdict:"na", got:"—", note:"no embedded density, so the file has no fixed physical size — see the DPI row"};
+    // Bleed can't be verified from file metadata — it's a layout property, not
+    // something stored in the file. Say so plainly instead of a vague flag.
+    if (rule.field==="Bleed")
+      return {verdict:"na", got:"—", note:"not in file metadata — check the artwork layout"};
     // Loudness is genuinely unmeasurable from a container — say so specifically.
     if (rule.field==="Loudness" && assetInfo && assetInfo._loudnessUnmeasurable)
       return {verdict:"flag", got:"—", note:"not in container — measure in Loudness Analyser"};
@@ -4108,6 +4405,28 @@ function compare(rule, got, assetInfo){
   // numeric-aware
   var expNum = parseFloat(exp), gNum = parseFloat(g);
   var bothNum = !isNaN(expNum) && !isNaN(gNum) && /^[-\d.]+/.test(exp) && /^[-\d.]+/.test(g);
+  // Unit-aware sizes: normalise MB/KB/B to bytes so "≤ 5 MB" vs "272.9 KB" works.
+  function toBytes(s){
+    var m=String(s).match(/([\d.]+)\s*(mb|kb|b)\b/i);
+    if(!m) return null;
+    var v=parseFloat(m[1]), u=m[2].toLowerCase();
+    return u==="mb" ? v*1024*1024 : u==="kb" ? v*1024 : v;
+  }
+  var expB=toBytes(exp), gB=toBytes(g);
+  if(expB!==null && gB!==null){ expNum=expB; gNum=gB; bothNum=true; }
+  // Physical size "297x420 mm" — compare both axes with a small tolerance
+  var expDim=String(exp).match(/([\d.]+)\s*[x×]\s*([\d.]+)/);
+  var gDim=String(g).match(/([\d.]+)\s*[x×]\s*([\d.]+)/);
+  if(expDim && gDim && /mm|in/.test(exp)){
+    var tol = /mm/.test(exp) ? 2 : 0.1;   // 2mm or 0.1in slack
+    var okW=Math.abs(parseFloat(expDim[1])-parseFloat(gDim[1]))<=tol;
+    var okH=Math.abs(parseFloat(expDim[2])-parseFloat(gDim[2]))<=tol;
+    if(okW&&okH) return {verdict:"pass", got:g};
+    // allow swapped orientation as a flag rather than a hard fail
+    if(Math.abs(parseFloat(expDim[1])-parseFloat(gDim[2]))<=tol && Math.abs(parseFloat(expDim[2])-parseFloat(gDim[1]))<=tol)
+      return {verdict:"flag", got:g, note:"right size, rotated"};
+    return {verdict:"fail", got:g};
+  }
 
   function eqLoose(a,b){
     return a.toLowerCase().replace(/[\s-]/g,"") === b.toLowerCase().replace(/[\s-]/g,"");
@@ -4134,22 +4453,33 @@ function compare(rule, got, assetInfo){
 function runCheck(){
   var body = document.getElementById("report-body");
   body.innerHTML = "";
-  var pass=0,fail=0,flag=0;
+  var pass=0,fail=0,flag=0,na=0;
   rules.filter(function(r){return r.enabled;}).forEach(function(r){
     var got = assetInfo ? assetInfo[r.field] : undefined;
     var res = compare(r, got, assetInfo);
-    if(res.verdict==="pass")pass++; else if(res.verdict==="fail")fail++; else flag++;
+    if(res.verdict==="pass")pass++;
+    else if(res.verdict==="fail")fail++;
+    else if(res.verdict==="na")na++;
+    else flag++;
+    var label = res.verdict==="pass" ? "● PASS"
+              : res.verdict==="fail" ? "✕ FAIL"
+              : res.verdict==="na"   ? "– N/A"
+              : "▲ FLAG";
     var row=document.createElement("div");
     row.className="rep-row "+res.verdict;
     row.innerHTML =
-      '<span class="verdict '+res.verdict+'">'+(res.verdict==="pass"?"● PASS":res.verdict==="fail"?"✕ FAIL":"▲ FLAG")+'</span>'+
+      '<span class="verdict '+res.verdict+'">'+label+'</span>'+
       '<span class="rep-field">'+r.field+'</span>'+
       '<span class="rep-exp">'+r.op+' '+r.value+'</span>'+
       '<span class="rep-got">'+res.got+(res.note?' ('+res.note+')':'')+'</span>';
     body.appendChild(row);
   });
+  var kindLabel = assetInfo && assetInfo._type==="static" ? "static asset" : "video/audio";
   document.getElementById("summary").innerHTML =
-    '<span class="s-pass">'+pass+' pass</span><span class="s-flag">'+flag+' flag</span><span class="s-fail">'+fail+' fail</span>';
+    '<span class="s-pass">'+pass+' pass</span><span class="s-flag">'+flag+' flag</span>'+
+    '<span class="s-fail">'+fail+' fail</span>'+
+    (na?'<span class="s-na">'+na+' n/a</span>':'')+
+    '<span class="s-kind">'+kindLabel+'</span>';
   document.getElementById("panel-report").classList.remove("hidden");
   setStep(4);
   document.getElementById("panel-report").scrollIntoView({behavior:"smooth"});
