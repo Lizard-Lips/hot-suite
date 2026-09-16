@@ -273,8 +273,9 @@ footer{ border-top: 1px solid var(--border); font-family: var(--mono); font-size
     font-family:var(--mono);font-size:12px;padding:5px 7px;border-radius:3px;outline:none;width:100%}#panel-speccheck .rule select:focus, #panel-speccheck .rule input:focus{border-color:var(--accent)}#panel-speccheck .rule select optgroup{background:var(--surface);color:var(--muted);font-style:normal;
     font-family:var(--mono);font-size:10px;letter-spacing:.08em}#panel-speccheck .rule select option{background:var(--bg);color:var(--text);font-style:normal}#panel-speccheck .dot{width:8px;height:8px;border-radius:50%}#panel-speccheck .dot.hi{background:var(--pass)}#panel-speccheck .dot.lo{background:var(--warn)}#panel-speccheck .dot.man{background:var(--muted)}#panel-speccheck .tog{cursor:pointer;text-align:center;color:var(--pass);font-size:11px}#panel-speccheck .tog.off{color:var(--muted)}#panel-speccheck .del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px}#panel-speccheck .del:hover{color:var(--fail)}#panel-speccheck /* progress */
   .prog{display:flex;align-items:center;gap:14px;font-size:11px;color:var(--muted)}#panel-speccheck .track{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}#panel-speccheck .fill{height:100%;background:var(--accent);width:0;transition:width .15s}#panel-speccheck /* results */
-  .summary{display:flex;gap:20px;font-size:13px;padding:4px 0;flex-wrap:wrap}#panel-speccheck .s-pass{color:var(--pass)}#panel-speccheck .s-fail{color:var(--fail)}#panel-speccheck .s-flag{color:var(--warn)}#panel-speccheck .s-tot{color:var(--muted);margin-left:auto}#panel-speccheck .filters{display:flex;gap:6px;align-items:center;font-size:10px;color:var(--muted)}#panel-speccheck .res-tbl{border:1px solid var(--border);border-radius:4px;overflow:hidden}#panel-speccheck .res-hd, #panel-speccheck .res-row{display:grid;grid-template-columns:74px 1fr 150px;gap:12px;padding:9px 13px;align-items:baseline}#panel-speccheck .res-hd{background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);font-size:9px;
-    text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}#panel-speccheck .res-row{border-bottom:1px solid #1a201a;font-size:12px;cursor:pointer}#panel-speccheck .res-row:last-child{border-bottom:0}#panel-speccheck .res-row:hover{background:rgba(255,255,255,.02)}#panel-speccheck .res-row.pass .v{color:var(--pass)}#panel-speccheck .res-row.fail{background:rgba(255,107,107,.06)}#panel-speccheck .res-row.fail .v{color:var(--fail)}#panel-speccheck .res-row.err{background:rgba(255,207,71,.05)}#panel-speccheck .res-row.err .v{color:var(--warn)}#panel-speccheck .res-row .name{word-break:break-all}#panel-speccheck .res-row .why{color:var(--muted);font-size:11px;text-align:right}#panel-speccheck .detail{padding:2px 13px 12px 100px;background:rgba(0,0,0,.2);border-bottom:1px solid #1a201a;font-size:11px}#panel-speccheck .detail div{padding:3px 0;display:flex;gap:10px}#panel-speccheck .detail .f{color:var(--muted);width:130px;flex:none}#panel-speccheck .detail .need{color:var(--muted)}#panel-speccheck .detail .got{margin-left:auto}#panel-speccheck .detail .bad .got{color:var(--fail)}#panel-speccheck .detail .ok .got{color:var(--pass)}#panel-speccheck .detail .na{opacity:.5}#panel-speccheck /* filename builder */
+  .summary{display:flex;gap:20px;font-size:13px;padding:4px 0;flex-wrap:wrap}#panel-speccheck /* grouped problems — what to fix, #panel-speccheck ranked by how many files it affects */
+  .issues{display:flex;flex-direction:column;gap:3px;border:1px solid var(--border);border-radius:4px;padding:10px 12px}#panel-speccheck .issues-hd{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}#panel-speccheck .issue{display:flex;align-items:baseline;gap:12px;padding:5px 7px;border-radius:3px;cursor:pointer;font-size:12px}#panel-speccheck .issue:hover{background:rgba(255,255,255,.03)}#panel-speccheck .issue.on{background:rgba(232,255,71,.09);outline:1px solid rgba(232,255,71,.35)}#panel-speccheck .issue .n{color:var(--fail);font-weight:500;min-width:26px;text-align:right;flex:none}#panel-speccheck .issue .l{color:var(--text)}#panel-speccheck .issue .hintwide{margin-left:auto;font-size:10px;color:var(--warn);opacity:.9}#panel-speccheck .s-pass{color:var(--pass)}#panel-speccheck .s-fail{color:var(--fail)}#panel-speccheck .s-flag{color:var(--warn)}#panel-speccheck .s-tot{color:var(--muted);margin-left:auto}#panel-speccheck .filters{display:flex;gap:6px;align-items:center;font-size:10px;color:var(--muted)}#panel-speccheck .res-tbl{border:1px solid var(--border);border-radius:4px;overflow:hidden}#panel-speccheck .res-hd, #panel-speccheck .res-row{display:grid;grid-template-columns:74px 1fr 150px;gap:12px;padding:9px 13px;align-items:baseline}#panel-speccheck .res-hd{background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);font-size:9px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}#panel-speccheck .res-row{border-bottom:1px solid #1a201a;font-size:12px;cursor:pointer}#panel-speccheck .res-row:last-child{border-bottom:0}#panel-speccheck .res-row:hover{background:rgba(255,255,255,.02)}#panel-speccheck .res-row.pass .v{color:var(--pass)}#panel-speccheck .res-row.fail{background:rgba(255,107,107,.06)}#panel-speccheck .res-row.fail .v{color:var(--fail)}#panel-speccheck .res-row.err{background:rgba(255,207,71,.05)}#panel-speccheck .res-row.err .v{color:var(--warn)}#panel-speccheck .res-row .name{word-break:break-all}#panel-speccheck .res-row .why{color:var(--muted);font-size:11px;text-align:right}#panel-speccheck .detail{padding:2px 13px 12px 100px;background:rgba(0,0,0,.2);border-bottom:1px solid #1a201a;font-size:11px}#panel-speccheck .detail div{padding:3px 0;display:flex;gap:10px}#panel-speccheck .detail .f{color:var(--muted);width:130px;flex:none}#panel-speccheck .detail .need{color:var(--muted)}#panel-speccheck .detail .got{margin-left:auto}#panel-speccheck .detail .bad .got{color:var(--fail)}#panel-speccheck .detail .ok .got{color:var(--pass)}#panel-speccheck .detail .na{opacity:.5}#panel-speccheck .detail .probs{margin:2px 0 8px 130px;display:flex;flex-direction:column;gap:2px}#panel-speccheck .detail .probs div{padding:0;display:block;color:var(--fail);font-size:11px;opacity:.85}#panel-speccheck /* filename builder */
   .fn-in{flex:1;min-width:300px;background:var(--bg);border:1px solid var(--border);color:var(--text);
     font-family:var(--mono);font-size:12px;padding:8px 11px;border-radius:3px;outline:none}#panel-speccheck .fn-in:focus{border-color:var(--accent)}#panel-speccheck .fn-tbl{border:1px solid var(--border);border-radius:4px;overflow:hidden}#panel-speccheck .fn-hd, #panel-speccheck .fn-row{display:grid;grid-template-columns:26px 1fr 168px 1fr;gap:9px;align-items:center;padding:7px 11px}#panel-speccheck .fn-hd{background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);font-size:9px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}#panel-speccheck .fn-row{border-bottom:1px solid #1a201a;font-size:12px}#panel-speccheck .fn-row:last-child{border-bottom:0}#panel-speccheck .fn-row .idx{color:var(--muted);font-size:10px}#panel-speccheck .fn-row .val{color:var(--text)}#panel-speccheck .fn-row select, #panel-speccheck .fn-row input{background:var(--bg);border:1px solid var(--border);color:var(--text);
@@ -345,69 +346,62 @@ footer{ border-top: 1px solid var(--border); font-family: var(--mono); font-size
 }#panel-subsync .col{ border:1px solid var(--border); border-radius:4px; overflow:hidden; display:flex; flex-direction:column; }#panel-subsync .col-head{ font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent2); padding:9px 12px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); }#panel-subsync .col-hint{ color:var(--muted); text-transform:none; letter-spacing:0; margin-left:6px; font-size:9px; }#panel-subsync .col-scroll{ height:340px; overflow-y:auto; padding:6px; }#panel-subsync .col-scroll::-webkit-scrollbar{ width:6px; }#panel-subsync .col-scroll::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }#panel-subsync /* SRT cue rows */
 .cue-row{ padding:8px 10px; border-radius:3px; font-family:var(--mono); font-size:12px; line-height:1.5; cursor:pointer; border-left:2px solid transparent; margin-bottom:2px; transition:background .1s; }#panel-subsync .cue-row:hover{ background:rgba(255,255,255,0.03); }#panel-subsync .cue-row.clean{ color:var(--muted); }#panel-subsync .cue-row.flagged{ color:var(--text); border-left-color:var(--sub); }#panel-subsync .cue-row.flagged.done{ border-left-color:var(--add); }#panel-subsync .cue-row.active{ background:rgba(71,200,255,0.08); border-left-color:var(--accent2); }#panel-subsync .cue-row .cue-tc{ font-size:9px; color:var(--muted); display:block; margin-bottom:2px; }#panel-subsync .cue-row .edit-pencil{ color:var(--muted); opacity:0; cursor:pointer; margin-left:6px; transition:opacity .1s; }#panel-subsync .cue-row:hover .edit-pencil{ opacity:0.7; }#panel-subsync .cue-row .edit-pencil:hover{ opacity:1; color:var(--accent2); }#panel-subsync .cue-row.edited{ border-left-color:var(--accent2); }#panel-subsync .cue-row.edited .cue-tc::after{ content:" edited"; color:var(--accent2); }#panel-subsync .cue-edit-input{ width:100%; background:var(--bg); border:1px solid var(--accent2); color:var(--text); font-family:var(--mono); font-size:12px; padding:6px 8px; border-radius:3px; outline:none; margin-top:2px; }#panel-subsync .cue-edit-actions{ display:flex; gap:6px; margin-top:6px; }#panel-subsync .cue-edit-actions button{ font-family:var(--mono); font-size:10px; padding:3px 9px; border-radius:3px; cursor:pointer; border:1px solid var(--border); background:var(--bg); color:var(--muted); }#panel-subsync .cue-edit-actions .cue-save{ border-color:var(--add); color:var(--add); }#panel-subsync .cue-edit-actions button:hover{ color:var(--text); }#panel-subsync .cue-row .flag-dot{ color:var(--sub); margin-right:5px; }#panel-subsync .cue-row.done .flag-dot{ color:var(--add); }#panel-subsync .cue-row .applied-text{ color:var(--add); }#panel-subsync /* script column words */
 #script-col{ font-family:var(--mono); font-size:12px; line-height:1.9; user-select:none; }#panel-subsync .sw{ padding:1px 3px; border-radius:2px; color:var(--muted); cursor:pointer; transition:background .08s,color .08s; }#panel-subsync .sw-hit{ background:rgba(232,255,71,0.22); color:var(--text); }#panel-subsync .sw-region{ color:var(--text); }#panel-subsync .sw:hover{ background:rgba(71,200,255,0.15); color:var(--text); }#panel-subsync /* fix action bar */
-.fixbar{ display:flex; align-items:center; gap:16px; padding:14px 16px; border:1px solid var(--sub); border-radius:4px; background:rgba(251,146,60,0.05); }#panel-subsync .fixbar-info{ flex:1; display:flex; flex-direction:column; gap:4px; }#panel-subsync .fixbar-note{ font-family:var(--mono); font-size:11px; color:var(--sub); }#panel-subsync .fixbar-correction{ font-family:var(--mono); font-size:14px; color:var(--add); }#panel-subsync .fixbar-actions{ display:flex; gap:8px; }#panel-subsync .review-count{ color:var(--muted); }#panel-subsync .review-count b{ color:var(--accent); }#panel-subsync .progress-track{ flex:1; height:3px; background:var(--border); border-radius:2px; margin:0 16px; overflow:hidden; }#panel-subsync .progress-fill{ height:100%; background:var(--accent); width:0%; transition:width .2s; }#panel-subsync .card{ border:1px solid var(--border); border-radius:4px; padding:0; overflow:hidden; }#panel-subsync .card-tc{ font-family:var(--mono); font-size:11px; color:var(--accent2); padding:10px 16px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); display:flex; justify-content:space-between; }#panel-subsync .card-tc .cue-n{ color:var(--muted); }#panel-subsync .card-body{ padding:18px 16px; display:flex; flex-direction:column; gap:14px; }#panel-subsync .diff-block{ display:flex; flex-direction:column; gap:5px; }#panel-subsync .kind-tag{ font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:0.02em; }#panel-subsync .kind-tag .kind-desc{ color:var(--muted); font-weight:400; }#panel-subsync .low-conf{ font-family:var(--mono); font-size:11px; color:var(--sub); background:rgba(251,146,60,0.08); border:1px solid rgba(251,146,60,0.3); border-radius:3px; padding:8px 10px; line-height:1.5; }#panel-subsync .card-low{ border-color:rgba(251,146,60,0.4); }#panel-subsync .repick{ color:var(--accent2); font-size:10px; }#panel-subsync .pane-hint{ color:var(--muted); font-weight:400; font-size:9px; }#panel-subsync .script-pane{ max-height:150px; overflow-y:auto; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-family:var(--mono); font-size:13px; line-height:2; user-select:none; }#panel-subsync .script-pane::-webkit-scrollbar{ width:6px; }#panel-subsync .script-pane::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }#panel-subsync .sw{ padding:2px 3px; border-radius:2px; color:var(--muted); cursor:pointer; transition:background .08s,color .08s; }#panel-subsync .sw-hit{ background:rgba(232,255,71,0.22); color:var(--text); }#panel-subsync .sw:hover{ background:rgba(71,200,255,0.15); color:var(--text); }#panel-subsync .script-empty{ font-family:var(--mono); font-size:11px; color:var(--muted); padding:10px; }#panel-subsync .diff-lbl{ font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }#panel-subsync .diff-text{ font-family:var(--mono); font-size:14px; line-height:1.7; }#panel-subsync .w-eq{ color:var(--text); }#panel-subsync .w-sub-from{ color:var(--del); text-decoration:line-through; opacity:0.75; }#panel-subsync .w-sub-to{ color:var(--add); }#panel-subsync .w-del{ color:var(--del); text-decoration:line-through; opacity:0.75; }#panel-subsync .w-add{ color:var(--add); }#panel-subsync .card-actions{ display:flex; gap:10px; padding:14px 16px; border-top:1px solid var(--border); align-items:center; }#panel-subsync .card-actions .info{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-left:auto; }#panel-subsync .btn-accept{ border-color:var(--add); background:var(--add); color:var(--bg); }#panel-subsync .btn-reject{ border-color:var(--border); background:none; color:var(--muted); }#panel-subsync .btn-reject:hover{ color:var(--text); border-color:var(--muted); }#panel-subsync .btn-edit{ border-color:var(--accent2); background:none; color:var(--accent2); }#panel-subsync .edit-field{ width:100%; background:var(--bg); border:1px solid var(--accent2); color:var(--text); font-family:var(--mono); font-size:14px; padding:8px 10px; border-radius:3px; outline:none; }#panel-subsync .summary-line{ font-family:var(--mono); font-size:13px; display:flex; gap:18px; padding:6px 0; }#panel-subsync .summary-line .s-acc{ color:var(--add); }#panel-subsync .summary-line .s-rej{ color:var(--muted); }#panel-subsync .summary-line .s-left{ color:var(--accent2); }#panel-subsync .done-msg{ font-family:var(--mono); font-size:13px; color:var(--add); text-align:center; padding:10px; }#panel-subsync footer{ padding:16px 40px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--muted); }#panel-subsync .footer-disclaimer{ color:var(--sub); opacity:0.85; }#panel-subsync /* ─────────── SHARED TOOL-FRAME NORMALISATION ───────────
-     One layout + type language across every tool panel, #panel-subsync so tools match in
-     form as well as colour. These rules come AFTER each tool's own scoped
-     CSS, #panel-subsync so they win on the shared structural elements. */
-.tool-panel{ font-family:var(--mono); color:var(--text); }#panel-subsync /* Header: consistent terminal-style bar for every tool */
-.tool-panel header{
-    padding:20px 32px !important;
-    border-bottom:1px solid var(--border) !important;
-    display:flex !important; align-items:baseline !important;
-    gap:16px !important; justify-content:flex-start !important;
-    background:var(--surface);
-  }#panel-subsync .tool-panel header h1{
-    font-family:var(--mono) !important; font-size:15px !important;
-    font-weight:500 !important; letter-spacing:0.02em !important;
-    color:var(--accent) !important; text-shadow:var(--glow);
-  }#panel-subsync .tool-panel header span, #panel-subsync .tool-panel header .header-left span{
-    font-family:var(--mono) !important; font-size:10px !important;
-    color:var(--muted) !important; letter-spacing:0.1em !important;
-  }#panel-subsync /* Main content column: same padding + centering + width everywhere */
-.tool-panel main{
-    flex:1; display:flex; flex-direction:column; align-items:center;
-    justify-content:flex-start !important;
-    padding:36px 32px !important; gap:20px !important;
-  }#panel-subsync /* Panels / cards: unified surface, #panel-subsync radius, #panel-subsync width, #panel-subsync padding */
-.tool-panel .panel{
-    width:100% !important; max-width:680px !important;
-    background:var(--surface) !important; border:1px solid var(--border) !important;
-    border-radius:4px !important; padding:20px !important;
-  }#panel-subsync .tool-panel .panel-title, #panel-subsync .tool-panel .panel-label, #panel-subsync .tool-panel .setting-label{
-    font-family:var(--mono) !important; font-size:10px !important;
-    text-transform:uppercase !important; letter-spacing:0.12em !important;
-    color:var(--phos) !important;
-  }#panel-subsync /* Drop zones: consistent framing */
-.tool-panel #dropzone{
-    width:100% !important; max-width:680px !important;
-  }#panel-subsync /* Inputs + buttons: one style across tools */
-  .tool-panel input[type="text"], #panel-subsync .tool-panel .text-input, #panel-subsync .tool-panel .custom-input{
-    background:var(--bg) !important; border:1px solid var(--border) !important;
-    color:var(--text) !important; font-family:var(--mono) !important;
-    font-size:12px !important; padding:9px 12px !important; border-radius:3px !important;
-  }#panel-subsync .tool-panel input:focus, #panel-subsync .tool-panel .text-input:focus{
-    border-color:var(--accent) !important; outline:none !important;
-  }#panel-subsync .tool-panel button:not(.std-btn):not(.nav-item){
-    font-family:var(--mono) !important; letter-spacing:0.04em;
-  }#panel-subsync /* Drop-zone titles were in Syne (sans) — force mono to match the terminal
-     aesthetic, #panel-subsync and normalise size/weight across tools. */
-  .tool-panel .drop-title, #panel-subsync .tool-panel .drop-text, #panel-subsync .tool-panel .dz-title{
-    font-family:var(--mono) !important; font-size:16px !important;
-    font-weight:500 !important; letter-spacing:0.01em !important;
-    color:var(--text) !important;
-  }#panel-subsync .tool-panel .drop-sub, #panel-subsync .tool-panel .drop-hint{
-    font-family:var(--mono) !important; font-size:11px !important;
-    color:var(--muted) !important;
-  }#panel-subsync .tool-panel .drop-formats{
-    font-family:var(--mono) !important; font-size:10px !important;
-    color:var(--muted) !important;
-  }#panel-subsync /* Header titles: consistent UPPERCASE terminal label across all tools */
-.tool-panel header h1{ text-transform:uppercase !important; }#panel-subsync .tool-panel header span{ text-transform:uppercase !important; }#panel-subsync /* Drop zones: consistent min-height so they don't jump between tools */
-.tool-panel #dropzone{
-    min-height:230px !important;
-    display:flex !important; flex-direction:column !important;
-    align-items:center !important; justify-content:center !important;
-  }
+.fixbar{ display:flex; align-items:center; gap:16px; padding:14px 16px; border:1px solid var(--sub); border-radius:4px; background:rgba(251,146,60,0.05); }#panel-subsync .fixbar-info{ flex:1; display:flex; flex-direction:column; gap:4px; }#panel-subsync .fixbar-note{ font-family:var(--mono); font-size:11px; color:var(--sub); }#panel-subsync .fixbar-correction{ font-family:var(--mono); font-size:14px; color:var(--add); }#panel-subsync .fixbar-actions{ display:flex; gap:8px; }#panel-subsync .review-count{ color:var(--muted); }#panel-subsync .review-count b{ color:var(--accent); }#panel-subsync .progress-track{ flex:1; height:3px; background:var(--border); border-radius:2px; margin:0 16px; overflow:hidden; }#panel-subsync .progress-fill{ height:100%; background:var(--accent); width:0%; transition:width .2s; }#panel-subsync .card{ border:1px solid var(--border); border-radius:4px; padding:0; overflow:hidden; }#panel-subsync .card-tc{ font-family:var(--mono); font-size:11px; color:var(--accent2); padding:10px 16px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); display:flex; justify-content:space-between; }#panel-subsync .card-tc .cue-n{ color:var(--muted); }#panel-subsync .card-body{ padding:18px 16px; display:flex; flex-direction:column; gap:14px; }#panel-subsync .diff-block{ display:flex; flex-direction:column; gap:5px; }#panel-subsync .kind-tag{ font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:0.02em; }#panel-subsync .kind-tag .kind-desc{ color:var(--muted); font-weight:400; }#panel-subsync .low-conf{ font-family:var(--mono); font-size:11px; color:var(--sub); background:rgba(251,146,60,0.08); border:1px solid rgba(251,146,60,0.3); border-radius:3px; padding:8px 10px; line-height:1.5; }#panel-subsync .card-low{ border-color:rgba(251,146,60,0.4); }#panel-subsync .repick{ color:var(--accent2); font-size:10px; }#panel-subsync .pane-hint{ color:var(--muted); font-weight:400; font-size:9px; }#panel-subsync .script-pane{ max-height:150px; overflow-y:auto; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-family:var(--mono); font-size:13px; line-height:2; user-select:none; }#panel-subsync .script-pane::-webkit-scrollbar{ width:6px; }#panel-subsync .script-pane::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }#panel-subsync .sw{ padding:2px 3px; border-radius:2px; color:var(--muted); cursor:pointer; transition:background .08s,color .08s; }#panel-subsync .sw-hit{ background:rgba(232,255,71,0.22); color:var(--text); }#panel-subsync .sw:hover{ background:rgba(71,200,255,0.15); color:var(--text); }#panel-subsync .script-empty{ font-family:var(--mono); font-size:11px; color:var(--muted); padding:10px; }#panel-subsync .diff-lbl{ font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }#panel-subsync .diff-text{ font-family:var(--mono); font-size:14px; line-height:1.7; }#panel-subsync .w-eq{ color:var(--text); }#panel-subsync .w-sub-from{ color:var(--del); text-decoration:line-through; opacity:0.75; }#panel-subsync .w-sub-to{ color:var(--add); }#panel-subsync .w-del{ color:var(--del); text-decoration:line-through; opacity:0.75; }#panel-subsync .w-add{ color:var(--add); }#panel-subsync .card-actions{ display:flex; gap:10px; padding:14px 16px; border-top:1px solid var(--border); align-items:center; }#panel-subsync .card-actions .info{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-left:auto; }#panel-subsync .btn-accept{ border-color:var(--add); background:var(--add); color:var(--bg); }#panel-subsync .btn-reject{ border-color:var(--border); background:none; color:var(--muted); }#panel-subsync .btn-reject:hover{ color:var(--text); border-color:var(--muted); }#panel-subsync .btn-edit{ border-color:var(--accent2); background:none; color:var(--accent2); }#panel-subsync .edit-field{ width:100%; background:var(--bg); border:1px solid var(--accent2); color:var(--text); font-family:var(--mono); font-size:14px; padding:8px 10px; border-radius:3px; outline:none; }#panel-subsync .summary-line{ font-family:var(--mono); font-size:13px; display:flex; gap:18px; padding:6px 0; }#panel-subsync .summary-line .s-acc{ color:var(--add); }#panel-subsync .summary-line .s-rej{ color:var(--muted); }#panel-subsync .summary-line .s-left{ color:var(--accent2); }#panel-subsync .done-msg{ font-family:var(--mono); font-size:13px; color:var(--add); text-align:center; padding:10px; }#panel-subsync footer{ padding:16px 40px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--muted); }#panel-subsync .footer-disclaimer{ color:var(--sub); opacity:0.85; }
+
+
+
+  
+
+  /* ═══════════ SHARED TYPE + FRAME ═══════════
+     Each tool is written as its own page, so left alone they drift apart. These
+     rules load after every tool's own CSS and pin the shared furniture — header,
+     panel titles, labels, buttons, drop zones — to one scale. Tool-specific
+     styling (tables, waveforms, diff colours) is untouched. */
+
+  .tool-panel { font-family:var(--mono); color:var(--text); }
+
+  /* header bar */
+  .tool-panel header { padding:20px 32px !important; border-bottom:1px solid var(--border) !important;
+    display:flex !important; align-items:baseline !important; gap:16px !important;
+    justify-content:flex-start !important; background:var(--surface) !important; }
+  .tool-panel header h1 { font-family:var(--mono) !important; font-size:15px !important;
+    font-weight:500 !important; letter-spacing:.02em !important; text-transform:uppercase !important;
+    color:var(--accent) !important; text-shadow:var(--glow) !important; }
+  .tool-panel header span { font-family:var(--mono) !important; font-size:10px !important;
+    font-weight:400 !important; color:var(--muted) !important; letter-spacing:.1em !important;
+    text-transform:uppercase !important; }
+
+  /* content column */
+  .tool-panel main { flex:1; display:flex; flex-direction:column;
+    justify-content:flex-start !important; padding:32px !important; gap:18px !important; }
+
+  /* section headings */
+  .tool-panel .panel-title, .tool-panel .panel-label, .tool-panel .setting-label,
+  .tool-panel .sect-label, .tool-panel .col-head {
+    font-family:var(--mono) !important; font-size:10px !important; font-weight:400 !important;
+    text-transform:uppercase !important; letter-spacing:.12em !important; }
+
+  /* small labels above fields / table heads */
+  .tool-panel .diff-lbl, .tool-panel .drop-label, .tool-panel .rule-hd,
+  .tool-panel .rules-hd, .tool-panel .res-hd, .tool-panel .fn-hd, .tool-panel .issues-hd {
+    font-family:var(--mono) !important; font-size:9px !important; font-weight:400 !important;
+    text-transform:uppercase !important; letter-spacing:.1em !important; color:var(--muted) !important; }
+
+  /* body / helper text */
+  .tool-panel .hint, .tool-panel .dz-sub, .tool-panel .drop-sub, .tool-panel .drop-hint,
+  .tool-panel .drop-formats, .tool-panel .col-hint, .tool-panel .dz .s {
+    font-family:var(--mono) !important; font-size:11px !important; font-weight:400 !important; }
+
+  /* drop zones — the biggest offender, five different treatments before this */
+  .tool-panel .dz-title, .tool-panel .drop-title, .tool-panel .dz .t {
+    font-family:var(--mono) !important; font-size:15px !important; font-weight:500 !important;
+    letter-spacing:.01em !important; color:var(--text) !important; }
+
+  /* controls */
+  .tool-panel button:not(.nav-item) { font-family:var(--mono) !important; font-size:12px !important;
+    font-weight:500 !important; letter-spacing:.03em !important; text-transform:none !important; }
+  .tool-panel input, .tool-panel select, .tool-panel textarea {
+    font-family:var(--mono) !important; font-size:12px !important; font-weight:400 !important; }
 
 </style>
 </head>
@@ -825,6 +819,7 @@ footer{ border-top: 1px solid var(--border); font-family: var(--mono); font-size
   <div class="panel hidden" id="p-report">
     <div class="panel-title"><span class="n">04</span> Report</div>
     <div class="summary" id="summary"></div>
+    <div class="issues hidden" id="issues"></div>
     <div class="filters">
       <button class="btn btn-ghost btn-sm on" id="f-all">All</button>
       <button class="btn btn-ghost btn-sm" id="f-fail">Failures only</button>
@@ -3483,6 +3478,7 @@ function runCheck(){
     body.appendChild(row);
   });
   var kindLabel = assetInfo && assetInfo._type==="static" ? "static asset" : "video/audio";
+  renderIssues();
   document.getElementById("summary").innerHTML =
     '<span class="s-pass">'+pass+' pass</span><span class="s-flag">'+flag+' flag</span>'+
     '<span class="s-fail">'+fail+' fail</span>'+
@@ -3589,15 +3585,26 @@ function checkFilename(fileName, pattern, info){
     if(pt.toLowerCase()!==sg.toLowerCase())
       probs.push("part "+n+" should be \u201C"+pt+"\u201D, got \u201C"+sg+"\u201D");
   }
-  if(lies.length) return {verdict:"fail",got:base,note:"name doesn't match the file \u2014 "+lies.join("; ")};
-  if(probs.length) return {verdict:"fail",got:base,note:probs.slice(0,2).join("; ")+(probs.length>2?" (+"+(probs.length-2)+" more)":"")};
+  if(lies.length) return {verdict:"fail",got:base,note:"name doesn't match the file",
+                          problems:lies, kind:"mismatch"};
+  if(probs.length){
+    // If most parts are wrong this isn't a naming slip, it's the wrong file.
+    // Different problem, different action — so say that instead of listing
+    // every correction.
+    var wrongFile = probs.length > Math.max(2, Math.floor(pats.length/2));
+    return {verdict:"fail", got:base,
+            note: wrongFile
+              ? "doesn't match the convention at all ("+probs.length+" of "+pats.length+" parts) \u2014 likely the wrong file"
+              : probs.length+" of "+pats.length+" parts wrong",
+            problems:probs, kind: wrongFile ? "wrongfile" : "naming"};
+  }
   return {verdict:"pass",got:base};
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BATCH SHELL
 // ─────────────────────────────────────────────────────────────────────────────
-var rules=[], specText="", specMode="upload", queue=[], results=[], filterFail=false;
+var rules=[], specText="", specMode="upload", queue=[], results=[], filterFail=false, filterIssue=null;
 if(FIELDS.indexOf("Filename")<0) FIELDS.unshift("Filename");
 if(OPS.indexOf("matches")<0) OPS.push("matches");
 if(FIELDS.indexOf("True peak")<0) FIELDS.push("True peak");
@@ -4002,7 +4009,8 @@ $("run-btn").addEventListener("click",async function(){
         var res = (r.field==="Filename")
           ? checkFilename(f.name, r.value, info)
           : compare(r,info[r.field],info);
-        checks.push({field:r.field,need:r.op+" "+r.value,got:res.got,verdict:res.verdict,note:res.note});
+        checks.push({field:r.field,need:r.op+" "+r.value,got:res.got,verdict:res.verdict,
+                     note:res.note,problems:res.problems||null,kind:res.kind||null});
         if(res.verdict==="pass")nPass++; else if(res.verdict==="fail")nFail++;
         else if(res.verdict==="flag")nFlag++;
       });
@@ -4022,23 +4030,93 @@ $("run-btn").addEventListener("click",async function(){
 });
 
 // ── results ──
+// Label a failed check for grouping. One filename rule can mean two very
+// different things, so it's split by kind.
+function issueLabel(c){
+  if(c.field!=="Filename") return c.field;
+  if(c.kind==="wrongfile") return "Wrong asset \u2014 name doesn't match";
+  if(c.kind==="mismatch")  return "Name contradicts the file";
+  return "Naming convention";
+}
+function buildIssues(){
+  var map={};
+  results.forEach(function(r,i){
+    if(r.verdict==="err"){ (map["Couldn't be read"]=map["Couldn't be read"]||[]).push(i); return; }
+    r.checks.forEach(function(c){
+      if(c.verdict!=="fail") return;
+      var l=issueLabel(c);
+      (map[l]=map[l]||[]).push(i);
+    });
+  });
+  return Object.keys(map).map(function(k){ return {label:k, files:map[k]}; })
+           .sort(function(a,b){ return b.files.length-a.files.length; });
+}
+function renderIssues(){
+  var box=$("issues"); if(!box) return;
+  var groups=buildIssues();
+  if(!groups.length){ box.innerHTML=''; box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  var total=results.length;
+  box.innerHTML='<div class="issues-hd">What needs attention</div>'+
+    groups.map(function(g,i){
+      var pct=Math.round(g.files.length/total*100);
+      var wide=g.files.length>=Math.max(3,total*0.5);
+      return '<div class="issue'+(filterIssue===g.label?' on':'')+'" data-label="'+esc(g.label)+'">'+
+             '<span class="n">'+g.files.length+'</span>'+
+             '<span class="l">'+esc(g.label)+'</span>'+
+             (wide?'<span class="hintwide">affects '+pct+'% \u2014 check the spec is right</span>':'')+
+             '</div>';
+    }).join("");
+  box.querySelectorAll('.issue').forEach(function(el){
+    el.addEventListener('click',function(){
+      var l=el.getAttribute('data-label');
+      filterIssue = (filterIssue===l) ? null : l;
+      filterFail = false;
+      $("f-all").classList.remove('on'); $("f-fail").classList.remove('on');
+      renderIssues(); renderResults();
+    });
+  });
+}
+
 function renderResults(){
   var pass=results.filter(function(r){return r.verdict==="pass";}).length;
   var fail=results.filter(function(r){return r.verdict==="fail";}).length;
   var err=results.filter(function(r){return r.verdict==="err";}).length;
   var flagged=results.reduce(function(a,r){return a+(r.nFlag||0);},0);
+  renderIssues();
   $("summary").innerHTML='<span class="s-pass">'+pass+' pass</span>'+
     '<span class="s-fail">'+fail+' fail</span>'+
     (err?'<span class="s-flag">'+err+' unreadable</span>':'')+
     (flagged?'<span class="s-flag">'+flagged+' field'+(flagged===1?'':'s')+' unverifiable</span>':'')+
     '<span class="s-tot">'+results.length+' file'+(results.length===1?'':'s')+'</span>';
   var body=$("res-body");
-  var show=filterFail?results.filter(function(r){return r.verdict!=="pass";}):results;
+  var show=results.slice();
+  if(filterIssue){
+    var keep={}; buildIssues().forEach(function(g){ if(g.label===filterIssue) g.files.forEach(function(i){keep[i]=1;}); });
+    show=show.filter(function(r){ return keep[results.indexOf(r)]; });
+  } else if(filterFail){
+    show=show.filter(function(r){ return r.verdict!=="pass"; });
+  }
+  // worst first: unreadable, then failures, then passes
+  var rank={err:0,fail:1,pass:2};
+  show.sort(function(a,b){ return (rank[a.verdict]-rank[b.verdict]) || 0; });
   if(!show.length){ body.innerHTML='<div class="hint" style="padding:16px 13px">Nothing to show.</div>'; return; }
   body.innerHTML=show.map(function(r,i){
     var label=r.verdict==="pass"?"● PASS":r.verdict==="fail"?"✕ FAIL":"▲ ERR";
-    var why=r.error?esc(r.error)
-      :(r.nFail?r.nFail+" mismatch"+(r.nFail===1?"":"es"):"all "+r.nPass+" matched");
+    var why;
+    if(r.error) why=esc(r.error);
+    else if(!r.nFail) why="all "+r.nPass+" matched";
+    else {
+      // count the individual problems, not just the number of failed rules —
+      // one filename rule can find eight separate faults.
+      var probCount=0, fields=[];
+      r.checks.forEach(function(c){
+        if(c.verdict!=="fail") return;
+        fields.push(c.field);
+        probCount += (c.problems&&c.problems.length) ? c.problems.length : 1;
+      });
+      why = probCount+" problem"+(probCount===1?"":"s")+" \u00b7 "+fields.join(", ");
+    }
     return '<div class="res-row '+r.verdict+'" data-k="'+results.indexOf(r)+'">'+
              '<span class="v">'+label+'</span>'+
              '<span class="name">'+esc(r.name)+'</span>'+
@@ -4046,9 +4124,14 @@ function renderResults(){
            '<div class="detail hidden" id="det-'+results.indexOf(r)+'">'+
              (r.checks.length?r.checks.map(function(c){
                var cls=c.verdict==="pass"?"ok":c.verdict==="fail"?"bad":"na";
-               return '<div class="'+cls+'"><span class="f">'+c.field+'</span>'+
+               var row='<div class="'+cls+'"><span class="f">'+c.field+'</span>'+
                       '<span class="need">'+esc(c.need)+'</span>'+
                       '<span class="got">'+esc(c.got)+(c.note?' ('+esc(c.note)+')':'')+'</span></div>';
+               if(c.problems&&c.problems.length){
+                 row+='<div class="probs">'+c.problems.map(function(x){
+                        return '<div>\u2022 '+esc(x)+'</div>'; }).join("")+'</div>';
+               }
+               return row;
              }).join(""):'<div class="hint">'+esc(r.error||"nothing read")+'</div>')+
            '</div>';
   }).join("");
@@ -4059,8 +4142,8 @@ function renderResults(){
     });
   });
 }
-$("f-all").addEventListener("click",function(){ filterFail=false; $("f-all").classList.add("on"); $("f-fail").classList.remove("on"); renderResults(); });
-$("f-fail").addEventListener("click",function(){ filterFail=true; $("f-fail").classList.add("on"); $("f-all").classList.remove("on"); renderResults(); });
+$("f-all").addEventListener("click",function(){ filterIssue=null; renderIssues(); filterFail=false; $("f-all").classList.add("on"); $("f-fail").classList.remove("on"); renderResults(); });
+$("f-fail").addEventListener("click",function(){ filterIssue=null; renderIssues(); filterFail=true; $("f-fail").classList.add("on"); $("f-all").classList.remove("on"); renderResults(); });
 
 $("csv-btn").addEventListener("click",function(){
   var rows=[["File","Result","Field","Required","Detected"]];
