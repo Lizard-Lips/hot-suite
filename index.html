@@ -1504,12 +1504,8 @@ function parseXML(xmlText) {
         const srcTB = (ftc && ftc.tb) || (clipRate && clipRate.tb) || TIMEBASE;
         const srcDF = !!(ftc && ftc.df);
         const tco = ftc ? ftc.frame : 0;
-        // A clip whose own rate differs from its file's timecode rate has been
-        // interpreted or retimed; in/out may not map cleanly onto source TC.
-        const retimed = !!(clipRate && ftc && ftc.tb && clipRate.tb !== ftc.tb);
         const notes = [];
         if (flagged) notes.push('Seq TC unresolvable – verify in Premiere');
-        if (retimed) notes.push('Clip rate differs from source – verify source TC');
 
         rows.push({
           clipId:   clip.getAttribute('id'),
@@ -1525,7 +1521,7 @@ function parseXML(xmlText) {
           duration: seqIn !== null && seqOut !== null
                       ? framesToTC(seqOut - seqIn, TIMEBASE, false)
                       : framesToTC(outF - inF, srcTB, false),
-          flagged:  flagged || retimed,
+          flagged,
           noteText: notes.join(' · '),
         });
       });
