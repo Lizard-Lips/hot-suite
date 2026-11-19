@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loudness Analyser — Lizard Lips</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:#0a0d0a; --surface:#111511; --border:#232a23;
+  --phos:#8fff6a; --accent:#e8ff47; --accent2:#47c8ff;
+  --text:#e8f0e4; --muted:#5f6b5c;
+  --pass:#8fff6a; --fail:#ff6b6b; --warn:#ffcf47;
+  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+  --glow:0 0 6px rgba(232,255,71,.45);
+}
+body { --pass: var(--phos); --fail: #ff6b6b; --warn: #ffcf47; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; display:flex; flex-direction:column; }
+header { padding:24px 40px; border-bottom:1px solid var(--border); display:flex; align-items:baseline; justify-content:space-between; }
+.header-left { display:flex; align-items:baseline; gap:16px; }
+header h1 { font-size:18px; font-weight:800; letter-spacing:-0.02em; color:var(--accent); }
+header span { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:0.08em; }
+main { flex:1; display:flex; flex-direction:column; align-items:center; padding:50px 40px; gap:24px; }
+#dropzone { width:100%; max-width:720px; border:1.5px dashed var(--border); border-radius:4px; padding:56px 40px; text-align:center; cursor:pointer; transition:border-color 0.2s,background 0.2s; position:relative; overflow:hidden; }
+#dropzone::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 50% 0%,rgba(232,255,71,0.04) 0%,transparent 70%); pointer-events:none; }
+#dropzone.drag-over { border-color:var(--accent); background:rgba(232,255,71,0.04); }
+#dropzone.has-file { border-color:var(--accent2); border-style:solid; }
+.drop-icon { width:44px; height:44px; margin:0 auto 18px; color:var(--muted); transition:color 0.2s; }
+#dropzone.drag-over .drop-icon, #dropzone.has-file .drop-icon { color:var(--accent); }
+.drop-title { font-size:19px; font-weight:700; margin-bottom:8px; letter-spacing:-0.02em; }
+.drop-sub { font-family:var(--mono); font-size:11px; color:var(--muted); }
+.drop-formats { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:6px; opacity:0.6; }
+#file-name { display:none; font-family:var(--mono); font-size:13px; color:var(--accent2); margin-top:14px; }
+#dropzone.has-file #file-name { display:block; }
+#dropzone.has-file .drop-title, #dropzone.has-file .drop-sub, #dropzone.has-file .drop-formats { display:none; }
+#file-input { display:none; }
+.panel { width:100%; max-width:720px; display:none; flex-direction:column; gap:12px; }
+.panel.visible { display:flex; }
+.panel-label { font-family:var(--mono); font-size:10px; letter-spacing:0.12em; color:var(--muted); text-transform:uppercase; }
+.standard-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+@media(min-width:600px) {
+.standard-grid { grid-template-columns:repeat(4,1fr); }
+ 
+}
+.std-btn { padding:10px 8px; border:1px solid var(--border); border-radius:3px; background:var(--surface); cursor:pointer; text-align:center; transition:all 0.15s; }
+.std-btn:hover { border-color:var(--accent); }
+.std-btn.active { border-color:var(--accent); background:rgba(232,255,71,0.06); }
+.std-name { font-size:12px; font-weight:700; color:var(--text); font-family:var(--sans); }
+.std-lufs { font-family:var(--mono); font-size:11px; color:var(--accent); margin-top:3px; }
+.std-sub { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+#analyse-btn { display:none; width:100%; max-width:720px; padding:15px; background:var(--accent); color:var(--bg); font-family:var(--sans); font-size:15px; font-weight:800; border:none; border-radius:4px; cursor:pointer; transition:opacity 0.15s,transform 0.1s; }
+#analyse-btn.visible { display:block; }
+#analyse-btn:hover { opacity:0.88; }
+#analyse-btn:active { transform:scale(0.99); }
+#analyse-btn:disabled { opacity:0.4; cursor:not-allowed; }
+#progress-wrap { display:none; width:100%; max-width:720px; flex-direction:column; gap:10px; align-items:center; }
+#progress-wrap.visible { display:flex; }
+.progress-bar-track { width:100%; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+.progress-bar-fill { height:100%; background:var(--accent); width:0%; transition:width 0.15s; border-radius:2px; }
+#progress-label { font-family:var(--mono); font-size:11px; color:var(--muted); }
+#results { display:none; width:100%; max-width:720px; flex-direction:column; gap:20px; }
+#results.visible { display:flex; }
+.section-title { font-family:var(--mono); font-size:10px; letter-spacing:0.12em; color:var(--muted); text-transform:uppercase; }
+.verdict { padding:20px 24px; border-radius:4px; display:flex; align-items:center; justify-content:space-between; border:1px solid; gap:16px; }
+.verdict.pass { background:rgba(74,222,128,0.08); border-color:rgba(74,222,128,0.3); }
+.verdict.fail { background:rgba(248,113,113,0.08); border-color:rgba(248,113,113,0.3); }
+.verdict-left { display:flex; align-items:center; gap:14px; }
+.verdict-icon { font-size:28px; }
+.verdict-title { font-size:18px; font-weight:800; letter-spacing:-0.02em; }
+.verdict-sub { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:3px; }
+.verdict.pass .verdict-title { color:var(--pass); }
+.verdict.fail .verdict-title { color:var(--fail); }
+.verdict-standard { font-family:var(--mono); font-size:11px; text-align:right; color:var(--muted); flex-shrink:0; }
+.verdict-standard strong { display:block; font-size:13px; color:var(--text); }
+.metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+@media(min-width:500px) {
+.metrics-grid { grid-template-columns:repeat(4,1fr); }
+ 
+}
+.metric { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:16px; text-align:center; }
+.metric.highlight { border-color:var(--accent2); }
+.metric-val { font-size:22px; font-weight:800; letter-spacing:-0.03em; }
+.metric-unit { font-size:12px; font-weight:400; color:var(--muted); margin-left:2px; }
+.metric-label { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-top:6px; }
+.metric-sub { font-family:var(--mono); font-size:10px; margin-top:4px; }
+.pass-text { color:var(--pass); }
+.fail-text { color:var(--fail); }
+.warn-text { color:var(--warn); }
+.ok-text { color:var(--accent2); }
+.info-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+@media(min-width:500px) {
+.info-grid { grid-template-columns:repeat(3,1fr); }
+ 
+}
+.info-cell { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:14px; }
+.info-val { font-family:var(--mono); font-size:14px; font-weight:500; color:var(--accent2); }
+.info-label { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-top:4px; }
+.qc-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+@media(min-width:500px) {
+.qc-grid { grid-template-columns:repeat(3,1fr); }
+ 
+}
+.qc-item { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:14px; display:flex; align-items:flex-start; gap:10px; }
+.qc-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+.qc-dot.pass { background:var(--pass); }
+.qc-dot.fail { background:var(--fail); }
+.qc-dot.warn { background:var(--warn); }
+.qc-dot.info { background:var(--accent2); }
+.qc-name { font-size:12px; font-weight:700; }
+.qc-value { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:2px; }
+#waveform-canvas { width:100%; height:80px; border-radius:4px; background:var(--surface); border:1px solid var(--border); display:block; }
+#waveform-legend { gap:14px; flex-wrap:wrap; padding:6px 2px 0; }
+.wl-item { display:flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--muted); }
+.wl-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+.wl-diamond { width:0; height:0; border:5px solid transparent; border-bottom-color:#e8ff47; position:relative; top:-5px; flex-shrink:0; }
+.wl-diamond::after { content:""; width:0; height:0; border:5px solid transparent; border-top-color:#e8ff47; position:absolute; top:5px; left:-5px; }
+.table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+.standards-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+.standards-table th { text-align:left; padding:10px 12px; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); font-weight:500; }
+.standards-table td { padding:10px 12px; border-bottom:1px solid rgba(36,36,40,0.6); vertical-align:middle; }
+.standards-table tr:last-child td { border-bottom:none; }
+.standards-table tr.current-std td { background:rgba(232,255,71,0.025); }
+.pill { display:inline-block; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; letter-spacing:0.04em; }
+.pill.pass { background:rgba(74,222,128,0.15); color:var(--pass); }
+.pill.fail { background:rgba(248,113,113,0.15); color:var(--fail); }
+.pill.warn { background:rgba(251,146,60,0.15);  color:var(--warn); }
+.export-row { display:flex; gap:10px; }
+.export-btn { flex:1; padding:12px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:var(--sans); font-size:13px; font-weight:700; border-radius:4px; cursor:pointer; transition:all 0.15s; }
+.export-btn:hover { border-color:var(--accent); color:var(--accent); }
+footer { border-top:1px solid var(--border); font-family:var(--mono); font-size:11px; color:var(--muted); }
+.footer-disclaimer { padding:11px 40px; background:rgba(255,148,71,0.06); border-bottom:1px solid rgba(255,148,71,0.15); color:var(--warn); text-align:center; letter-spacing:0.02em; }
+.footer-meta { padding:14px 40px; display:flex; justify-content:space-between; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <h1>LOUDNESS ANALYSER</h1>
+    <span>Broadcast QC Tool / v2.1</span>
+  </div>
+</header>
+<main>
+  <div id="dropzone">
+    <svg class="drop-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M24 6v24M24 6l-7 7M24 6l7 7"/>
+      <path d="M8 34v4a2 2 0 002 2h28a2 2 0 002-2v-4"/>
+      <rect x="10" y="20" width="8" height="10" rx="1" fill="currentColor" opacity="0.3"/>
+      <rect x="20" y="16" width="8" height="14" rx="1" fill="currentColor" opacity="0.5"/>
+      <rect x="30" y="22" width="8" height="8"  rx="1" fill="currentColor" opacity="0.3"/>
+    </svg>
+    <div class="drop-title">Drop your audio or video file here</div>
+    <div class="drop-sub">or click to browse</div>
+    <div class="drop-formats">.wav · .mp3 · .aiff · .flac · .m4a · .mp4 · .mov · .aac &nbsp;·&nbsp; <span style="color:var(--fail);opacity:0.7">MXF not supported</span></div>
+    <div id="file-name"></div>
+    <input type="file" id="file-input" accept="audio/*,video/*,.wav,.mp3,.aiff,.flac,.m4a,.mp4,.mov,.aac">
+  </div>
+
+  <div class="panel" id="standard-panel">
+    <div class="panel-label">Target broadcast standard</div>
+    <div class="standard-grid" id="standard-grid"></div>
+  </div>
+
+  <button id="analyse-btn">Analyse File</button>
+
+  <div id="progress-wrap">
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div id="progress-label">Reading file…</div>
+  </div>
+
+  <div id="results">
+    <div class="section-title">Verdict</div>
+    <div class="verdict" id="verdict">
+      <div class="verdict-left">
+        <div class="verdict-icon" id="verdict-icon"></div>
+        <div>
+          <div class="verdict-title" id="verdict-title"></div>
+          <div class="verdict-sub"   id="verdict-sub"></div>
+        </div>
+      </div>
+      <div class="verdict-standard" id="verdict-standard"></div>
+    </div>
+
+    <div class="section-title">Loudness Measurements</div>
+    <div class="metrics-grid">
+      <div class="metric highlight">
+        <div><span class="metric-val" id="m-lufs">—</span><span class="metric-unit">LUFS</span></div>
+        <div class="metric-label">Integrated</div>
+        <div class="metric-sub" id="m-lufs-status"></div>
+      </div>
+      <div class="metric">
+        <div><span class="metric-val" id="m-tp">—</span><span class="metric-unit">dBTP</span></div>
+        <div class="metric-label">True Peak</div>
+        <div class="metric-sub" id="m-tp-status"></div>
+      </div>
+      <div class="metric">
+        <div><span class="metric-val" id="m-lra">—</span><span class="metric-unit">LU</span></div>
+        <div class="metric-label">Loudness Range</div>
+        <div class="metric-sub" id="m-lra-status"></div>
+      </div>
+      <div class="metric">
+        <div><span class="metric-val" id="m-ppm">—</span><span class="metric-unit">PPM</span></div>
+        <div class="metric-label">Peak Programme</div>
+        <div class="metric-sub" id="m-ppm-status"></div>
+      </div>
+      <div class="metric">
+        <div><span class="metric-val" id="m-sp">—</span><span class="metric-unit">dBFS</span></div>
+        <div class="metric-label">Sample Peak</div>
+        <div class="metric-sub"></div>
+      </div>
+      <div class="metric">
+        <div><span class="metric-val" id="m-dr">—</span><span class="metric-unit">dB</span></div>
+        <div class="metric-label">Dynamic Range</div>
+        <div class="metric-sub ok-text">Crest factor</div>
+      </div>
+      <div class="metric">
+        <div><span class="metric-val" id="m-phase">—</span></div>
+        <div class="metric-label">Phase Correlation</div>
+        <div class="metric-sub" id="m-phase-status"></div>
+      </div>
+      <div class="metric">
+        <div><span class="metric-val" id="m-stmax">—</span><span class="metric-unit">LUFS</span></div>
+        <div class="metric-label">Short-Term Max</div>
+        <div class="metric-sub ok-text">3s window</div>
+      </div>
+    </div>
+
+    <div class="section-title">File &amp; Format Information</div>
+    <div class="info-grid">
+      <div class="info-cell"><div class="info-val" id="i-duration">—</div><div class="info-label">Duration</div></div>
+      <div class="info-cell"><div class="info-val" id="i-samplerate">—</div><div class="info-label">Sample Rate</div></div>
+      <div class="info-cell"><div class="info-val" id="i-channels">—</div><div class="info-label">Channels</div></div>
+      <div class="info-cell"><div class="info-val" id="i-framerate">—</div><div class="info-label">Frame Rate</div></div>
+      <div class="info-cell"><div class="info-val" id="i-format">—</div><div class="info-label">Format</div></div>
+      <div class="info-cell"><div class="info-val" id="i-filesize">—</div><div class="info-label">File Size</div></div>
+      <div class="info-cell"><div class="info-val" id="i-bitdepth">—</div><div class="info-label">Bit Depth</div></div>
+      <div class="info-cell"><div class="info-val" id="i-dropframe">—</div><div class="info-label">Drop Frame</div></div>
+      <div class="info-cell"><div class="info-val" id="i-videotype">—</div><div class="info-label">Media Type</div></div>
+    </div>
+
+    <div class="section-title">Broadcast QC Flags</div>
+    <div class="qc-grid" id="qc-grid"></div>
+
+    <div class="section-title">Waveform Overview</div>
+    <canvas id="waveform-canvas"></canvas>
+    <div id="waveform-legend" style="display:none"></div>
+
+    <div class="section-title">All Standards Comparison</div>
+    <div class="table-wrap">
+      <table class="standards-table">
+        <thead>
+          <tr><th>Standard</th><th>Target LUFS</th><th>True Peak</th><th>Your LUFS</th><th>Your TP</th><th>Result</th></tr>
+        </thead>
+        <tbody id="standards-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="export-row">
+      <button class="export-btn" id="export-csv">&#8595; Download CSV Report</button>
+      <button class="export-btn" id="export-pdf">&#8595; Download PDF Report</button>
+    </div>
+  </div>
+</main>
+<footer>
+  <div class="footer-disclaimer">
+    &#9888; A close approximation, first audio track only. Verify against your DAW or meter before final delivery.
+  </div>
+  <div class="footer-meta">
+    <span>Browser-based analysis — no files leave your machine</span>
+    <span>A Lizard Lips Tool</span>
+  </div>
+</footer>
+<script>
+"use strict";
+
+// ── Standards ────────────────────────────────────────────────────────────────
+var STANDARDS = [
+  { id:"ebu",     name:"EBU R128",    platform:"EU TV Broadcast", lufs:-23, tolerance:1, tp:-1,  lraMin:5,  lraMax:10, ppmMax:6  },
+  { id:"atsc",    name:"ATSC A/85",   platform:"US TV Broadcast", lufs:-24, tolerance:2, tp:-2,  lraMin:4,  lraMax:7,  ppmMax:4  },
+  { id:"netflix", name:"Netflix",     platform:"VOD",             lufs:-27, tolerance:1, tp:-2,  lraMin:5,  lraMax:10, ppmMax:2  },
+  { id:"youtube", name:"YouTube",     platform:"Online Video",    lufs:-14, tolerance:1, tp:-1,  lraMin:6,  lraMax:8,  ppmMax:8  },
+  { id:"bbc",     name:"BBC R128",    platform:"BBC Broadcast",   lufs:-23, tolerance:1, tp:-1,  lraMin:5,  lraMax:15, ppmMax:6  },
+  { id:"smpte",   name:"SMPTE ST2095",platform:"Cinema/SMPTE",   lufs:-24, tolerance:2, tp:-2,  lraMin:10, lraMax:20, ppmMax:4  },
+  { id:"podcast", name:"Podcast",     platform:"Podcast / Radio", lufs:-16, tolerance:1, tp:-1,  lraMin:6,  lraMax:10, ppmMax:8  },
+  { id:"spotify", name:"Spotify",     platform:"Music Streaming", lufs:-14, tolerance:1, tp:-1,  lraMin:7,  lraMax:10, ppmMax:8  }
+];
+
+var selectedStd = STANDARDS[0];
+var lastResults = null;
+var lastFile    = null;
+
+// ── Build standard buttons ───────────────────────────────────────────────────
+var stdGrid = document.getElementById("standard-grid");
+STANDARDS.forEach(function(std) {
+  var btn = document.createElement("div");
+  btn.className = "std-btn" + (std.id === selectedStd.id ? " active" : "");
+  btn.innerHTML = "<div class='std-name'>" + std.name + "</div>" +
+                  "<div class='std-lufs'>" + std.lufs + " LUFS</div>" +
+                  "<div class='std-sub'>"  + std.platform + "</div>";
+  btn.addEventListener("click", function() {
+    selectedStd = std;
+    stdGrid.querySelectorAll(".std-btn").forEach(function(b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    if (lastResults) renderResults(lastResults, lastFile);
+  });
+  stdGrid.appendChild(btn);
+});
+
+// @@ENGINE:audio BEGIN — generated from audio_core.js by sync_engine.py. Do not edit here.
+// ═══════════════════════════════════════════════════════════════════════════
+// AUDIO CORE — loudness measurement, and getting audio out of files.
+// Shared by Delivery QC, the Loudness Analyser and the monday app. Edit it here;
+// sync_engine.py copies it into each.
+//
+// Loudness follows ITU-R BS.1770-4 and EBU R128: K-weighting, gated 400ms blocks
+// for integrated loudness, 3s short-term blocks for loudness range (EBU Tech
+// 3342), and 4x oversampled true peak. The meter takes audio in pieces, so a
+// long master is measured as it streams in rather than held in memory whole.
+//
+// Uncompressed audio is read straight out of the file: QuickTime (ProRes
+// masters, typically), WAV, BWF, RF64 and AIFF. No decoding, no resampling, and
+// only the audio bytes are touched, so a multi-gigabyte master costs what its
+// audio costs. Compressed audio (AAC, MP3) is decoded by the browser.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// K-weighting filter coefficients for a sample rate (libebur128's designs).
+function kWeighting(sr){
+  var f0=1681.974450955533, G=3.999843853973347, Q=0.7071752369554196, K=Math.tan(Math.PI*f0/sr);
+  var Vh=Math.pow(10,G/20), Vb=Math.pow(Vh,0.4996667741545416), a0=1+K/Q+K*K;
+  var s={b0:(Vh+Vb*K/Q+K*K)/a0, b1:2*(K*K-Vh)/a0, b2:(Vh-Vb*K/Q+K*K)/a0, a1:2*(K*K-1)/a0, a2:(1-K/Q+K*K)/a0};
+  f0=38.13547087602444; Q=0.5003270373238773; K=Math.tan(Math.PI*f0/sr);
+  var d=1+K/Q+K*K;
+  var h={b0:1, b1:-2, b2:1, a1:2*(K*K-1)/d, a2:(1-K/Q+K*K)/d};
+  return {s:s, h:h};
+}
+
+// 4x interpolation filter for true peak: windowed sinc, 48 taps as 4 phases of 12.
+var TP_PHASES=(function(){
+  var L=48, mid=(L-1)/2, h=[], p, k, n;
+  for(n=0;n<L;n++){
+    var t=(n-mid)/4, s=t===0?1:Math.sin(Math.PI*t)/(Math.PI*t);
+    h.push(s*(0.5-0.5*Math.cos(2*Math.PI*(n+0.5)/L)));
+  }
+  var ph=[];
+  for(p=0;p<4;p++){
+    var c=new Float64Array(12), sum=0;
+    for(k=0;k<12;k++){ c[k]=h[p+4*k]; sum+=c[k]; }
+    for(k=0;k<12;k++) c[k]/=sum;
+    ph.push(c);
+  }
+  return ph;
+})();
+
+function LoudnessMeter(sampleRate){
+  this.sr=sampleRate;
+  this.subLen=Math.round(sampleRate/10);       // 100ms sub-blocks
+  this.pow=[];                                  // channel-weighted mean square per sub-block
+  this.tp=0; this.sp=0; this.frames=0;
+  this.k=kWeighting(sampleRate);
+}
+LoudnessMeter.prototype.channel=function(gain){ return new MeterChannel(this, gain); };
+
+function MeterChannel(m, gain){
+  this.m=m; this.g=gain;
+  this.s1=0; this.s2=0; this.s3=0; this.s4=0;  // shelf state
+  this.h1=0; this.h2=0; this.h3=0; this.h4=0;  // high-pass state
+  this.acc=0; this.n=0; this.idx=0; this.count=0;
+  this.hist=new Float64Array(12); this.hp=0;   // last 12 input samples, for true peak
+}
+MeterChannel.prototype.push=function(x){
+  var m=this.m, s=m.k.s, h=m.k.h, sub=m.subLen, g=this.g, pow=m.pow, ph=TP_PHASES;
+  var s1=this.s1,s2=this.s2,s3=this.s3,s4=this.s4,h1=this.h1,h2=this.h2,h3=this.h3,h4=this.h4;
+  var acc=this.acc, n=this.n, idx=this.idx, hist=this.hist, hp=this.hp;
+  var tp=m.tp, sp=m.sp;
+  for(var i=0;i<x.length;i++){
+    var v=x[i];
+    // K-weighting: high shelf, then high pass
+    var y=s.b0*v+s.b1*s1+s.b2*s2-s.a1*s3-s.a2*s4; s2=s1; s1=v; s4=s3; s3=y;
+    var z=h.b0*y+h.b1*h1+h.b2*h2-h.a1*h3-h.a2*h4; h2=h1; h1=y; h4=h3; h3=z;
+    acc+=z*z;
+    if(++n===sub){ pow[idx]=(pow[idx]||0)+g*acc/sub; idx++; acc=0; n=0; }
+    // peaks
+    hist[hp]=v; hp=(hp+1)%12;
+    var a=v<0?-v:v;
+    if(a>sp) sp=a;
+    if(a>=tp*0.5){               // only samples near the running peak can hide a higher one
+      for(var p=0;p<4;p++){
+        var c=ph[p], o=0;
+        for(var k=0;k<12;k++) o+=c[k]*hist[(hp-1-k+24)%12];
+        if(o<0) o=-o;
+        if(o>tp) tp=o;
+      }
+      if(a>tp) tp=a;
+    }
+  }
+  this.s1=s1;this.s2=s2;this.s3=s3;this.s4=s4;this.h1=h1;this.h2=h2;this.h3=h3;this.h4=h4;
+  this.acc=acc; this.n=n; this.idx=idx; this.hp=hp; this.count+=x.length;
+  m.tp=tp; m.sp=sp; if(this.count>m.frames) m.frames=this.count;
+};
+
+LoudnessMeter.prototype.result=function(){
+  var pow=this.pow, n=pow.length, i;
+  for(i=0;i<n;i++) if(pow[i]===undefined) pow[i]=0;
+  function lufs(p){ return -0.691+10*Math.log10(p); }
+  function mean(a){ var t=0; for(var j=0;j<a.length;j++) t+=a[j]; return a.length?t/a.length:0; }
+  // integrated: 400ms blocks every 100ms, absolute gate -70, relative gate -10
+  var blocks=[], run=0;
+  for(i=0;i<n;i++){ run+=pow[i]; if(i>=4) run-=pow[i-4]; if(i>=3) blocks.push(run/4); }
+  var abs=blocks.filter(function(p){ return lufs(p)>-70; });
+  var integrated=-Infinity;
+  if(abs.length){
+    var rel=lufs(mean(abs))-10;
+    var gated=abs.filter(function(p){ return lufs(p)>rel; });
+    if(gated.length) integrated=lufs(mean(gated));
+  }
+  // short-term: 3s blocks every 100ms; range per EBU Tech 3342
+  var st=[]; run=0;
+  for(i=0;i<n;i++){ run+=pow[i]; if(i>=30) run-=pow[i-30]; if(i>=29) st.push(run/30); }
+  var stMax=-Infinity; st.forEach(function(p){ var l=lufs(p); if(l>stMax) stMax=l; });
+  var lra=0, sa=st.filter(function(p){ return lufs(p)>-70; });
+  if(sa.length){
+    var relS=lufs(mean(sa))-20;
+    var sg=sa.filter(function(p){ return lufs(p)>relS; }).map(lufs).sort(function(a,b){ return a-b; });
+    if(sg.length>1) lra=sg[Math.round((sg.length-1)*0.95)]-sg[Math.round((sg.length-1)*0.10)];
+  }
+  return { integrated:integrated, lra:lra, stMax:stMax,
+           truePeak:20*Math.log10(this.tp||1e-10), samplePeak:20*Math.log10(this.sp||1e-10),
+           duration:this.frames/this.sr };
+};
+
+// Which channels make up the programme, and how much each counts (BS.1770).
+// 5.1 is measured as 5.1. Any other layout wider than stereo — an 8-channel
+// broadcast master with stems after the mix, say — is measured as its first
+// two channels, the stereo mix, and says so.
+function programmeChannels(count){
+  if(count<=2) return { use: count===1?[0]:[0,1], gains: count===1?[1]:[1,1], note:null };
+  if(count===6) return { use:[0,1,2,4,5], gains:[1,1,1,1.41,1.41], note:"5.1, LFE excluded" };
+  return { use:[0,1], gains:[1,1], note:"channels 1\u20132 measured as the stereo mix" };
+}
+
+// ── QuickTime / MP4 audio tracks ──
+function fourcc(dv,o){ return String.fromCharCode(dv.getUint8(o),dv.getUint8(o+1),dv.getUint8(o+2),dv.getUint8(o+3)); }
+function boxesIn(dv,start,end){
+  var out=[], o=start;
+  while(o+8<=end){
+    var size=dv.getUint32(o), type=fourcc(dv,o+4), hdr=8;
+    if(size===1){ size=dv.getUint32(o+8)*4294967296+dv.getUint32(o+12); hdr=16; }
+    else if(size===0) size=end-o;
+    if(size<hdr||o+size>end) break;
+    out.push({type:type, body:o+hdr, end:o+size});
+    o+=size;
+  }
+  return out;
+}
+function boxPath(dv,box,path){
+  for(var i=0;i<path.length && box;i++){
+    var kids=boxesIn(dv,box.body,box.end), next=null;
+    for(var j=0;j<kids.length;j++) if(kids[j].type===path[i]){ next=kids[j]; break; }
+    box=next;
+  }
+  return box;
+}
+async function bytesAt(file,off,len){ return new Uint8Array(await file.slice(off,off+len).arrayBuffer()); }
+
+// The uncompressed audio tracks in a QuickTime-family file, with where every
+// chunk of audio sits. Returns [] when there are none (AAC in an MP4, say).
+async function pcmTracks(file){
+  var off=0, moov=null, guard=0;
+  while(off+8<=file.size && guard++<100000){
+    var hb=await bytesAt(file,off,16), hv=new DataView(hb.buffer);
+    if(hb.length<8) break;
+    var size=hv.getUint32(0), type=fourcc(hv,4);
+    if(size===1) size=hv.getUint32(8)*4294967296+hv.getUint32(12); else if(size===0) size=file.size-off;
+    if(size<8) break;
+    if(type==="moov"){ moov={off:off,size:size}; break; }
+    off+=size;
+  }
+  if(!moov || moov.size>512*1024*1024) return [];
+  var mb=await bytesAt(file,moov.off,moov.size), dv=new DataView(mb.buffer);
+  var top={body:8, end:mb.length}, tracks=[];
+  boxesIn(dv,top.body,top.end).filter(function(b){ return b.type==="trak"; }).forEach(function(trak){
+    var mdia=boxPath(dv,trak,["mdia"]); if(!mdia) return;
+    var hdlr=boxPath(dv,mdia,["hdlr"]); if(!hdlr || fourcc(dv,hdlr.body+8)!=="soun") return;
+    var stbl=boxPath(dv,mdia,["minf","stbl"]); if(!stbl) return;
+    var stsd=boxPath(dv,stbl,["stsd"]); if(!stsd) return;
+    var E=stsd.body+8, fmt=fourcc(dv,E+4), ver=dv.getUint16(E+16);
+    var t={format:fmt};
+    if(ver===2){
+      t.rate=dv.getFloat64(E+40); t.channels=dv.getUint32(E+48); t.bits=dv.getUint32(E+56);
+      var flags=dv.getUint32(E+60);
+      t.float=!!(flags&1); t.little=!(flags&2); t.signed=!!(flags&4);
+      if(fmt!=="lpcm") t.unsupported=true;
+    } else {
+      t.channels=dv.getUint16(E+24); t.bits=dv.getUint16(E+26); t.rate=dv.getUint32(E+32)/65536;
+      t.little=(fmt==="sowt"); t.signed=(fmt!=="raw "); t.float=(fmt==="fl32"||fmt==="fl64");
+      if(fmt==="in24") t.bits=24; if(fmt==="in32"||fmt==="fl32") t.bits=32; if(fmt==="fl64") t.bits=64;
+      if(["sowt","twos","in24","in32","fl32","fl64","raw ","NONE"].indexOf(fmt)<0) t.unsupported=true;
+      // 24/32-bit and float are big-endian unless an 'enda' atom says otherwise
+      if(/in24|in32|fl32|fl64/.test(fmt)){
+        for(var q=E+36;q<Math.min(stsd.end-6,E+256);q++)
+          if(dv.getUint8(q)===101&&dv.getUint8(q+1)===110&&dv.getUint8(q+2)===100&&dv.getUint8(q+3)===97){ t.little=dv.getUint16(q+4)===1; break; }
+      }
+    }
+    if(t.unsupported || !t.channels || !t.rate || [8,16,24,32,64].indexOf(t.bits)<0) return;
+    t.bytesPerFrame=t.channels*t.bits/8;
+    // chunk table
+    var stsc=boxPath(dv,stbl,["stsc"]), stco=boxPath(dv,stbl,["stco"]), co64=boxPath(dv,stbl,["co64"]);
+    if(!stsc || !(stco||co64)) return;
+    var offs=[], cb=stco||co64, cn=dv.getUint32(cb.body+4);
+    for(var i=0;i<cn;i++) offs.push(stco ? dv.getUint32(cb.body+8+i*4)
+                                          : dv.getUint32(cb.body+8+i*8)*4294967296+dv.getUint32(cb.body+12+i*8));
+    var sn=dv.getUint32(stsc.body+4), runs=[];
+    for(i=0;i<sn;i++) runs.push([dv.getUint32(stsc.body+8+i*12), dv.getUint32(stsc.body+12+i*12)]);
+    t.chunks=[]; t.frames=0;
+    for(i=0;i<cn;i++){
+      var per=0;
+      for(var r=0;r<runs.length;r++) if(runs[r][0]<=i+1) per=runs[r][1];
+      t.chunks.push([offs[i], per]); t.frames+=per;
+    }
+    t.duration=t.frames/t.rate;
+    tracks.push(t);
+  });
+  return tracks;
+}
+
+// WAV, BWF and RF64: one data chunk of interleaved PCM, read in 1MB pieces.
+// The browser would resample on decode, which costs accuracy at the top of the
+// spectrum, exactly where K-weighting boosts.
+function pieces(t, start, bytes){
+  var per=Math.max(1, Math.floor(1048576/t.bytesPerFrame)), total=Math.floor(bytes/t.bytesPerFrame);
+  t.chunks=[]; t.frames=total;
+  for(var f=0; f<total; f+=per) t.chunks.push([start+f*t.bytesPerFrame, Math.min(per, total-f)]);
+  t.duration=total/t.rate; return t;
+}
+async function wavTrack(file){
+  var h=await bytesAt(file,0,12); if(h.length<12) return null;
+  var hv=new DataView(h.buffer), id=fourcc(hv,0);
+  if(!/^(RIFF|RF64|BW64)$/.test(id) || fourcc(hv,8)!=="WAVE") return null;
+  var off=12, fmt=null, data=null, big=null, guard=0;
+  while(off+8<=file.size && guard++<10000){
+    var c=await bytesAt(file,off,8), dv=new DataView(c.buffer), cid=fourcc(dv,0), size=dv.getUint32(4,true);
+    if(cid==="ds64"){ var d=new DataView((await bytesAt(file,off+8,16)).buffer); big=d.getUint32(8,true)+d.getUint32(12,true)*4294967296; }
+    else if(cid==="fmt "){
+      var fv=new DataView((await bytesAt(file,off+8,Math.min(size,40))).buffer);
+      fmt={tag:fv.getUint16(0,true), ch:fv.getUint16(2,true), rate:fv.getUint32(4,true), bits:fv.getUint16(14,true)};
+      if(fmt.tag===0xFFFE && size>=26) fmt.tag=fv.getUint16(24,true);     // extensible: the real format is in the sub-format
+    }
+    else if(cid==="data"){ data={off:off+8, size:(size===0xFFFFFFFF && big!=null) ? big : size}; break; }
+    off+=8+size+(size&1);
+  }
+  if(!fmt || !data || (fmt.tag!==1 && fmt.tag!==3) || [8,16,24,32,64].indexOf(fmt.bits)<0) return null;
+  var t={format:"wav", rate:fmt.rate, channels:fmt.ch, bits:fmt.bits, little:true, float:fmt.tag===3, signed:fmt.bits>8};
+  t.bytesPerFrame=t.channels*t.bits/8;
+  return pieces(t, data.off, Math.min(data.size, file.size-data.off));
+}
+async function aiffTrack(file){
+  var h=await bytesAt(file,0,12); if(h.length<12) return null;
+  var hv=new DataView(h.buffer), form=fourcc(hv,8);
+  if(fourcc(hv,0)!=="FORM" || (form!=="AIFF" && form!=="AIFC")) return null;
+  var off=12, t=null, ssnd=null, guard=0;
+  while(off+8<=file.size && guard++<10000){
+    var c=await bytesAt(file,off,8), dv=new DataView(c.buffer), cid=fourcc(dv,0), size=dv.getUint32(4);
+    if(cid==="COMM"){
+      var b=await bytesAt(file,off+8,Math.min(size,22)), v=new DataView(b.buffer);
+      var ex=((b[8]&0x7f)<<8|b[9])-16383, man=v.getUint32(10)*4294967296+v.getUint32(14);
+      var comp=form==="AIFC" && size>=22 ? fourcc(v,18) : "NONE";
+      t={format:"aiff", channels:v.getUint16(0), bits:v.getUint16(6), rate:man*Math.pow(2,ex-63),
+         little:comp==="sowt", float:/^fl(32|64)$/i.test(comp), signed:true};
+      if(!/^(NONE|twos|sowt|fl32|FL32|fl64|FL64)$/.test(comp)) return null;
+    }
+    else if(cid==="SSND"){ var sv=new DataView((await bytesAt(file,off+8,8)).buffer); ssnd={off:off+16+sv.getUint32(0), size:size-8-sv.getUint32(0)}; }
+    off+=8+size+(size&1);
+  }
+  if(!t || !ssnd || [8,16,24,32,64].indexOf(t.bits)<0) return null;
+  t.bytesPerFrame=t.channels*t.bits/8;
+  return pieces(t, ssnd.off, Math.min(ssnd.size, file.size-ssnd.off));
+}
+// Where a file's programme audio can be read without decoding, if it can.
+async function pcmSource(file){
+  var n=file.name, t=null;
+  try{
+    if(/\.(mov|mp4|m4v|m4a|qt)$/i.test(n)) return programmeTracks(await pcmTracks(file));
+    if(/\.(wav|wave|bwf|rf64)$/i.test(n)) t=await wavTrack(file);
+    else if(/\.(aif|aiff|aifc)$/i.test(n)) t=await aiffTrack(file);
+  }catch(e){ return null; }
+  return t ? programmeTracks([t]) : null;
+}
+
+function pcmToChannels(bytes,t,frames){
+  var ch=t.channels, bps=t.bits/8, out=[], c;
+  for(c=0;c<ch;c++) out.push(new Float32Array(frames));
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength), le=t.little, o=0;
+  for(var f=0;f<frames;f++){
+    for(c=0;c<ch;c++,o+=bps){
+      var v;
+      if(t.float) v = bps===4 ? dv.getFloat32(o,le) : dv.getFloat64(o,le);
+      else if(bps===2) v = dv.getInt16(o,le)/32768;
+      else if(bps===3){
+        var iv = le ? (bytes[o]|(bytes[o+1]<<8)|(bytes[o+2]<<16)) : ((bytes[o]<<16)|(bytes[o+1]<<8)|bytes[o+2]);
+        if(iv&0x800000) iv-=0x1000000; v=iv/8388608;
+      }
+      else if(bps===4) v = dv.getInt32(o,le)/2147483648;
+      else v = t.signed ? ((bytes[o]<<24)>>24)/128 : (bytes[o]-128)/128;
+      out[c][f]=v;
+    }
+  }
+  return out;
+}
+async function eachPcmChunk(file,t,fn,onProgress){
+  for(var i=0;i<t.chunks.length;i++){
+    var frames=t.chunks[i][1], len=frames*t.bytesPerFrame;
+    if(!len) continue;
+    var b=await bytesAt(file,t.chunks[i][0],len);
+    if(b.length<len) frames=Math.floor(b.length/t.bytesPerFrame);
+    fn(pcmToChannels(b,t,frames));
+    if(onProgress && i%64===0) onProgress(i/t.chunks.length);
+  }
+}
+
+// The audio that makes up the programme, from whichever tracks carry it: one
+// stereo (or 5.1, or wider) track, or a pair of mono tracks as left and right.
+function programmeTracks(tracks){
+  if(!tracks.length) return null;
+  var a=tracks[0];
+  if(a.channels===1 && tracks.length>1 && tracks[1].channels===1 && tracks[1].rate===a.rate)
+    return { parts:[[a,0,1],[tracks[1],0,1]], rate:a.rate, note:"tracks 1\u20132 measured as stereo" };
+  var pc=programmeChannels(a.channels);
+  return { parts:pc.use.map(function(c,i){ return [a,c,pc.gains[i]]; }), rate:a.rate, note:pc.note };
+}
+
+function decodeWithBrowser(file){
+  return file.arrayBuffer().then(function(ab){
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    return ctx.decodeAudioData(ab).then(function(buf){ try{ctx.close();}catch(e){} return buf; },
+                                         function(e){ try{ctx.close();}catch(_){} throw e; });
+  });
+}
+
+// Measure a whole file. QuickTime-family files with PCM audio stream straight
+// through the meter; anything else is decoded by the browser first.
+async function measureFileLoudness(file, onProgress){
+  var prog=await pcmSource(file);
+  if(prog){
+      var meter=new LoudnessMeter(prog.rate);
+      // each track is read once, feeding all of its programme channels
+      var byTrack=new Map();
+      prog.parts.forEach(function(p){ if(!byTrack.has(p[0])) byTrack.set(p[0],[]); byTrack.get(p[0]).push([p[1], meter.channel(p[2])]); });
+      var done=0, total=prog.parts.length;
+      for(var entry of byTrack){
+        var feeds=entry[1];
+        await eachPcmChunk(file, entry[0], function(chs){ feeds.forEach(function(f){ f[1].push(chs[f[0]]); }); },
+                           onProgress ? function(x){ onProgress((done+x*feeds.length)/total); } : null);
+        done+=feeds.length;
+      }
+      var r=meter.result(); r.source="pcm"; r.note=prog.note; return r;
+  }
+  var buf=await decodeWithBrowser(file);
+  var res=measureBuffer(buf); res.source="decoded"; return res;
+}
+
+// Measure audio already in memory (an AudioBuffer, or anything shaped like one).
+function measureBuffer(buf){
+  var m=new LoudnessMeter(buf.sampleRate), pc=programmeChannels(buf.numberOfChannels);
+  pc.use.forEach(function(c,i){ m.channel(pc.gains[i]).push(buf.getChannelData(c)); });
+  var r=m.result(); r.note=pc.note; return r;
+}
+
+// The whole of a file's audio in memory, for analysis that needs all of it at
+// once. QuickTime PCM is read directly; anything else is decoded by the browser.
+var FULL_AUDIO_LIMIT_S=20*60;
+async function decodeAudioFile(file){
+  var prog=await pcmSource(file);
+  if(prog){
+      var t0=prog.parts[0][0];
+      if(t0.duration>FULL_AUDIO_LIMIT_S)
+        throw new Error("this file runs over 20 minutes \u2014 too long to analyse in full here. Delivery QC measures loudness on long masters.");
+      var pair=prog.parts.length===2 && prog.parts[0][0]!==prog.parts[1][0];
+      var srcs=pair ? [prog.parts[0][0],prog.parts[1][0]] : [t0];
+      var chans=[];
+      for(var s=0;s<srcs.length;s++){
+        var t=srcs[s], data=[], o=0;
+        for(var c=0;c<t.channels;c++) data.push(new Float32Array(t.frames));
+        await eachPcmChunk(file,t,function(chs){ for(var c=0;c<chs.length;c++) data[c].set(chs[c],o); o+=chs[0].length; });
+        data.forEach(function(d){ chans.push(o<d.length ? d.subarray(0,o) : d); });
+      }
+      var rate=prog.rate;
+      return { sampleRate:rate, numberOfChannels:chans.length, length:chans[0].length, duration:chans[0].length/rate,
+               getChannelData:function(c){ return chans[c]; }, _pcm:true, _bits:t0.bits };
+  }
+  return decodeWithBrowser(file);
+}
+// @@ENGINE:audio END
+
+function computeSamplePeak(buffer) {
+  var max=0, c, d, i, a;
+  for (c=0;c<buffer.numberOfChannels;c++) {
+    d=buffer.getChannelData(c);
+    for (i=0;i<d.length;i++) { a=Math.abs(d[i]); if(a>max) max=a; }
+  }
+  return 20*Math.log10(max+1e-10);
+}
+
+function computePhaseCorrelation(buffer) {
+  if (buffer.numberOfChannels < 2) return null;
+  var L=buffer.getChannelData(0), R=buffer.getChannelData(1);
+  var sumLR=0, sumL2=0, sumR2=0, step=Math.max(1,Math.floor(L.length/50000)), i;
+  for (i=0;i<L.length;i+=step) { sumLR+=L[i]*R[i]; sumL2+=L[i]*L[i]; sumR2+=R[i]*R[i]; }
+  var denom=Math.sqrt(sumL2*sumR2);
+  return denom>0 ? sumLR/denom : 0;
+}
+
+function computeDCOffset(buffer) {
+  var maxDC=0, c, d, sum, i;
+  for (c=0;c<buffer.numberOfChannels;c++) {
+    d=buffer.getChannelData(c); sum=0;
+    for (i=0;i<d.length;i++) sum+=d[i];
+    maxDC=Math.max(maxDC,Math.abs(sum/d.length));
+  }
+  return maxDC;
+}
+
+function countClips(buffer) {
+  var clips=0, positions=[], c, d, i, len;
+  len = buffer.getChannelData(0).length;
+  for (c=0;c<buffer.numberOfChannels;c++) {
+    d=buffer.getChannelData(c);
+    for (i=0;i<d.length;i++) {
+      if(Math.abs(d[i])>=0.9999) { clips++; positions.push(i/len); }
+    }
+  }
+  return { count: clips, positions: positions };
+}
+
+function detectSilence(buffer) {
+  var thresh=Math.pow(10,-60/20), hop=Math.round(0.02*buffer.sampleRate);
+  var minBlocks=Math.ceil(0.5*buffer.sampleRate/hop);
+  var d=buffer.getChannelData(0), silRegions=0, current=0, silBlocks=0, loud, i, j;
+  for (i=0;i<d.length;i+=hop) {
+    loud=false;
+    for (j=i;j<Math.min(i+hop,d.length);j++) { if(Math.abs(d[j])>thresh){loud=true;break;} }
+    if (!loud) { current++; if(current===minBlocks) silRegions++; }
+    else { if(current>=minBlocks) silBlocks+=current; current=0; }
+  }
+  return { regions:silRegions, totalSecs:(silBlocks*hop/buffer.sampleRate) };
+}
+
+// Detects audio dropouts: runs of consecutive samples all below -60 dBFS
+// lasting at least 2ms. Returns count, total duration, and normalised positions.
+function detectDropouts(buffer) {
+  var sr       = buffer.sampleRate;
+  var thresh   = Math.pow(10, -60 / 20);
+  var minSamps = Math.round(0.002 * sr);
+  var count    = 0, totalSamps = 0;
+  var positions = [];
+  var len = buffer.getChannelData(0).length;
+  var nc  = buffer.numberOfChannels;
+  var run = 0, runStart = 0;
+  for (var i = 0; i < len; i++) {
+    var avg = 0;
+    for (var c = 0; c < nc; c++) avg += Math.abs(buffer.getChannelData(c)[i]);
+    avg /= nc;
+    if (avg < thresh) {
+      if (run === 0) runStart = i;
+      run++;
+    } else {
+      if (run >= minSamps) {
+        count++; totalSamps += run;
+        positions.push({ start: runStart / len, end: i / len });
+      }
+      run = 0;
+    }
+  }
+  if (run >= minSamps) { count++; totalSamps += run; positions.push({ start: runStart / len, end: 1 }); }
+  return { count: count, totalSecs: totalSamps / sr, positions: positions };
+}
+
+// Detects audio pops: single samples (or up to 4-sample clusters) that are
+// ≥ 18 dBFS louder than the local RMS over a 10ms window on either side.
+// Returns count and normalised positions for waveform overlay.
+function detectPops(buffer) {
+  var sr = buffer.sampleRate, win = Math.round(0.01 * sr), count = 0, positions = [];
+  var nc = buffer.numberOfChannels, totalLen = buffer.getChannelData(0).length;
+  var ratio = Math.pow(10, 18 / 20);
+  for (var c = 0; c < nc; c++) {
+    var d = buffer.getChannelData(c), len = d.length;
+    // running sum of squares, so each window costs two lookups instead of 2*win adds
+    var pre = new Float64Array(len + 1);
+    for (var i = 0; i < len; i++) pre[i + 1] = pre[i] + d[i] * d[i];
+    for (i = win; i < len - win; i++) {
+      var rms = Math.sqrt((pre[i] - pre[i - win] + pre[i + win + 1] - pre[i + 1]) / (win * 2));
+      if (rms < 1e-6) continue;
+      if (Math.abs(d[i]) > rms * ratio) { count++; positions.push(i / totalLen); i += 4; }
+    }
+  }
+  return { count: count, positions: positions };
+}
+
+// Detects level/channel mismatch in stereo files.
+// Returns: { missing: bool, mismatch: bool, dbDiff: number, detail: string }
+function detectLevelMismatch(buffer) {
+  if (buffer.numberOfChannels < 2) {
+    return { missing: false, mismatch: false, dbDiff: 0, detail: "Mono" };
+  }
+  var L = buffer.getChannelData(0);
+  var R = buffer.getChannelData(1);
+  var rmsL = 0, rmsR = 0, n = L.length;
+  for (var i = 0; i < n; i++) { rmsL += L[i]*L[i]; rmsR += R[i]*R[i]; }
+  rmsL = Math.sqrt(rmsL / n);
+  rmsR = Math.sqrt(rmsR / n);
+  var SILENCE = Math.pow(10, -60 / 20);
+  var missingL = rmsL < SILENCE;
+  var missingR = rmsR < SILENCE;
+  if (missingL || missingR) {
+    return { missing: true, mismatch: false, dbDiff: 0,
+      detail: missingL ? "Left channel silent" : "Right channel silent" };
+  }
+  var dbDiff = 20 * Math.log10(rmsL / (rmsR + 1e-10));
+  var mismatch = Math.abs(dbDiff) > 3;
+  return {
+    missing:  false,
+    mismatch: mismatch,
+    dbDiff:   dbDiff,
+    detail:   mismatch
+      ? "L/R differ by " + Math.abs(dbDiff).toFixed(1) + " dB"
+      : "Channels balanced (" + dbDiff.toFixed(1) + " dB)"
+  };
+}
+
+function computeDynamicRange(buffer) {
+  var peak=0, rmsSum=0, n=0, c, d, i, a;
+  for (c=0;c<buffer.numberOfChannels;c++) {
+    d=buffer.getChannelData(c);
+    for (i=0;i<d.length;i++) { a=Math.abs(d[i]); if(a>peak)peak=a; rmsSum+=d[i]*d[i]; n++; }
+  }
+  var rms=Math.sqrt(rmsSum/n);
+  return 20*Math.log10(peak+1e-10) - 20*Math.log10(rms+1e-10);
+}
+
+function computePPM(buffer) {
+  var intTime=Math.round(0.01*buffer.sampleRate), maxPPM=-Infinity, c, d, i, j, peak, db;
+  for (c=0;c<buffer.numberOfChannels;c++) {
+    d=buffer.getChannelData(c);
+    for (i=0;i<d.length;i+=intTime) {
+      peak=0;
+      for (j=i;j<Math.min(i+intTime,d.length);j++) { var a=Math.abs(d[j]); if(a>peak)peak=a; }
+      db=20*Math.log10(peak+1e-10); if(db>maxPPM) maxPPM=db;
+    }
+  }
+  return maxPPM + 18; // convert dBFS to PPM scale
+}
+
+function detectBitDepth(arrayBuffer, filename) {
+  var ext = filename.split(".").pop().toLowerCase();
+  if (ext !== "wav") return null;
+  try {
+    var view = new DataView(arrayBuffer.slice(0,44));
+    if (view.getUint32(0,false) === 0x52494646) return view.getUint16(34,true);
+  } catch(e) {}
+  return null;
+}
+
+// ── Frame rate detection ──────────────────────────────────────────────────────
+// Strategy 1: Parse MP4/MOV container atoms (stts/mdhd) from raw bytes.
+//   - Reads the first 2 MB of the file to find the moov/trak/mdia/mdhd atom,
+//     which stores the media timescale, and stts (sample-to-time table) which
+//     gives the exact frame duration. This is authoritative and works for
+//     29.97 vs 25 which the seeking method gets wrong.
+// Strategy 2: requestVideoFrameCallback (Chromium only) — counts real frames.
+// Strategy 3: seeking fallback — measures inter-seek deltas (least reliable).
+
+function snapFPS(fps) {
+  if (fps === null || !isFinite(fps)) return null;
+  var common = [23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60];
+  for (var k = 0; k < common.length; k++) {
+    if (Math.abs(common[k] - fps) < 0.5) return common[k];
+  }
+  return Math.round(fps * 1000) / 1000;
+}
+
+function parseFPSFromAtoms(arrayBuffer) {
+  // Walk the top-level box tree looking for moov > trak > mdia > mdhd
+  // mdhd contains timescale (4 bytes) which we use with stts to get fps.
+  // We also try stts directly for sample duration.
+  try {
+    var buf = new Uint8Array(arrayBuffer);
+    var view = new DataView(arrayBuffer);
+    var len = buf.length;
+
+    function readU32(off) { return view.getUint32(off, false); }
+    function readU64hi(off) { return view.getUint32(off, false); } // just hi-word ok for sizes
+
+    // Find a named 4-byte box tag, searching linearly within [start, end)
+    // Returns offset of box payload (i.e. start+8), or -1
+    function findBox(tag, start, end) {
+      var t0=tag.charCodeAt(0),t1=tag.charCodeAt(1),t2=tag.charCodeAt(2),t3=tag.charCodeAt(3);
+      var i = start;
+      while (i + 8 <= end && i + 8 <= len) {
+        var boxSize = readU32(i);
+        var match = buf[i+4]===t0 && buf[i+5]===t1 && buf[i+6]===t2 && buf[i+7]===t3;
+        if (boxSize < 8) break; // corrupt
+        if (match) return i;
+        i += boxSize;
+      }
+      return -1;
+    }
+
+    function boxEnd(off) {
+      var s = readU32(off);
+      return off + (s < 8 ? 8 : s);
+    }
+
+    // Locate moov
+    var moovOff = findBox("moov", 0, len);
+    if (moovOff < 0) return null;
+    var moovEnd = boxEnd(moovOff);
+
+    // Try each trak
+    var trakSearch = moovOff + 8;
+    while (trakSearch < moovEnd) {
+      var trakOff = findBox("trak", trakSearch, moovEnd);
+      if (trakOff < 0) break;
+      var trakEnd = boxEnd(trakOff);
+
+      var mdiaOff = findBox("mdia", trakOff + 8, trakEnd);
+      if (mdiaOff >= 0) {
+        var mdiaEnd = boxEnd(mdiaOff);
+
+        // Read mdhd for timescale
+        var mdhdOff = findBox("mdhd", mdiaOff + 8, mdiaEnd);
+        var timescale = 0;
+        if (mdhdOff >= 0) {
+          var version = buf[mdhdOff + 8];
+          // version 0: timescale at +20; version 1: timescale at +28
+          var tsOff = version === 1 ? mdhdOff + 28 : mdhdOff + 20;
+          if (tsOff + 4 <= len) timescale = readU32(tsOff);
+        }
+
+        // Find minf > stbl > stts
+        var minfOff = findBox("minf", mdiaOff + 8, mdiaEnd);
+        if (minfOff >= 0) {
+          var minfEnd = boxEnd(minfOff);
+          var stblOff = findBox("stbl", minfOff + 8, minfEnd);
+          if (stblOff >= 0) {
+            var stblEnd = boxEnd(stblOff);
+            var sttsOff = findBox("stts", stblOff + 8, stblEnd);
+            if (sttsOff >= 0 && timescale > 0) {
+              // stts payload: version(1) flags(3) entry_count(4) [count(4) duration(4)]...
+              var entryCount = readU32(sttsOff + 12);
+              if (entryCount > 0 && sttsOff + 16 + entryCount * 8 <= len) {
+                // Find the most common sample duration (mode)
+                var durations = {};
+                for (var e = 0; e < Math.min(entryCount, 64); e++) {
+                  var sampleCount  = readU32(sttsOff + 16 + e * 8);
+                  var sampleDur    = readU32(sttsOff + 20 + e * 8);
+                  if (sampleDur > 0) {
+                    durations[sampleDur] = (durations[sampleDur] || 0) + sampleCount;
+                  }
+                }
+                var bestDur = 0, bestCount = 0;
+                for (var d in durations) {
+                  if (durations[d] > bestCount) { bestCount = durations[d]; bestDur = parseInt(d); }
+                }
+                if (bestDur > 0) {
+                  var rawFPS = timescale / bestDur;
+                  return snapFPS(rawFPS);
+                }
+              }
+            }
+          }
+        }
+      }
+      trakSearch = trakEnd;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function detectFrameRate(file) {
+  return new Promise(function(resolve) {
+    var ext = file.name.split(".").pop().toLowerCase();
+    if (["mp4","mov","mkv","avi","webm"].indexOf(ext) === -1) return resolve(null);
+
+    var resolved = false;
+    function done(fps) {
+      if (resolved) return;
+      resolved = true;
+      resolve(fps);
+    }
+
+    // ── Strategy 1: atom parser ───────────────────────────────────────────────
+    // Read first 2 MB — enough to find moov in most files
+    var HEADER_BYTES = 2 * 1024 * 1024;
+    var slice = file.slice(0, HEADER_BYTES);
+    var fr = new FileReader();
+    fr.onload = function(e) {
+      var atomFPS = parseFPSFromAtoms(e.target.result);
+      if (atomFPS !== null) return done(atomFPS);
+      // Fall through to video-element strategies
+      tryVideoElement();
+    };
+    fr.onerror = function() { tryVideoElement(); };
+    fr.readAsArrayBuffer(slice);
+
+    // ── Strategy 2 & 3: video element ────────────────────────────────────────
+    function tryVideoElement() {
+      var video = document.createElement("video");
+      var url   = URL.createObjectURL(file);
+      video.src = url;
+      video.muted = true;
+      var videoResolved = false;
+      function videoDone(fps) {
+        if (videoResolved) return; videoResolved = true;
+        URL.revokeObjectURL(url);
+        done(fps);
+      }
+      video.addEventListener("error", function() { videoDone(null); });
+      setTimeout(function() { videoDone(null); }, 8000);
+
+      video.addEventListener("loadedmetadata", function() {
+        // Strategy 2: requestVideoFrameCallback
+        if ("requestVideoFrameCallback" in video) {
+          var frameCount = 0, startTime = null;
+          var MAX_FRAMES = 30;
+          function onFrame(now, meta) {
+            if (videoResolved) return;
+            if (startTime === null) startTime = meta.mediaTime;
+            frameCount++;
+            if (frameCount >= MAX_FRAMES) {
+              var elapsed = meta.mediaTime - startTime;
+              var fps = elapsed > 0 ? (frameCount - 1) / elapsed : null;
+              return videoDone(snapFPS(fps));
+            }
+            video.requestVideoFrameCallback(onFrame);
+          }
+          video.requestVideoFrameCallback(onFrame);
+          video.play().catch(function() {
+            // play blocked — fall through to seeking
+            trySeekMethod(video, videoDone);
+          });
+        } else {
+          trySeekMethod(video, videoDone);
+        }
+      });
+      video.load();
+    }
+
+    // ── Strategy 3: seeking ───────────────────────────────────────────────────
+    function trySeekMethod(video, cb) {
+      var samples = [], lastTime = -1;
+      video.pause();
+      video.currentTime = 0.001;
+      video.addEventListener("seeked", function onSeeked() {
+        if (samples.length >= 20) {
+          video.removeEventListener("seeked", onSeeked);
+          samples.sort(function(a,b){return a-b;});
+          var median = samples[Math.floor(samples.length / 2)];
+          var fps = median > 0 ? 1 / median : null;
+          return cb(snapFPS(fps));
+        }
+        if (lastTime >= 0) {
+          var dt = video.currentTime - lastTime;
+          if (dt > 0 && dt < 0.1) samples.push(dt);
+        }
+        lastTime = video.currentTime;
+        video.currentTime += 0.04;
+      });
+    }
+  });
+}
+
+function isDropFrame(fps) {
+  if (fps === null) return "—";
+  if (Math.abs(fps - 29.97) < 0.1 || Math.abs(fps - 59.94) < 0.1) return "Possible (29.97/59.94)";
+  return "N/A";
+}
+
+// ── Draw waveform ────────────────────────────────────────────────────────────
+// markers = { clips: [0..1], dropouts: [{start,end}], pops: [0..1] }
+function drawWaveform(buffer, markers) {
+  var canvas = document.getElementById("waveform-canvas");
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width  = canvas.offsetWidth  * dpr;
+  canvas.height = canvas.offsetHeight * dpr;
+  var ctx = canvas.getContext("2d"); ctx.scale(dpr,dpr);
+  var W=canvas.offsetWidth, H=canvas.offsetHeight, mid=H/2;
+
+  // Background
+  ctx.fillStyle="#040604"; ctx.fillRect(0,0,W,H);
+
+  // Dropout regions — dark red fill behind waveform
+  if (markers && markers.dropouts && markers.dropouts.length) {
+    ctx.fillStyle="rgba(220,38,38,0.22)";
+    markers.dropouts.forEach(function(d) {
+      var x0=Math.round(d.start*W), x1=Math.round(d.end*W);
+      ctx.fillRect(x0, 0, Math.max(2, x1-x0), H);
+    });
+  }
+
+  // Centre line
+  ctx.strokeStyle="#2b3f2b"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,mid); ctx.lineTo(W,mid); ctx.stroke();
+
+  // Waveform
+  var data=buffer.getChannelData(0), step=Math.ceil(data.length/W);
+  var grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,"rgba(71,200,255,0.8)");
+  grad.addColorStop(0.5,"rgba(232,255,71,0.9)");
+  grad.addColorStop(1,"rgba(71,200,255,0.8)");
+  ctx.fillStyle=grad;
+  for (var x=0;x<W;x++) {
+    var mn=1,mx=-1;
+    for (var j=0;j<step;j++) { var v=data[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
+    ctx.fillRect(x, mid+mn*mid*0.92, 1, Math.max(1,(mid+mx*mid*0.92)-(mid+mn*mid*0.92)));
+  }
+
+  // Clip markers — red ticks at top & bottom
+  if (markers && markers.clips && markers.clips.length) {
+    ctx.fillStyle="rgba(220,38,38,0.95)";
+    // De-duplicate to pixel columns to avoid painting thousands of ticks
+    var clipCols = {};
+    markers.clips.forEach(function(p) { clipCols[Math.round(p*W)] = true; });
+    Object.keys(clipCols).forEach(function(x) {
+      x = parseInt(x);
+      ctx.fillRect(x-1, 0, 2, 8);
+      ctx.fillRect(x-1, H-8, 2, 8);
+    });
+  }
+
+  // Pop markers — accent yellow diamond at centre line
+  if (markers && markers.pops && markers.pops.length) {
+    ctx.fillStyle="#e8ff47";
+    var popCols = {};
+    markers.pops.forEach(function(p) { popCols[Math.round(p*W)] = true; });
+    Object.keys(popCols).forEach(function(x) {
+      x = parseInt(x);
+      // Small diamond
+      ctx.beginPath();
+      ctx.moveTo(x,   mid-7);
+      ctx.lineTo(x+4, mid);
+      ctx.lineTo(x,   mid+7);
+      ctx.lineTo(x-4, mid);
+      ctx.closePath();
+      ctx.fill();
+    });
+  }
+
+  // Dropout border lines
+  if (markers && markers.dropouts && markers.dropouts.length) {
+    ctx.strokeStyle="rgba(220,38,38,0.8)";
+    ctx.lineWidth=1;
+    markers.dropouts.forEach(function(d) {
+      var x0=Math.round(d.start*W), x1=Math.round(d.end*W);
+      ctx.beginPath(); ctx.moveTo(x0,0); ctx.lineTo(x0,H); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1,0); ctx.lineTo(x1,H); ctx.stroke();
+    });
+  }
+
+  // Update legend visibility
+  updateWaveformLegend(markers);
+}
+
+function updateWaveformLegend(markers) {
+  var legend = document.getElementById("waveform-legend");
+  if (!legend) return;
+  var hasClips    = markers && markers.clips    && markers.clips.length    > 0;
+  var hasPops     = markers && markers.pops     && markers.pops.length     > 0;
+  var hasDropouts = markers && markers.dropouts && markers.dropouts.length > 0;
+  if (!hasClips && !hasPops && !hasDropouts) {
+    legend.style.display = "none"; return;
+  }
+  legend.style.display = "flex";
+  legend.innerHTML = "";
+  if (hasClips) {
+    legend.innerHTML += "<span class='wl-item'><span class='wl-dot' style='background:#dc2626'></span>Clipping ("+markers.clips.length+" samples)</span>";
+  }
+  if (hasPops) {
+    legend.innerHTML += "<span class='wl-item'><span class='wl-diamond'></span>Pops ("+markers.pops.length+")</span>";
+  }
+  if (hasDropouts) {
+    legend.innerHTML += "<span class='wl-item'><span class='wl-dot' style='background:rgba(220,38,38,0.5);border:1px solid #dc2626'></span>Dropouts ("+markers.dropouts.length+")</span>";
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function fmtDur(s) {
+  var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=Math.floor(s%60),ms=Math.round((s%1)*1000);
+  if (h>0) return h+":"+pad(m)+":"+pad(ss);
+  return pad(m)+":"+pad(ss)+"."+pad3(ms);
+}
+function pad(n)  { return String(n).padStart(2,"0"); }
+function pad3(n) { return String(n).padStart(3,"0"); }
+function fmtSize(b) { return b>1e6 ? (b/1e6).toFixed(1)+" MB" : Math.round(b/1e3)+" KB"; }
+function fmtN(n, d) { d = d===undefined ? 1 : d; return isFinite(n) ? n.toFixed(d) : "—"; }
+function chLabel(n) { return n===1?"Mono":n===2?"Stereo":n+" ch"; }
+function fmtFPS(fps) {
+  if (!fps) return "—";
+  var map = {"23.976":"23.976 fps (Film)","24":"24 fps","25":"25 fps (PAL)","29.97":"29.97 fps (NTSC)","30":"30 fps","50":"50 fps","59.94":"59.94 fps","60":"60 fps"};
+  var key = String(fps);
+  return map[key] || fps.toFixed(3)+" fps";
+}
+function statusClass(ok) { return ok ? "pass-text" : "fail-text"; }
+function pillClass(ok, marginal) { return ok ? "pass" : (marginal ? "warn" : "fail"); }
+function pillText(ok, marginal)  { return ok ? "PASS" : (marginal ? "MARGINAL" : "FAIL"); }
+
+// ── Render results ────────────────────────────────────────────────────────────
+function renderResults(res, file) {
+  lastResults = res; lastFile = file;
+  var std  = selectedStd;
+  var diff = res.integrated - std.lufs;
+  var lufsPass = Math.abs(diff) <= std.tolerance;
+  var tpPass   = res.truePeak  <= std.tp + 0.5;
+  var passes   = lufsPass && tpPass;
+
+  // Verdict
+  var vEl = document.getElementById("verdict");
+  vEl.className = "verdict " + (passes ? "pass" : "fail");
+  document.getElementById("verdict-icon").textContent  = passes ? "✓" : "✗";
+  document.getElementById("verdict-title").textContent = (passes ? "Passes " : "Fails ") + std.name;
+  document.getElementById("verdict-sub").textContent   = passes
+    ? "Integrated loudness within ±" + std.tolerance + " LU of " + std.lufs + " LUFS target"
+    : "Integrated: " + fmtN(res.integrated) + " LUFS — " + (diff>0?"+":"") + fmtN(diff) + " LU from target";
+  if (res.measureNote) document.getElementById("verdict-sub").textContent += " \u00b7 " + res.measureNote;
+  document.getElementById("verdict-standard").innerHTML =
+    "<strong>" + std.name + "</strong>" + std.platform + "<br>Target: " + std.lufs + " LUFS ±" + std.tolerance;
+
+  // Metrics
+  setMetric("m-lufs",  fmtN(res.integrated), "metric-val " + statusClass(lufsPass), "m-lufs-status",  "Target: " + std.lufs + " LUFS",   "metric-sub " + statusClass(lufsPass));
+  setMetric("m-tp",    fmtN(res.truePeak),   "metric-val " + statusClass(tpPass),   "m-tp-status",    "Limit: "  + std.tp  + " dBTP",    "metric-sub " + statusClass(tpPass));
+  var lraOk = res.lra >= std.lraMin && res.lra <= std.lraMax;
+  setMetric("m-lra",   fmtN(res.lra),  "metric-val " + (lraOk?"ok-text":"warn-text"), "m-lra-status", std.lraMin + "–" + std.lraMax + " LU", "metric-sub " + (lraOk?"ok-text":"warn-text"));
+  var ppmOk = res.ppm <= std.ppmMax;
+  setMetric("m-ppm",   fmtN(res.ppm),  "metric-val " + (ppmOk?"ok-text":"warn-text"), "m-ppm-status", "Limit: " + std.ppmMax + " PPM",     "metric-sub " + (ppmOk?"ok-text":"warn-text"));
+  document.getElementById("m-sp").textContent    = fmtN(res.samplePeak);
+  document.getElementById("m-sp").className      = "metric-val ok-text";
+  document.getElementById("m-dr").textContent    = fmtN(res.dynamicRange);
+  document.getElementById("m-dr").className      = "metric-val ok-text";
+  document.getElementById("m-stmax").textContent = fmtN(res.stMax);
+  document.getElementById("m-stmax").className   = "metric-val ok-text";
+
+  if (res.phase !== null) {
+    var phaseClass = res.phase > 0.5 ? "pass-text" : (res.phase > 0 ? "warn-text" : "fail-text");
+    var phaseText  = res.phase > 0.5 ? "Good"      : (res.phase > 0 ? "Check mono" : "Out of phase!");
+    setMetric("m-phase", fmtN(res.phase,2), "metric-val " + phaseClass, "m-phase-status", phaseText, "metric-sub " + phaseClass);
+  } else {
+    setMetric("m-phase", "N/A", "metric-val ok-text", "m-phase-status", "Mono file", "metric-sub");
+  }
+
+  // File info
+  document.getElementById("i-duration").textContent   = fmtDur(res.duration);
+  document.getElementById("i-samplerate").textContent = (res.sampleRate/1000).toFixed(1) + " kHz";
+  document.getElementById("i-channels").textContent   = chLabel(res.channels);
+  document.getElementById("i-framerate").textContent  = fmtFPS(res.frameRate);
+  document.getElementById("i-format").textContent     = file.name.split(".").pop().toUpperCase();
+  document.getElementById("i-filesize").textContent   = fmtSize(file.size);
+  document.getElementById("i-bitdepth").textContent   = res.bitDepth ? res.bitDepth + "-bit" : "—";
+  document.getElementById("i-dropframe").textContent  = isDropFrame(res.frameRate);
+  document.getElementById("i-videotype").textContent  = res.isVideo ? "Video + Audio" : "Audio Only";
+
+  // QC flags
+  var qcEl = document.getElementById("qc-grid");
+  qcEl.innerHTML = "";
+  var flags = [
+    { name:"Integrated Loudness", val:passes?"PASS ✓":"FAIL ✗",            status:lufsPass?"pass":"fail",  detail:fmtN(res.integrated)+" LUFS (target "+std.lufs+")" },
+    { name:"True Peak",           val:tpPass?"PASS ✓":"FAIL ✗",             status:tpPass?"pass":"fail",    detail:fmtN(res.truePeak)+" dBTP (limit "+std.tp+")" },
+    { name:"Clipping",            val:res.clips.count===0?"None":res.clips.count+" samples", status:res.clips.count===0?"pass":(res.clips.count<10?"warn":"fail"), detail:res.clips.count===0?"No clipping detected":res.clips.count+" clipped sample(s)" },
+    { name:"DC Offset",           val:(res.dcOffset*100).toFixed(2)+"%",    status:res.dcOffset<0.005?"pass":(res.dcOffset<0.02?"warn":"fail"), detail:res.dcOffset<0.005?"Within limits":"May need high-pass filter" },
+    { name:"Silence Regions",     val:res.silence.regions===0?"None":res.silence.regions+" found", status:res.silence.regions===0?"pass":"warn", detail:res.silence.regions>0?res.silence.totalSecs.toFixed(1)+"s total silence":"No unexpected silence" },
+    { name:"Audio Dropout",       val:res.dropouts.count===0?"None":res.dropouts.count+" found",   status:res.dropouts.count===0?"pass":(res.dropouts.count<3?"warn":"fail"), detail:res.dropouts.count===0?"No dropouts detected":res.dropouts.count+" dropout(s), "+res.dropouts.totalSecs.toFixed(2)+"s total" },
+    { name:"Audio Pop",           val:res.pops.count===0?"None":res.pops.count+" found",                       status:res.pops.count===0?"pass":(res.pops.count<5?"warn":"fail"),                    detail:res.pops.count===0?"No pops detected":res.pops.count+" pop transient(s) detected" },
+    { name:"Level Mismatch",      val:res.levelMismatch.missing?"FAIL ✗":(res.levelMismatch.mismatch?"WARN":"PASS ✓"), status:res.levelMismatch.missing?"fail":(res.levelMismatch.mismatch?"warn":"pass"), detail:res.levelMismatch.detail },
+    { name:"Mono Compatibility",  val:res.phase===null?"N/A":(res.phase>0.5?"Good":(res.phase>0?"Check":"Poor")), status:res.phase===null?"info":(res.phase>0.5?"pass":(res.phase>0?"warn":"fail")), detail:res.phase===null?"Mono file":"Phase correlation: "+fmtN(res.phase,2) }
+  ];
+  flags.forEach(function(f) {
+    var div = document.createElement("div"); div.className = "qc-item";
+    div.innerHTML = "<div class='qc-dot " + f.status + "'></div>" +
+      "<div><div class='qc-name'>" + f.name + ": <span class='" + f.status + "-text'>" + f.val + "</span></div>" +
+      "<div class='qc-value'>" + f.detail + "</div></div>";
+    qcEl.appendChild(div);
+  });
+
+  // Standards table
+  var tbody = document.getElementById("standards-tbody");
+  tbody.innerHTML = "";
+  STANDARDS.forEach(function(s) {
+    var d   = res.integrated - s.lufs;
+    var lp  = Math.abs(d) <= s.tolerance;
+    var tp  = res.truePeak  <= s.tp + 0.5;
+    var ok  = lp && tp;
+    var mg  = !ok && Math.abs(d) <= s.tolerance + 1;
+    var tr  = document.createElement("tr");
+    if (s.id === std.id) tr.className = "current-std";
+    tr.innerHTML =
+      "<td><strong>" + s.name + "</strong><br><span style='color:var(--muted);font-size:10px'>" + s.platform + "</span></td>" +
+      "<td>" + s.lufs + " LUFS</td>" +
+      "<td>" + s.tp   + " dBTP</td>" +
+      "<td>" + fmtN(res.integrated) + " LUFS<br><span style='color:var(--muted)'>" + (d>0?"+":"") + fmtN(d) + " LU</span></td>" +
+      "<td>" + fmtN(res.truePeak) + " dBTP</td>" +
+      "<td><span class='pill " + pillClass(ok,mg) + "'>" + pillText(ok,mg) + "</span></td>";
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("results").classList.add("visible");
+
+  // Draw waveform after results are visible so canvas has non-zero dimensions
+  requestAnimationFrame(function() {
+    drawWaveform(res._buffer, res.waveformMarkers);
+  });
+}
+
+function setMetric(valId, valText, valClass, subId, subText, subClass) {
+  document.getElementById(valId).textContent = valText;
+  document.getElementById(valId).className   = valClass;
+  if (subId) {
+    document.getElementById(subId).textContent = subText;
+    document.getElementById(subId).className   = subClass;
+  }
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+document.getElementById("export-csv").addEventListener("click", function() {
+  if (!lastResults) return;
+  var r=lastResults, s=selectedStd, f=lastFile;
+  var rows=[
+    ["LIZARD LIPS — BROADCAST LOUDNESS ANALYSIS REPORT"],[""],
+    ["File",f.name],["Analysed",new Date().toLocaleString()],["Target Standard",s.name+" ("+s.platform+")"],[""],
+    ["LOUDNESS MEASUREMENTS"],
+    ["Integrated Loudness (LUFS)",fmtN(r.integrated)],["True Peak (dBTP)",fmtN(r.truePeak)],
+    ["Sample Peak (dBFS)",fmtN(r.samplePeak)],["Loudness Range LRA (LU)",fmtN(r.lra)],
+    ["Short-Term Max (LUFS)",fmtN(r.stMax)],["PPM",fmtN(r.ppm)],["Dynamic Range (dB)",fmtN(r.dynamicRange)],[""],
+    ["FILE INFORMATION"],
+    ["Duration",fmtDur(r.duration)],["Sample Rate",(r.sampleRate/1000).toFixed(1)+" kHz"],
+    ["Channels",chLabel(r.channels)],["Frame Rate",fmtFPS(r.frameRate)],
+    ["Format",f.name.split(".").pop().toUpperCase()],["File Size",fmtSize(f.size)],
+    ["Bit Depth",r.bitDepth?r.bitDepth+"-bit":"N/A"],["Drop Frame",isDropFrame(r.frameRate)],[""],
+    ["QC FLAGS"],
+    ["Clipping",r.clips.count===0?"None":r.clips.count+" samples"],
+    ["DC Offset",(r.dcOffset*100).toFixed(3)+"%"],
+    ["Silence Regions",r.silence.regions+" ("+r.silence.totalSecs.toFixed(1)+"s)"],
+    ["Audio Dropout",r.dropouts.count===0?"None":r.dropouts.count+" dropout(s), "+r.dropouts.totalSecs.toFixed(2)+"s total"],
+    ["Audio Pop",r.pops.count===0?"None":r.pops.count+" pop(s) detected"],
+    ["Level Mismatch",r.levelMismatch.detail],
+    ["Phase Correlation",r.phase!==null?fmtN(r.phase,2):"N/A (Mono)"],[""],
+    ["STANDARDS COMPARISON"],
+    ["Standard","Platform","Target LUFS","True Peak Limit","Your LUFS","Delta","Your TP","Result"]
+  ];
+  STANDARDS.forEach(function(st) {
+    var d=r.integrated-st.lufs, lp=Math.abs(d)<=st.tolerance, tp=r.truePeak<=st.tp+0.5;
+    rows.push([st.name,st.platform,st.lufs,st.tp,fmtN(r.integrated),(d>0?"+":"")+fmtN(d),fmtN(r.truePeak),(lp&&tp)?"PASS":"FAIL"]);
+  });
+  var csv = rows.map(function(row){ return Array.isArray(row)?row.map(function(v){return '"'+v+'"';}).join(","):'"'+row+'"'; }).join("\n");
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download=f.name.replace(/\.[^.]+$/,"")+"_BroadcastQC.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+});
+
+// ── Export PDF ────────────────────────────────────────────────────────────────
+document.getElementById("export-pdf").addEventListener("click", function() {
+  if (!lastResults) return;
+  var r=lastResults, s=selectedStd, f=lastFile;
+  var diff = r.integrated - s.lufs;
+  var lufsPass = Math.abs(diff) <= s.tolerance;
+  var tpOk     = r.truePeak <= s.tp + 0.5;
+  var passes   = lufsPass && tpOk;
+  var pc=passes?"#16a34a":"#dc2626", bg=passes?"#f0fdf4":"#fef2f2", bc=passes?"#bbf7d0":"#fecaca";
+
+  function statusStr(ok, marginal) { return ok?"PASS":(marginal?"MARGINAL":"FAIL"); }
+  function cls(ok, marginal) { return ok?"pass":(marginal?"warn":"fail"); }
+
+  var stdRows = "";
+  STANDARDS.forEach(function(st) {
+    var d=r.integrated-st.lufs, lp=Math.abs(d)<=st.tolerance, tp=r.truePeak<=st.tp+0.5, ok=lp&&tp, mg=!ok&&Math.abs(d)<=st.tolerance+1;
+    stdRows += "<tr><td>"+st.name+"</td><td>"+st.platform+"</td><td>"+st.lufs+" LUFS</td><td>"+fmtN(r.integrated)+"</td><td>"+(d>0?"+":"")+fmtN(d)+"</td><td class='"+cls(ok,mg)+"'>"+statusStr(ok,mg)+"</td></tr>";
+  });
+
+  var phaseVal  = r.phase !== null ? fmtN(r.phase,2)  : "N/A";
+  var phaseNote = r.phase !== null ? (r.phase>0.5?"Good":r.phase>0?"Check":"Poor") : "Mono";
+  var phaseCls  = r.phase !== null ? (r.phase>0.5?"pass":r.phase>0?"warn":"fail") : "";
+
+  var lraCls  = (r.lra>=s.lraMin&&r.lra<=s.lraMax) ? "pass" : "warn";
+  var ppmCls  = r.ppm<=s.ppmMax ? "pass" : "warn";
+  var clipCls     = r.clips.count===0?"pass":(r.clips.count<10?"warn":"fail");
+  var dcCls       = r.dcOffset<0.005?"pass":(r.dcOffset<0.02?"warn":"fail");
+  var silCls      = r.silence.regions===0?"pass":"warn";
+  var dropCls     = r.dropouts.count===0?"pass":(r.dropouts.count<3?"warn":"fail");
+  var popCls      = r.pops.count===0?"pass":(r.pops.count<5?"warn":"fail");
+  var mismatchCls = r.levelMismatch.missing?"fail":(r.levelMismatch.mismatch?"warn":"pass");
+
+  var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>" +
+    "body{font-family:'Courier New',monospace;background:#fff;color:#111;padding:36px;max-width:740px;margin:0 auto;font-size:12px}" +
+    "h1{font-family:sans-serif;font-size:22px;font-weight:900;letter-spacing:-0.02em;margin-bottom:2px}" +
+    ".sub{color:#888;font-size:11px;margin-bottom:28px}" +
+    ".verdict{padding:14px 18px;border-radius:4px;background:"+bg+";border:2px solid "+bc+";margin-bottom:22px}" +
+    ".verdict h2{font-family:sans-serif;color:"+pc+";font-size:17px;margin:0 0 3px}" +
+    ".verdict p{margin:0;color:#666;font-size:11px}" +
+    "h3{font-family:sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin:18px 0 6px;border-bottom:1px solid #eee;padding-bottom:4px}" +
+    "table{width:100%;border-collapse:collapse;margin-bottom:16px}" +
+    "th{text-align:left;padding:6px 8px;background:#f8f8f8;border-bottom:2px solid #ddd;font-family:sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.05em}" +
+    "td{padding:6px 8px;border-bottom:1px solid #f0f0f0;vertical-align:top}" +
+    ".pass{color:#16a34a;font-weight:700}.fail{color:#dc2626;font-weight:700}.warn{color:#ea580c;font-weight:700}" +
+    ".foot{margin-top:32px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#aaa;font-family:sans-serif}" +
+    "@media print{body{padding:20px}}" +
+    "</style></head><body>" +
+    "<h1>BROADCAST LOUDNESS REPORT</h1>" +
+    "<div class='sub'>"+f.name+" &nbsp;&middot;&nbsp; "+new Date().toLocaleString()+" &nbsp;&middot;&nbsp; Standard: "+s.name+"</div>" +
+    "<div class='verdict'><h2>"+(passes?"&#10003; PASSES":"&#10007; FAILS")+" "+s.name+" ("+s.platform+")</h2>" +
+    "<p>Integrated: "+fmtN(r.integrated)+" LUFS &nbsp;|&nbsp; Target: "+s.lufs+" LUFS &plusmn;"+s.tolerance+" &nbsp;|&nbsp; &Delta; "+(diff>0?"+":"")+fmtN(diff)+" LU &nbsp;|&nbsp; True Peak: "+fmtN(r.truePeak)+" dBTP</p></div>" +
+    "<h3>Loudness Measurements</h3>" +
+    "<table><tr><th>Metric</th><th>Value</th><th>Target / Limit</th><th>Status</th></tr>" +
+    "<tr><td>Integrated Loudness</td><td>"+fmtN(r.integrated)+" LUFS</td><td>"+s.lufs+" LUFS &plusmn;"+s.tolerance+"</td><td class='"+(lufsPass?"pass":"fail")+"'>"+(lufsPass?"PASS":"FAIL")+"</td></tr>" +
+    "<tr><td>True Peak</td><td>"+fmtN(r.truePeak)+" dBTP</td><td>&lt;"+s.tp+" dBTP</td><td class='"+(tpOk?"pass":"fail")+"'>"+(tpOk?"PASS":"FAIL")+"</td></tr>" +
+    "<tr><td>Sample Peak</td><td>"+fmtN(r.samplePeak)+" dBFS</td><td>—</td><td>—</td></tr>" +
+    "<tr><td>Loudness Range (LRA)</td><td>"+fmtN(r.lra)+" LU</td><td>"+s.lraMin+"–"+s.lraMax+" LU</td><td class='"+lraCls+"'>"+(r.lra>=s.lraMin&&r.lra<=s.lraMax?"OK":"CHECK")+"</td></tr>" +
+    "<tr><td>Short-Term Max</td><td>"+fmtN(r.stMax)+" LUFS</td><td>—</td><td>—</td></tr>" +
+    "<tr><td>Peak Programme (PPM)</td><td>"+fmtN(r.ppm)+"</td><td>&lt;"+s.ppmMax+"</td><td class='"+ppmCls+"'>"+(r.ppm<=s.ppmMax?"OK":"CHECK")+"</td></tr>" +
+    "<tr><td>Dynamic Range</td><td>"+fmtN(r.dynamicRange)+" dB</td><td>—</td><td>—</td></tr>" +
+    "<tr><td>Phase Correlation</td><td>"+phaseVal+"</td><td>&gt;0 (ideally &gt;0.5)</td><td class='"+phaseCls+"'>"+phaseNote+"</td></tr>" +
+    "</table>" +
+    "<h3>File Information</h3>" +
+    "<table><tr><th>Property</th><th>Value</th><th>Property</th><th>Value</th></tr>" +
+    "<tr><td>Filename</td><td colspan='3'>"+f.name+"</td></tr>" +
+    "<tr><td>Duration</td><td>"+fmtDur(r.duration)+"</td><td>File Size</td><td>"+fmtSize(f.size)+"</td></tr>" +
+    "<tr><td>Sample Rate</td><td>"+(r.sampleRate/1000).toFixed(1)+" kHz</td><td>Bit Depth</td><td>"+(r.bitDepth?r.bitDepth+"-bit":"N/A")+"</td></tr>" +
+    "<tr><td>Channels</td><td>"+chLabel(r.channels)+"</td><td>Media Type</td><td>"+(r.isVideo?"Video + Audio":"Audio Only")+"</td></tr>" +
+    "<tr><td>Frame Rate</td><td>"+fmtFPS(r.frameRate)+"</td><td>Drop Frame</td><td>"+isDropFrame(r.frameRate)+"</td></tr>" +
+    "</table>" +
+    "<h3>QC Flags</h3>" +
+    "<table><tr><th>Check</th><th>Result</th><th>Detail</th></tr>" +
+    "<tr><td>Clipping</td><td class='"+clipCls+"'>"+(r.clips.count===0?"NONE":r.clips.count+" SAMPLES")+"</td><td>"+(r.clips.count===0?"No clipping detected":r.clips.count+" clipped sample(s)")+"</td></tr>" +
+    "<tr><td>DC Offset</td><td class='"+dcCls+"'>"+(r.dcOffset*100).toFixed(3)+"%</td><td>"+(r.dcOffset<0.005?"Within limits":"May need high-pass filter")+"</td></tr>" +
+    "<tr><td>Silence Regions</td><td class='"+silCls+"'>"+(r.silence.regions===0?"NONE":r.silence.regions+" FOUND")+"</td><td>"+(r.silence.regions>0?r.silence.totalSecs.toFixed(1)+"s total silence":"No unexpected silence")+"</td></tr>" +
+    "<tr><td>Audio Dropout</td><td class='"+dropCls+"'>"+(r.dropouts.count===0?"NONE":r.dropouts.count+" FOUND")+"</td><td>"+(r.dropouts.count===0?"No dropouts detected":r.dropouts.count+" dropout(s), "+r.dropouts.totalSecs.toFixed(2)+"s total")+"</td></tr>" +
+    "<tr><td>Audio Pop</td><td class='"+popCls+"'>"+(r.pops.count===0?"NONE":r.pops.count+" FOUND")+"</td><td>"+(r.pops.count===0?"No pops detected":r.pops.count+" pop transient(s) detected")+"</td></tr>" +
+    "<tr><td>Level Mismatch</td><td class='"+mismatchCls+"'>"+(r.levelMismatch.missing?"FAIL":r.levelMismatch.mismatch?"WARN":"PASS")+"</td><td>"+r.levelMismatch.detail+"</td></tr>" +
+    "</table>" +
+    "<h3>All Standards Comparison</h3>" +
+    "<table><tr><th>Standard</th><th>Platform</th><th>Target</th><th>Your LUFS</th><th>Delta</th><th>Result</th></tr>" +
+    stdRows +
+    "</table>" +
+    "<div class='foot'>Generated by Lizard Lips Loudness Analyser &nbsp;&middot;&nbsp; &#9888; Results may not be 100% accurate &mdash; verify against your DAW and amend accordingly</div>" +
+    "</body></html>";
+
+  var w = window.open("","_blank");
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){w.print();}, 600);
+});
+
+// ── File handling ─────────────────────────────────────────────────────────────
+var dropzone  = document.getElementById("dropzone");
+var fileInput = document.getElementById("file-input");
+
+function showFile(file) {
+  if (!file) return;
+  var ext = file.name.split(".").pop().toLowerCase();
+  if (ext === "mxf") {
+    document.getElementById("file-name").textContent = "MXF is not supported \u2014 use WAV, MP4 or MOV";
+    dropzone.classList.add("has-file");
+    document.getElementById("standard-panel").classList.remove("visible");
+    document.getElementById("analyse-btn").classList.remove("visible");
+    lastResults = null; lastFile = null;
+    return;
+  }
+  document.getElementById("file-name").textContent = file.name;
+  dropzone.classList.add("has-file");
+  document.getElementById("standard-panel").classList.add("visible");
+  document.getElementById("analyse-btn").classList.add("visible");
+  document.getElementById("results").classList.remove("visible");
+  lastResults = null; lastFile = file;
+}
+
+dropzone.addEventListener("dragover",  function(e){e.preventDefault();dropzone.classList.add("drag-over");});
+dropzone.addEventListener("dragleave", function(){dropzone.classList.remove("drag-over");});
+dropzone.addEventListener("drop",      function(e){e.preventDefault();dropzone.classList.remove("drag-over");showFile(e.dataTransfer.files[0]);});
+dropzone.addEventListener("click",     function(){fileInput.click();});
+fileInput.addEventListener("change",   function(){if(fileInput.files[0])showFile(fileInput.files[0]);});
+
+// ── Analyse ───────────────────────────────────────────────────────────────────
+document.getElementById("analyse-btn").addEventListener("click", async function() {
+  var failed = false;
+  if (!lastFile) return;
+  var btn   = document.getElementById("analyse-btn");
+  var prog  = document.getElementById("progress-wrap");
+  var fill  = document.getElementById("progress-fill");
+  var label = document.getElementById("progress-label");
+
+  btn.disabled = true;
+  prog.classList.add("visible");
+  document.getElementById("results").classList.remove("visible");
+
+  function setP(pct, msg) { fill.style.width = pct+"%"; label.textContent = msg; }
+
+  try {
+    setP(5,  "Reading the audio…");
+    var frameRatePromise = detectFrameRate(lastFile);
+    // QuickTime masters have their PCM read straight out of the file — no
+    // decoding, and the picture is never loaded. Anything else the browser decodes.
+    var buffer = await decodeAudioFile(lastFile);
+
+    setP(45, "Measuring loudness…");
+    await new Promise(function(r){setTimeout(r,10);});
+    var lufsResult   = measureBuffer(buffer);
+    var truePeak     = lufsResult.truePeak;
+
+    setP(70, "Measuring peaks…");
+    await new Promise(function(r){setTimeout(r,10);});
+    var samplePeak   = computeSamplePeak(buffer);
+    var ppm          = computePPM(buffer);
+    var dynamicRange = computeDynamicRange(buffer);
+    var phase        = computePhaseCorrelation(buffer);
+    var dcOffset     = computeDCOffset(buffer);
+    var clips        = countClips(buffer);
+
+    setP(82, "Detecting dropouts & pops…");
+    await new Promise(function(r){setTimeout(r,10);});
+    var silence       = detectSilence(buffer);
+    var dropouts      = detectDropouts(buffer);
+    var pops          = detectPops(buffer);
+    var levelMismatch = detectLevelMismatch(buffer);
+    var bitDepth = buffer._bits || detectBitDepth(await lastFile.slice(0,64).arrayBuffer(), lastFile.name);
+    var frameRate= await frameRatePromise;
+
+    setP(95, "Finalising…");
+    await new Promise(function(r){setTimeout(r,10);});
+
+    var ext     = lastFile.name.split(".").pop().toLowerCase();
+    var isVideo = ["mp4","mov","mkv","avi","webm"].indexOf(ext) !== -1;
+
+    setP(100, "Done!");
+    await new Promise(function(r){setTimeout(r,200);});
+
+    renderResults({
+      integrated:   lufsResult.integrated,
+      lra:          lufsResult.lra,
+      stMax:        lufsResult.stMax,
+      truePeak:     truePeak,
+      samplePeak:   samplePeak,
+      ppm:          ppm,
+      dynamicRange: dynamicRange,
+      phase:        phase,
+      dcOffset:     dcOffset,
+      clips:        clips,
+      silence:      silence,
+      dropouts:     dropouts,
+      pops:         pops,
+      waveformMarkers: {
+        clips:    clips.positions,
+        pops:     pops.positions,
+        dropouts: dropouts.positions
+      },
+      _buffer:      buffer,
+      levelMismatch: levelMismatch,
+      measureNote:  lufsResult.note,
+      duration:     buffer.duration,
+      sampleRate:   buffer.sampleRate,
+      channels:     buffer.numberOfChannels,
+      bitDepth:     bitDepth,
+      frameRate:    frameRate,
+      isVideo:      isVideo
+    }, lastFile);
+
+  } catch(err) {
+    failed = true;
+    // Say it plainly, and leave it on screen. The finally block used to hide
+    // the progress area — and this message with it — the same instant.
+    var msg = /decode|EncodingError|Unable to decode/i.test(String(err && (err.name+" "+err.message)))
+      ? "Couldn't decode the audio in this file \u2014 it may be corrupt, empty, or a format the browser can't read."
+      : "Couldn't analyse this file: " + (err && err.message ? err.message : err);
+    label.textContent = msg;
+    label.style.color = "var(--fail)";
+    fill.style.width = "0%";
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    if (!failed) {
+      prog.classList.remove("visible");
+      fill.style.width = "0%";
+      label.style.color = "";
+    }
+  }
+});
+</script>
+</body>
+</html>

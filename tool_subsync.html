@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sub Sync — Lizard Lips</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0d0a; --surface:#111511; --border:#232a23;
+  --phos:#8fff6a; --accent:#e8ff47; --accent2:#47c8ff;
+  --text:#e8f0e4; --muted:#5f6b5c;
+  --pass:#8fff6a; --fail:#ff6b6b; --warn:#ffcf47;
+  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+  --glow:0 0 6px rgba(232,255,71,.45);
+}
+body { --add:#4ade80; --del:#f87171; --sub:#fb923c; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; display:flex; flex-direction:column; }
+header { padding:24px 40px; border-bottom:1px solid var(--border); display:flex; align-items:baseline; justify-content:space-between; }
+header h1 { font-size:18px; font-weight:800; letter-spacing:-0.02em; color:var(--accent); }
+header span { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:0.08em; }
+main { flex:1; display:flex; flex-direction:column; align-items:center; padding:40px; gap:20px; }
+.steps { width:100%; max-width:880px; display:flex; gap:0; margin-bottom:4px; }
+.step { flex:1; font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:8px 0; border-top:2px solid var(--border); transition:color .2s,border-color .2s; }
+.step.active { color:var(--accent); border-top-color:var(--accent); }
+.step.done { color:var(--add); border-top-color:var(--add); }
+.step i { font-style:normal; opacity:0.6; margin-right:6px; }
+.panel { width:100%; max-width:880px; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:22px; display:flex; flex-direction:column; gap:16px; }
+.panel-title { font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.12em; color:var(--accent2); display:flex; align-items:center; gap:8px; }
+.panel-title .num { color:var(--muted); }
+.two-up { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:680px) {
+.two-up { grid-template-columns:1fr; }
+ 
+}
+.drop-col { display:flex; flex-direction:column; gap:8px; }
+.drop-label { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+.dz { border:1.5px dashed var(--border); border-radius:4px; padding:24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+.dz:hover, .dz.drag { border-color:var(--accent); background:rgba(232,255,71,0.03); }
+.dz-title { font-family:var(--mono); font-size:13px; color:var(--text); }
+.dz-sub { font-family:var(--mono); font-size:10px; color:var(--muted); }
+.dz.loaded { border-color:var(--add); border-style:solid; }
+.dz .fn { font-family:var(--mono); font-size:11px; color:var(--add); word-break:break-all; }
+input[type=file] { display:none; }
+.mode-tabs { display:flex; gap:4px; margin-bottom:6px; }
+.mode-tab { font-family:var(--mono); font-size:10px; padding:5px 12px; border:1px solid var(--border); background:var(--bg); color:var(--muted); cursor:pointer; border-radius:3px; transition:color .15s,border-color .15s; }
+.mode-tab:hover { color:var(--text); }
+.mode-tab.active { color:var(--accent); border-color:var(--accent); background:rgba(232,255,71,0.04); }
+.script-paste { width:100%; min-height:100px; resize:vertical; background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:12px; line-height:1.6; padding:10px 12px; border-radius:4px; outline:none; }
+.script-paste:focus { border-color:var(--accent); }
+.script-paste::placeholder { color:var(--muted); opacity:0.55; }
+.btn { font-family:var(--mono); font-size:12px; padding:10px 18px; border-radius:3px; border:1px solid var(--accent); background:var(--accent); color:var(--bg); cursor:pointer; font-weight:500; letter-spacing:0.03em; transition:opacity .15s; }
+.btn:hover { opacity:0.85; }
+.btn:disabled { opacity:0.3; cursor:not-allowed; }
+.btn-ghost { background:none; color:var(--accent); }
+.btn-sm { padding:7px 13px; font-size:11px; }
+.btn-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.spinner { font-family:var(--mono); font-size:11px; color:var(--accent2); }
+.hint { font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; }
+.hidden { display:none !important; }
+/* Review */
+.review-top { display:flex; align-items:center; justify-content:space-between; font-family:var(--mono); font-size:12px; }
+/* two-column conform view */
+.conform { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media (max-width:680px) {
+.conform { grid-template-columns:1fr; }
+ 
+}
+.col { border:1px solid var(--border); border-radius:4px; overflow:hidden; display:flex; flex-direction:column; }
+.col-head { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent2); padding:9px 12px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); }
+.col-hint { color:var(--muted); text-transform:none; letter-spacing:0; margin-left:6px; font-size:9px; }
+.col-scroll { height:340px; overflow-y:auto; padding:6px; }
+.col-scroll::-webkit-scrollbar { width:6px; }
+.col-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+/* SRT cue rows */
+.cue-row { padding:8px 10px; border-radius:3px; font-family:var(--mono); font-size:12px; line-height:1.5; cursor:pointer; border-left:2px solid transparent; margin-bottom:2px; transition:background .1s; }
+.cue-row:hover { background:rgba(255,255,255,0.03); }
+.cue-row.clean { color:var(--muted); }
+.cue-row.flagged { color:var(--text); border-left-color:var(--sub); }
+.cue-row.flagged.done { border-left-color:var(--add); }
+.cue-row.active { background:rgba(71,200,255,0.08); border-left-color:var(--accent2); }
+.cue-row .cue-tc { font-size:9px; color:var(--muted); display:block; margin-bottom:2px; }
+.cue-row .edit-pencil { color:var(--muted); opacity:0; cursor:pointer; margin-left:6px; transition:opacity .1s; }
+.cue-row:hover .edit-pencil { opacity:0.7; }
+.cue-row .edit-pencil:hover { opacity:1; color:var(--accent2); }
+.cue-row.edited { border-left-color:var(--accent2); }
+.cue-row.edited .cue-tc::after { content:" edited"; color:var(--accent2); }
+.cue-edit-input { width:100%; background:var(--bg); border:1px solid var(--accent2); color:var(--text); font-family:var(--mono); font-size:12px; padding:6px 8px; border-radius:3px; outline:none; margin-top:2px; }
+.cue-edit-actions { display:flex; gap:6px; margin-top:6px; }
+.cue-edit-actions button { font-family:var(--mono); font-size:10px; padding:3px 9px; border-radius:3px; cursor:pointer; border:1px solid var(--border); background:var(--bg); color:var(--muted); }
+.cue-edit-actions .cue-save { border-color:var(--add); color:var(--add); }
+.cue-edit-actions button:hover { color:var(--text); }
+.cue-row .flag-dot { color:var(--sub); margin-right:5px; }
+.cue-row.done .flag-dot { color:var(--add); }
+.cue-row .applied-text { color:var(--add); }
+/* script column words */
+#script-col { font-family:var(--mono); font-size:12px; line-height:1.9; user-select:none; }
+.sw { padding:1px 3px; border-radius:2px; color:var(--muted); cursor:pointer; transition:background .08s,color .08s; }
+.sw-hit { background:rgba(232,255,71,0.22); color:var(--text); }
+.sw-region { color:var(--text); }
+.sw:hover { background:rgba(71,200,255,0.15); color:var(--text); }
+/* fix action bar */
+.fixbar { display:flex; align-items:center; gap:16px; padding:14px 16px; border:1px solid var(--sub); border-radius:4px; background:rgba(251,146,60,0.05); }
+.fixbar-info { flex:1; display:flex; flex-direction:column; gap:4px; }
+.fixbar-note { font-family:var(--mono); font-size:11px; color:var(--sub); }
+.fixbar-correction { font-family:var(--mono); font-size:14px; color:var(--add); }
+.fixbar-actions { display:flex; gap:8px; }
+.review-count { color:var(--muted); }
+.review-count b { color:var(--accent); }
+.progress-track { flex:1; height:3px; background:var(--border); border-radius:2px; margin:0 16px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--accent); width:0%; transition:width .2s; }
+.card { border:1px solid var(--border); border-radius:4px; padding:0; overflow:hidden; }
+.card-tc { font-family:var(--mono); font-size:11px; color:var(--accent2); padding:10px 16px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); display:flex; justify-content:space-between; }
+.card-tc .cue-n { color:var(--muted); }
+.card-body { padding:18px 16px; display:flex; flex-direction:column; gap:14px; }
+.diff-block { display:flex; flex-direction:column; gap:5px; }
+.kind-tag { font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:0.02em; }
+.kind-tag .kind-desc { color:var(--muted); font-weight:400; }
+.low-conf { font-family:var(--mono); font-size:11px; color:var(--sub); background:rgba(251,146,60,0.08); border:1px solid rgba(251,146,60,0.3); border-radius:3px; padding:8px 10px; line-height:1.5; }
+.card-low { border-color:rgba(251,146,60,0.4); }
+.repick { color:var(--accent2); font-size:10px; }
+.pane-hint { color:var(--muted); font-weight:400; font-size:9px; }
+.script-pane { max-height:150px; overflow-y:auto; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-family:var(--mono); font-size:13px; line-height:2; user-select:none; }
+.script-pane::-webkit-scrollbar { width:6px; }
+.script-pane::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.sw { padding:2px 3px; border-radius:2px; color:var(--muted); cursor:pointer; transition:background .08s,color .08s; }
+.sw-hit { background:rgba(232,255,71,0.22); color:var(--text); }
+.sw:hover { background:rgba(71,200,255,0.15); color:var(--text); }
+.script-empty { font-family:var(--mono); font-size:11px; color:var(--muted); padding:10px; }
+.diff-lbl { font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }
+.diff-text { font-family:var(--mono); font-size:14px; line-height:1.7; }
+.w-eq { color:var(--text); }
+.w-sub-from { color:var(--del); text-decoration:line-through; opacity:0.75; }
+.w-sub-to { color:var(--add); }
+.w-del { color:var(--del); text-decoration:line-through; opacity:0.75; }
+.w-add { color:var(--add); }
+.card-actions { display:flex; gap:10px; padding:14px 16px; border-top:1px solid var(--border); align-items:center; }
+.card-actions .info { font-family:var(--mono); font-size:10px; color:var(--muted); margin-left:auto; }
+.btn-accept { border-color:var(--add); background:var(--add); color:var(--bg); }
+.btn-reject { border-color:var(--border); background:none; color:var(--muted); }
+.btn-reject:hover { color:var(--text); border-color:var(--muted); }
+.btn-edit { border-color:var(--accent2); background:none; color:var(--accent2); }
+.edit-field { width:100%; background:var(--bg); border:1px solid var(--accent2); color:var(--text); font-family:var(--mono); font-size:14px; padding:8px 10px; border-radius:3px; outline:none; }
+.summary-line { font-family:var(--mono); font-size:13px; display:flex; gap:18px; padding:6px 0; }
+.summary-line .s-acc { color:var(--add); }
+.summary-line .s-rej { color:var(--muted); }
+.summary-line .s-left { color:var(--accent2); }
+.done-msg { font-family:var(--mono); font-size:13px; color:var(--add); text-align:center; padding:10px; }
+footer { padding:16px 40px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--muted); }
+.footer-disclaimer { color:var(--sub); opacity:0.85; }
+
+
+
+  </style>
+</head>
+<body>
+<header>
+  <h1>SUB SYNC</h1>
+  <span>Subtitle QC · SRT vs script</span>
+</header>
+
+<main>
+  <div class="steps" id="steps">
+    <div class="step active" data-step="1"><i>01</i>Load files</div>
+    <div class="step" data-step="2"><i>02</i>Align</div>
+    <div class="step" data-step="3"><i>03</i>Review discrepancies</div>
+    <div class="step" data-step="4"><i>04</i>Export SRT</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="panel" id="panel-load">
+    <div class="panel-title"><span class="num">01</span> Load subtitle &amp; script</div>
+    <div class="two-up">
+      <div class="drop-col">
+        <div class="drop-label">Subtitle file (.srt)</div>
+        <div class="dz" id="dz-srt">
+          <div class="dz-title">Drop .srt here</div>
+          <div class="dz-sub">Premiere transcript export</div>
+          <div class="fn" id="srt-fn"></div>
+        </div>
+        <input type="file" id="srt-input" accept=".srt,.vtt,.txt">
+      </div>
+      <div class="drop-col">
+        <div class="drop-label">Script</div>
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-smode="upload">Upload</button>
+          <button class="mode-tab" data-smode="paste">Paste</button>
+        </div>
+        <div class="dz" id="dz-script">
+          <div class="dz-title">Drop script here</div>
+          <div class="dz-sub">TXT · DOCX · PDF</div>
+          <div class="fn" id="script-fn"></div>
+        </div>
+        <textarea id="script-paste" class="script-paste hidden" placeholder="Paste the script here — dialogue lines, character names and directions are fine, the tool strips non-spoken text."></textarea>
+        <input type="file" id="script-input" accept=".txt,.docx,.pdf,.fdx">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="align-btn" disabled>Align &amp; find discrepancies</button>
+      <span class="spinner hidden" id="align-spin">aligning…</span>
+    </div>
+    <div class="hint" id="load-hint"></div>
+  </div>
+
+  <!-- STEP 3 review -->
+  <div class="panel hidden" id="panel-review">
+    <div class="panel-title"><span class="num">02</span> Review discrepancies</div>
+    <div class="review-top">
+      <span class="review-count"><b id="rev-current">0</b> / <span id="rev-total">0</span> fixes<span id="manual-count"></span></span>
+      <div class="progress-track"><div class="progress-fill" id="rev-progress"></div></div>
+      <span class="review-count" id="rev-remaining"></span>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end;margin-top:-6px">
+      <button class="btn btn-ghost btn-sm" id="finish-btn">Finish &amp; export</button>
+    </div>
+
+    <!-- two synced columns -->
+    <div class="conform">
+      <div class="col col-srt">
+        <div class="col-head">Subtitle (SRT) <span class="col-hint">click ✎ or double-click any line to edit</span></div>
+        <div class="col-scroll" id="srt-col"></div>
+      </div>
+      <div class="col col-script">
+        <div class="col-head">Script <span class="col-hint">click a line, or click a word then another to extend</span></div>
+        <div class="col-scroll" id="script-col"></div>
+      </div>
+    </div>
+
+    <!-- action bar for the focused fix -->
+    <div class="fixbar hidden" id="fixbar">
+      <div class="fixbar-info">
+        <div class="fixbar-note" id="fixbar-note"></div>
+        <div class="fixbar-correction" id="fixbar-correction"></div>
+      </div>
+      <div class="fixbar-actions">
+        <button class="btn btn-sm btn-accept" id="fb-accept">✓ Apply &amp; continue</button>
+        <button class="btn btn-sm btn-reject" id="fb-skip">Skip</button>
+        <button class="btn btn-sm btn-edit" id="fb-edit">✎ Edit</button>
+      </div>
+    </div>
+    <input class="edit-field hidden" id="fb-edit-field" placeholder="corrected subtitle text">
+
+    <div class="summary-line hidden" id="rev-summary"></div>
+  </div>
+
+  <!-- STEP 4 export -->
+  <div class="panel hidden" id="panel-export">
+    <div class="panel-title"><span class="num">03</span> Export</div>
+    <div class="done-msg" id="export-msg"></div>
+    <div class="btn-row">
+      <button class="btn" id="export-btn">Download corrected .srt</button>
+      <button class="btn btn-ghost btn-sm" id="restart-btn">Start over</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-disclaimer">&#9888; Alignment is a best guess. Nothing changes without your approval.</span>
+  <span>Lizard Lips · Sub Sync</span>
+</footer>
+<script>
+"use strict";
+// @@ENGINE:libs BEGIN — generated from lib_loader.js by sync_engine.py. Do not edit here.
+// ═══════════════════════════════════════════════════════════════════════════
+// LIBRARIES — fetched the first time something needs them, never with the page.
+// Opening the suite used to download every reader (PDF, Word, Excel, media,
+// zip, OCR) whichever tool you wanted. Edit here; sync_engine.py copies this
+// into each tool that uses it.
+// ═══════════════════════════════════════════════════════════════════════════
+var LL_LIBS = {
+  pdfjs:     { url:"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", what:"the PDF reader",
+               has:function(){ return !!window.pdfjsLib; },
+               ready:function(){ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } },
+  mammoth:   { url:"https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js", what:"the Word reader",
+               has:function(){ return !!window.mammoth; } },
+  xlsx:      { url:"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", what:"the Excel reader",
+               has:function(){ return !!window.XLSX; } },
+  mediainfo: { url:"https://cdn.jsdelivr.net/npm/mediainfo.js@0.3.1/dist/umd/index.min.js", what:"the media reader",
+               has:function(){ return !!(window.MediaInfo||window.mediaInfoFactory); } },
+  jszip:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", what:"the zip tools",
+               has:function(){ return !!window.JSZip; } },
+  tesseract: { url:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", what:"the text reader",
+               has:function(){ return !!window.Tesseract; } },
+  jspdf:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", what:"the PDF tools",
+               has:function(){ return !!(window.jspdf && window.jspdf.jsPDF); } },
+  autotable: { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js", what:"the PDF tools",
+               needs:"jspdf", has:function(){ return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API.autoTable); } },
+  exceljs:   { url:"https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js", what:"the Excel tools",
+               has:function(){ return !!window.ExcelJS; } }
+};
+function needLib(name){
+  var lib=LL_LIBS[name], cache=window.__llLibs||(window.__llLibs={});
+  function ready(){ if(lib.ready) lib.ready(); }
+  if(lib.has()){ ready(); return Promise.resolve(); }
+  // load what it depends on first (once), then itself
+  if(lib.needs && !LL_LIBS[lib.needs].has()) return needLib(lib.needs).then(function(){ return needLib(name); });
+  if(!cache[name]) cache[name]=new Promise(function(res,rej){
+    var s=document.createElement("script"); s.src=lib.url;
+    s.onload=function(){ res(); };
+    // a failed load isn't remembered, so trying again after reconnecting works
+    s.onerror=function(){ delete cache[name]; rej(new Error("couldn't load "+lib.what+" \u2014 check your internet connection and try again")); };
+    document.head.appendChild(s);
+  });
+  return cache[name].then(ready);
+}
+
+// The standard PDF fonts can't draw Ł, ș, ț and so on, so names from Polish or
+// Romanian deliveries would come out as garbage. DejaVu covers them.
+var LL_FONTS = {
+  regular:"https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf",
+  bold:   "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf"
+};
+function llFont(which){
+  var cache=window.__llFonts||(window.__llFonts={});
+  if(cache[which]) return cache[which];
+  var fail=function(){ delete cache[which]; throw new Error("couldn't load the PDF font \u2014 check your internet connection and try again"); };
+  cache[which]=fetch(LL_FONTS[which]).then(function(r){ if(!r.ok) fail(); return r.arrayBuffer(); }, fail).then(function(ab){
+    var bytes=new Uint8Array(ab), bin="";
+    for(var i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000));
+    return btoa(bin);
+  });
+  return cache[which];
+}
+// A PDF ready for tables, with fonts that can draw any European name.
+async function newPdf(opts){
+  await needLib("autotable");
+  var f=await Promise.all([llFont("regular"), llFont("bold")]);
+  var doc=new window.jspdf.jsPDF(opts||{orientation:"landscape", unit:"pt", format:"a4"});
+  doc.addFileToVFS("DejaVuSans.ttf", f[0]);      doc.addFont("DejaVuSans.ttf","DejaVu","normal");
+  doc.addFileToVFS("DejaVuSans-Bold.ttf", f[1]); doc.addFont("DejaVuSans-Bold.ttf","DejaVu","bold");
+  return doc;
+}
+function saveBlob(blob, name){
+  var url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+// @@ENGINE:libs END
+
+// ── STATE ──
+var srtText="", scriptText="", scriptMode="upload";
+var cues=[];          // parsed SRT cues
+var discrepancies=[]; // {cueIdx, ops, corrected, decision:'pending'|'accept'|'reject', editedText}
+var reviewPos=0;
+
+// ── step rail ──
+function setStep(n){
+  document.querySelectorAll(".step").forEach(function(s){
+    var sn=+s.getAttribute("data-step");
+    s.classList.toggle("active",sn===n);
+    s.classList.toggle("done",sn<n);
+  });
+}
+
+// ── drop wiring ──
+function wireDrop(dz,input,onFile){
+  dz.addEventListener("click",function(){input.click();});
+  dz.addEventListener("dragover",function(e){e.preventDefault();dz.classList.add("drag");});
+  dz.addEventListener("dragleave",function(){dz.classList.remove("drag");});
+  dz.addEventListener("drop",function(e){e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])onFile(e.dataTransfer.files[0]);});
+  input.addEventListener("change",function(e){if(e.target.files[0])onFile(e.target.files[0]);});
+}
+
+// ── file readers ──
+async function readText(file){ return await file.text(); }
+async function readScript(file){
+  var n=file.name.toLowerCase();
+  if(n.endsWith(".txt")||n.endsWith(".srt")||n.endsWith(".fdx")||n.endsWith(".vtt")) return await file.text();
+  if(n.endsWith(".pdf")){
+    await needLib("pdfjs");
+    var buf=await file.arrayBuffer();
+    var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    var pages=[];
+    for(var i=1;i<=pdf.numPages;i++){
+      var pg=await pdf.getPage(i);
+      var tc=await pg.getTextContent();
+      pages.push(reconstructPage(tc.items));
+    }
+    var joined=pages.join("\n\n");
+    // If a PDF yields almost no text, its pages are images (scanned or
+    // picture-per-page export). There's no text layer to read — flag it so the
+    // UI can offer OCR instead of failing with an empty script.
+    var wc=joined.split(/\s+/).filter(Boolean).length;
+    window._pdfNeedsOCR = (wc < 20);
+    window._ocrFile = window._pdfNeedsOCR ? file : null;
+    window._ocrPages = pdf.numPages;
+    return joined;
+  }
+  if(n.endsWith(".docx")){await needLib("mammoth");var ab=await file.arrayBuffer();var r=await mammoth.extractRawText({arrayBuffer:ab});return r.value;}
+  return await file.text();
+}
+
+// OCR an image-only PDF: render each page to a canvas, then read the text off
+// the pixels with Tesseract. Slower than text extraction, but it's the only way
+// to get script text out of a scanned document.
+async function ocrPDF(file, onProgress){
+  await needLib("pdfjs"); await needLib("tesseract");
+  var buf=await file.arrayBuffer();
+  var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  var worker=await Tesseract.createWorker("eng");
+  var out=[];
+  try{
+    for(var i=1;i<=pdf.numPages;i++){
+      if(onProgress) onProgress(i, pdf.numPages);
+      var pg=await pdf.getPage(i);
+      var viewport=pg.getViewport({scale:2.0});   // 2x for legible OCR
+      var cv=document.createElement("canvas");
+      cv.width=Math.floor(viewport.width); cv.height=Math.floor(viewport.height);
+      await pg.render({canvasContext:cv.getContext("2d"), viewport:viewport}).promise;
+      var res=await worker.recognize(cv);
+      out.push((res && res.data && res.data.text) ? res.data.text : "");
+    }
+  } finally {
+    try{ await worker.terminate(); }catch(e){}
+  }
+  return out.join("\n\n");
+}
+
+// Rebuild readable lines from a PDF page's positioned text fragments.
+// PDFs store text as fragments with (x,y) transforms, NOT as lines — so we
+// group fragments by their vertical position into rows, sort each row left→right,
+// and join with spaces. This preserves the line structure cleanScript needs.
+function reconstructPage(items){
+  var frags=[];
+  items.forEach(function(it){
+    if(!it.str) return;
+    // transform = [a,b,c,d,e,f]; e = x, f = y (baseline position)
+    var tr=it.transform||[1,0,0,1,0,0];
+    var x=tr[4], y=tr[5];
+    // pdf.js also gives a hasEOL flag on some builds
+    frags.push({str:it.str, x:x, y:y, eol:!!it.hasEOL});
+  });
+  if(!frags.length) return "";
+  // group into rows by y (allow small jitter within a line)
+  frags.sort(function(a,b){ return b.y-a.y || a.x-b.x; }); // top→bottom, then left→right
+  var rows=[], cur=null, lastY=null;
+  var Y_TOL=3; // points of vertical tolerance for "same line"
+  frags.forEach(function(f){
+    if(cur===null || Math.abs(f.y-lastY)>Y_TOL){
+      cur={y:f.y, items:[f]}; rows.push(cur); lastY=f.y;
+    } else {
+      cur.items.push(f);
+    }
+  });
+  // within each row, sort left→right and join; insert a space when there's an x-gap
+  var lines=rows.map(function(row){
+    row.items.sort(function(a,b){return a.x-b.x;});
+    var out="";
+    for(var k=0;k<row.items.length;k++){
+      var it=row.items[k];
+      if(k>0){
+        var prev=row.items[k-1];
+        var gap=it.x-(prev.x+approxWidth(prev.str));
+        // big gap → treat as spacing (common in two-column / tabbed scripts)
+        if(gap>8) out+="  "; else if(!/\s$/.test(out) && !/^\s/.test(it.str)) out+=" ";
+      }
+      out+=it.str;
+    }
+    return out.replace(/\s+/g," ").trim();
+  }).filter(function(l){return l;});
+  return lines.join("\n");
+}
+function approxWidth(s){ return (s?s.length:0)*5; } // rough per-char width in points
+
+// ── SRT parse ──
+function parseSRT(txt){
+  // A byte-order mark at the start of the file glues itself to the first cue
+  // number, so the first cue failed to parse and vanished. Strip it first.
+  var blocks=txt.replace(/^\uFEFF/,"").replace(/\r/g,"").split(/\n\s*\n+/),out=[];
+  blocks.forEach(function(b){
+    var lines=b.split("\n").filter(function(l){return l.trim();});
+    if(lines.length<2)return;
+    var idx=lines[0].trim().match(/^\d+$/)?lines.shift().trim():String(out.length+1);
+    var m=lines.shift().match(/(\d{1,2}:\d{2}:\d{2}[,.]\d{1,3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}[,.]\d{1,3})/);
+    if(!m)return;
+    out.push({
+      index:+idx, start:m[1], end:m[2],
+      // matching works on one joined line; the export keeps the original
+      // line breaks, so two-line subtitles stay two lines
+      text:lines.join(" ").trim(),
+      rawLines:lines.map(function(l){return l.trim();})
+    });
+  });
+  return out;
+}
+
+// Re-wrap replacement text to the same number of lines as the cue it replaces,
+// breaking at the space nearest the original break, so a corrected subtitle
+// keeps its layout.
+function rewrapLike(text, rawLines){
+  text=String(text).replace(/\s+/g," ").trim();
+  if(!rawLines || rawLines.length<2) return text;
+  var spaces=[];
+  for(var i=0;i<text.length;i++) if(text[i]===" ") spaces.push(i);
+  if(!spaces.length) return text;
+  var orig=rawLines.join(" "), ratios=[], run=-1;
+  for(var k=0;k<rawLines.length-1;k++){ run+=rawLines[k].length+1; ratios.push(run/orig.length); }
+  var chosen=[], last=-1;
+  ratios.forEach(function(r){
+    var want=r*text.length, best=null;
+    spaces.forEach(function(sp){
+      if(sp>last && (best===null || Math.abs(sp-want)<Math.abs(best-want))) best=sp;
+    });
+    if(best!==null){ chosen.push(best); last=best; }
+  });
+  var chars=text.split("");
+  chosen.forEach(function(sp){ chars[sp]="\n"; });
+  return chars.join("");
+}
+
+// ── script clean ──
+function cleanScript(txt){
+  var lines=txt.replace(/\r/g,"").split("\n"),kept=[];
+  lines.forEach(function(l){
+    var s=l.trim(); if(!s)return;
+
+    // ── strip leading line numbers / cue numbers that broadcast scripts add ──
+    // e.g. "15  Yes! Dad loves the movie" → "Yes! Dad loves the movie"
+    s=s.replace(/^\d{1,4}[.:)\s]+/,"");
+    // bare line-number-only lines
+    if(/^\d{1,4}$/.test(s))return;
+
+    if(!s)return;
+
+    // ── document metadata / headers ──
+    if(/^(as\s+broadcast|broadcast\s+script|shooting\s+script|final\s+draft|draft|revision|rev\.?|page|scene|episode|ep\.?|series|prod(uction)?\.?\s*(no|number|#)|©|copyright|confidential|property of)/i.test(s))return;
+    // date-only lines (07/07/25, 7 July 2025, etc.)
+    if(/^\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}$/.test(s))return;
+    if(/^\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{2,4}$/i.test(s))return;
+    // page markers ("Page 3", "3.", "- 3 -")
+    if(/^-?\s*page\s+\d+\s*-?$/i.test(s))return;
+    if(/^-\s*\d+\s*-$/.test(s))return;
+    // standalone timecode lines
+    if(/^\d{1,2}:\d{2}(:\d{2})?([.,]\d+)?$/.test(s))return;
+
+    // ── scene headings / transitions ──
+    if(/^(INT\.|EXT\.|INT\/EXT|I\/E|FADE|CUT TO|DISSOLVE|SMASH CUT|MATCH CUT|WIPE|BLACK|TITLE|SUPER|VO|V\.O\.|O\.S\.)/i.test(s))return;
+
+    // ── parentheticals / stage directions on their own line ──
+    if(/^\(.*\)$/.test(s))return;
+    if(/^\[.*\]$/.test(s))return;
+
+    // ── lone character name / all-caps heading line ──
+    if(/^[A-Z][A-Z0-9 .'&\-]{1,30}$/.test(s) && s.length<32)return;
+
+    // ── inline cleanups on dialogue lines ──
+    s=s.replace(/^[A-Z][A-Z0-9 .'&\-]{1,30}:\s*/,"");   // "SARAH:" prefix
+    s=s.replace(/\([^)]*\)/g," ");                        // inline (parentheticals)
+    s=s.replace(/\[[^\]]*\]/g," ");                        // inline [directions]
+
+    s=s.trim();
+    if(s)kept.push(s);
+  });
+  return kept.join(" ").replace(/\s+/g," ").trim();
+}
+
+// ── tokens ──
+function norm(w){ return w.toLowerCase().replace(/[^a-z0-9]/g,""); }
+function cueTokens(cs){ var a=[]; cs.forEach(function(c,ci){ c.text.split(/\s+/).filter(Boolean).forEach(function(w){ if(norm(w))a.push({raw:w,norm:norm(w),cue:ci}); }); }); return a; }
+function scriptTokens(s){ return s.split(/\s+/).filter(Boolean).map(function(w){return {raw:w,norm:norm(w)};}).filter(function(t){return t.norm;}); }
+
+// ── alignment: anchor-based (robust at full-episode scale) ──
+// A full global DP over thousands of words drifts and mis-aligns. Instead we
+// pin the two streams together at "anchor" words (words appearing exactly once
+// in each, in monotonic order) and only run a small local alignment in the
+// gaps between anchors. Fast and accurate on real dialogue.
+
+function alignSmall(A,B){
+  var n=A.length,m=B.length,GAP=-1,MATCH=2,MIS=-1;
+  if(n===0&&m===0) return [];
+  if(n===0) return B.map(function(b){return {a:null,b:b};});
+  if(m===0) return A.map(function(a){return {a:a,b:null};});
+  var dp=[]; for(var i=0;i<=n;i++){ dp.push(new Float32Array(m+1)); }
+  for(i=0;i<=n;i++)dp[i][0]=i*GAP;
+  for(var j=0;j<=m;j++)dp[0][j]=j*GAP;
+  for(i=1;i<=n;i++)for(j=1;j<=m;j++){var s=A[i-1].norm===B[j-1].norm?MATCH:MIS;dp[i][j]=Math.max(dp[i-1][j-1]+s,dp[i-1][j]+GAP,dp[i][j-1]+GAP);}
+  var al=[];i=n;j=m;
+  while(i>0&&j>0){
+    var s2=A[i-1].norm===B[j-1].norm?MATCH:MIS;
+    if(dp[i][j]===dp[i-1][j-1]+s2){al.unshift({a:A[i-1],b:B[j-1]});i--;j--;}
+    else if(dp[i][j]===dp[i][j-1]+GAP){al.unshift({a:null,b:B[j-1]});j--;}
+    else{al.unshift({a:A[i-1],b:null});i--;}
+  }
+  while(i>0)al.unshift({a:A[--i],b:null});
+  while(j>0)al.unshift({a:null,b:B[--j]});
+  return al;
+}
+
+function findAnchors(A,B){
+  var countA={},countB={},posA={},posB={};
+  A.forEach(function(t,i){countA[t.norm]=(countA[t.norm]||0)+1;posA[t.norm]=i;});
+  B.forEach(function(t,i){countB[t.norm]=(countB[t.norm]||0)+1;posB[t.norm]=i;});
+  var cand=[];
+  Object.keys(countA).forEach(function(w){
+    if(w.length>=3 && countA[w]===1 && countB[w]===1) cand.push({ai:posA[w],bi:posB[w]});
+  });
+  cand.sort(function(x,y){return x.ai-y.ai;});
+  // longest increasing subsequence on bi → keep monotonic anchor chain
+  var tails=[],parent=[];
+  cand.forEach(function(c,idx){
+    var lo=0,hi=tails.length;
+    while(lo<hi){var mid=(lo+hi)>>1; if(cand[tails[mid]].bi<c.bi)lo=mid+1; else hi=mid;}
+    parent[idx]=lo>0?tails[lo-1]:-1;
+    if(lo===tails.length)tails.push(idx); else tails[lo]=idx;
+  });
+  var seq=[],k=tails.length?tails[tails.length-1]:-1;
+  while(k>=0){seq.unshift(cand[k]);k=parent[k];}
+  return seq;
+}
+
+function align(A,B){
+  var anchors=findAnchors(A,B);
+  // If almost no anchors (unrelated texts, or tiny), fall back to one small align.
+  if(anchors.length < 2) return alignSmall(A,B);
+  var out=[],ai=0,bi=0;
+  anchors.forEach(function(anc){
+    alignSmall(A.slice(ai,anc.ai), B.slice(bi,anc.bi)).forEach(function(c){out.push(c);});
+    out.push({a:A[anc.ai],b:B[anc.bi]});
+    ai=anc.ai+1; bi=anc.bi+1;
+  });
+  alignSmall(A.slice(ai), B.slice(bi)).forEach(function(c){out.push(c);});
+  return out;
+}
+
+// ── build per-cue op lists ──
+function buildDiscrepancies(){
+  var scriptClean = cleanScript(scriptText);
+  var B = scriptTokens(scriptClean);
+  var A = cueTokens(cues);
+  // GUARD: if the script produced almost nothing, extraction/cleaning failed —
+  // don't emit a wall of false "delete everything" cards.
+  window._diag = { scriptChars: scriptText.length, scriptCleanWords: B.length, cueWords: A.length, sample: scriptClean.slice(0,160) };
+  if (B.length < 5) {
+    throw new Error("The script came through nearly empty ("+B.length+" words). It may not have extracted — try pasting the script text instead of uploading.");
+  }
+  // Sanity: how much of the SRT actually overlaps the script?
+  var scriptSet={}; B.forEach(function(t){scriptSet[t.norm]=1;});
+  var hit=0; A.forEach(function(t){ if(scriptSet[t.norm])hit++; });
+  var overlap = A.length ? hit/A.length : 0;
+  window._diag.overlap = overlap;
+  if (overlap < 0.15) {
+    throw new Error("Only "+Math.round(overlap*100)+"% of subtitle words appear in the script — they may not match (wrong script/episode?), or the script didn't read correctly.");
+  }
+
+  var al = align(A,B);
+  // Track, per cue: the ops, and the min/max script-token index it aligned to,
+  // so each card can show and highlight the exact script passage it drew from.
+  var per=cues.map(function(){return {ops:[], bMin:Infinity, bMax:-1, matched:0, total:0};});
+  var lastCue=0, bIdx=0;
+  al.forEach(function(col){
+    var ci=col.a?col.a.cue:lastCue;
+    if(col.a)lastCue=col.a.cue;
+    // bIdx tracks position in B (script) as we walk the alignment
+    if(col.b){
+      per[ci].bMin=Math.min(per[ci].bMin,bIdx);
+      per[ci].bMax=Math.max(per[ci].bMax,bIdx);
+    }
+    if(col.a&&col.b){
+      var same=col.a.norm===col.b.norm;
+      per[ci].ops.push(same?{op:"=",raw:col.b.raw}:{op:"~",from:col.a.raw,to:col.b.raw});
+      per[ci].total++; if(same)per[ci].matched++;
+    } else if(col.a&&!col.b){ per[ci].ops.push({op:"-",raw:col.a.raw}); per[ci].total++; }
+    else if(!col.a&&col.b){ per[ci].ops.push({op:"+",raw:col.b.raw}); }
+    if(col.b)bIdx++;
+  });
+  // trim leading/trailing pure inserts (neighbour bleed)
+  per.forEach(function(p){
+    while(p.ops.length&&p.ops[p.ops.length-1].op==="+")p.ops.pop();
+    while(p.ops.length&&p.ops[0].op==="+")p.ops.shift();
+  });
+  window._scriptToks = B;   // expose cleaned script tokens for the script column
+  // Per-cue script span (for ALL cues, not just flagged) so the two-column
+  // view can scroll the script to wherever any cue maps.
+  window._cueSpans = per.map(function(p){
+    return { lo: p.bMin===Infinity?-1:p.bMin, hi: p.bMax<0?-1:p.bMax };
+  });
+  var out=[];
+  per.forEach(function(p,ci){
+    var ops=p.ops;
+    var changed=ops.some(function(o){return o.op!=="=";});
+    if(!changed)return;
+    // Confidence: fraction of the cue's words that actually matched the script.
+    var conf = p.total ? p.matched/p.total : 0;
+    var kind = classifyOps(ops);
+    var lowConf = conf < 0.4;   // below this the "correction" is unreliable
+    var corrected=ops.filter(function(o){return o.op!=="-";}).map(function(o){return o.op==="~"?o.to:o.raw;}).join(" ");
+    // human-readable note of what changed (instead of red/green soup)
+    var note = describeChange(ops);
+    var spanLo = p.bMin===Infinity ? -1 : p.bMin;
+    var spanHi = p.bMax<0 ? -1 : p.bMax;
+    out.push({
+      cueIdx:ci, ops:ops, corrected:corrected, kind:kind, note:note,
+      conf:conf, lowConf:lowConf,
+      spanLo:spanLo, spanHi:spanHi,
+      decision:"pending", editedText:null, customSpan:null
+    });
+  });
+  return out;
+}
+
+// Plain-language description of what changed — replaces the red/green diff.
+function describeChange(ops){
+  var subs=ops.filter(function(o){return o.op==="~";});
+  var dels=ops.filter(function(o){return o.op==="-";});
+  var adds=ops.filter(function(o){return o.op==="+";});
+  var parts=[];
+  if(subs.length){
+    if(subs.length<=2) subs.forEach(function(o){ parts.push('“'+o.from+'” → “'+o.to+'”'); });
+    else parts.push(subs.length+' words changed');
+  }
+  if(adds.length){
+    if(adds.length<=2) parts.push('added '+adds.map(function(o){return '“'+o.raw+'”';}).join(', '));
+    else parts.push(adds.length+' words added from script');
+  }
+  if(dels.length){
+    if(dels.length<=2) parts.push('removed '+dels.map(function(o){return '“'+o.raw+'”';}).join(', '));
+    else parts.push(dels.length+' words removed');
+  }
+  return parts.join(' · ');
+}
+
+// Label a discrepancy by what kind of change dominates.
+function classifyOps(ops){
+  var subs=ops.filter(function(o){return o.op==="~";}).length;
+  var dels=ops.filter(function(o){return o.op==="-";}).length;
+  var adds=ops.filter(function(o){return o.op==="+";}).length;
+  if(adds>0 && subs===0 && dels===0) return "missing";   // script has words the SRT dropped
+  if(dels>0 && subs===0 && adds===0) return "extra";     // SRT has words not in script
+  if(subs>0 && dels===0 && adds===0) return "wording";   // word swaps (mishears)
+  return "mixed";
+}
+
+function spanText(lo,hi){
+  var toks=window._scriptToks||[]; var out=[];
+  for(var i=lo;i<=hi && i<toks.length;i++) out.push(toks[i].raw);
+  return out.join(" ");
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TWO-COLUMN CONFORM VIEW
+// Left: every SRT cue (flagged ones marked). Right: full script, click to
+// re-point. A fix bar shows the focused correction; Continue jumps to next fix.
+// ─────────────────────────────────────────────────────────────────────────────
+var flaggedByCue = {};   // cueIdx -> discrepancy
+var manualEdits = {};    // cueIdx -> manually-edited text (any cue, flagged or not)
+var scriptWordEls = [];  // script column word spans
+var selAnchor = null;    // click-extend anchor in script column
+
+function buildReviewView(){
+  discrepancies.forEach(function(d){ flaggedByCue[d.cueIdx]=d; });
+  renderSRTColumn();
+  renderScriptColumn();
+  focusFix(0);   // focus first flagged cue
+  document.getElementById("rev-total").textContent=discrepancies.length;
+}
+
+function cueDisplayText(ci){
+  // priority: manual edit > accepted correction > original
+  if(manualEdits[ci]!=null) return manualEdits[ci];
+  var d=flaggedByCue[ci];
+  if(d && d.decision==="accept") return d.editedText!=null?d.editedText:d.corrected;
+  return cues[ci].text;
+}
+
+function renderSRTColumn(){
+  var col=document.getElementById("srt-col");
+  col.innerHTML = cues.map(function(cue,ci){
+    var d=flaggedByCue[ci];
+    var edited = manualEdits[ci]!=null;
+    var cls="cue-row "+(d?"flagged":"clean")+(edited?" edited":"")+((d&&d.decision==="accept")?" done":"");
+    var dot = d ? '<span class="flag-dot">●</span>' : '';
+    var applied=(d && d.decision==="accept") || edited;
+    var txt=cueDisplayText(ci);
+    var shownText = applied
+      ? '<span class="applied-text">'+esc(txt)+'</span>'
+      : esc(txt);
+    return '<div class="'+cls+'" data-cue="'+ci+'" id="cue-row-'+ci+'">'+
+             '<span class="cue-tc">'+cue.start+' <span class="edit-pencil" title="edit this line">✎</span></span>'+
+             '<span class="cue-text">'+dot+shownText+'</span>'+
+           '</div>';
+  }).join("");
+  col.querySelectorAll(".cue-row").forEach(function(row){
+    var ci=+row.getAttribute("data-cue");
+    // pencil or double-click → inline edit any line
+    var pencil=row.querySelector(".edit-pencil");
+    if(pencil) pencil.addEventListener("click",function(e){ e.stopPropagation(); editCueInline(ci); });
+    row.addEventListener("dblclick",function(){ editCueInline(ci); });
+    // single click → if flagged, focus its fix; otherwise just select/scroll
+    row.addEventListener("click",function(){
+      if(flaggedByCue[ci]){ focusFix(discrepancies.indexOf(flaggedByCue[ci])); }
+      else {
+        document.querySelectorAll(".cue-row").forEach(function(r){r.classList.remove("active");});
+        row.classList.add("active");
+      }
+    });
+  });
+}
+
+// Inline-edit any cue's text directly in the SRT column.
+function editCueInline(ci){
+  var row=document.getElementById("cue-row-"+ci);
+  if(!row || row.querySelector(".cue-edit-input")) return;
+  var textSpan=row.querySelector(".cue-text");
+  var current=cueDisplayText(ci);
+  textSpan.innerHTML='<input class="cue-edit-input" value="'+esc(current).replace(/"/g,"&quot;")+'">'+
+                     '<div class="cue-edit-actions"><button class="cue-save">save</button><button class="cue-cancel">cancel</button>'+
+                     (manualEdits[ci]!=null?'<button class="cue-revert">revert</button>':'')+'</div>';
+  var input=textSpan.querySelector(".cue-edit-input");
+  input.focus(); input.select();
+  function save(){
+    var v=input.value;
+    if(v.trim()==="" || v===cues[ci].text){ delete manualEdits[ci]; }
+    else { manualEdits[ci]=v; }
+    renderSRTColumn(); refreshCounts();
+  }
+  function cancel(){ renderSRTColumn(); }
+  textSpan.querySelector(".cue-save").addEventListener("click",function(e){ e.stopPropagation(); save(); });
+  textSpan.querySelector(".cue-cancel").addEventListener("click",function(e){ e.stopPropagation(); cancel(); });
+  var rev=textSpan.querySelector(".cue-revert");
+  if(rev) rev.addEventListener("click",function(e){ e.stopPropagation(); delete manualEdits[ci]; renderSRTColumn(); refreshCounts(); });
+  input.addEventListener("keydown",function(e){
+    if(e.key==="Enter"){ e.preventDefault(); save(); }
+    if(e.key==="Escape"){ e.preventDefault(); cancel(); }
+  });
+  input.addEventListener("click",function(e){ e.stopPropagation(); });
+}
+
+// keep the "X edits" counter honest across manual edits + accepted fixes
+function refreshCounts(){
+  var manual=Object.keys(manualEdits).length;
+  var acc=discrepancies.filter(function(d){return d.decision==="accept";}).length;
+  var el=document.getElementById("manual-count");
+  if(el) el.textContent = manual>0 ? (" · "+manual+" manual edit"+(manual===1?"":"s")) : "";
+}
+
+function renderScriptColumn(){
+  var col=document.getElementById("script-col");
+  var toks=window._scriptToks||[];
+  col.innerHTML = toks.map(function(t,i){
+    return '<span class="sw" data-i="'+i+'">'+esc(t.raw)+'</span> ';
+  }).join("");
+  scriptWordEls=[].slice.call(col.querySelectorAll(".sw"));
+  // click-to-extend selection, and click-a-line via double context
+  col.addEventListener("click",function(e){
+    var el=e.target;
+    if(!el.classList||!el.classList.contains("sw"))return;
+    var i=+el.getAttribute("data-i");
+    if(selAnchor===null){ selAnchor=i; paintScript(i,i); applySpan(i,i); }
+    else { var lo=Math.min(selAnchor,i),hi=Math.max(selAnchor,i); paintScript(lo,hi); applySpan(lo,hi); selAnchor=null; }
+  });
+}
+
+function paintScript(lo,hi){
+  scriptWordEls.forEach(function(w){ var i=+w.getAttribute("data-i"); w.classList.toggle("sw-hit", i>=lo && i<=hi); });
+}
+
+// apply a chosen script span to the currently focused fix
+function applySpan(lo,hi){
+  if(currentFixIdx<0)return;
+  var d=discrepancies[currentFixIdx];
+  d.customSpan=[lo,hi];
+  var txt=spanText(lo,hi);
+  document.getElementById("fixbar-correction").textContent=txt;
+  document.getElementById("fixbar-note").textContent="Re-pointed to script selection";
+  var ef=document.getElementById("fb-edit-field"); if(ef) ef.value=txt;
+}
+
+var currentFixIdx=-1;
+function focusFix(idx){
+  if(idx>=discrepancies.length){ finishReview(); return; }
+  currentFixIdx=idx;
+  selAnchor=null;
+  var d=discrepancies[idx];
+  var cue=cues[d.cueIdx];
+
+  // highlight active cue row, scroll it into view
+  document.querySelectorAll(".cue-row").forEach(function(r){ r.classList.remove("active"); });
+  var row=document.getElementById("cue-row-"+d.cueIdx);
+  if(row){ row.classList.add("active"); row.scrollIntoView({block:"center",behavior:"smooth"}); }
+
+  // highlight + scroll the script column to the matched span
+  var lo = d.customSpan?d.customSpan[0]:d.spanLo, hi = d.customSpan?d.customSpan[1]:d.spanHi;
+  if(lo>=0){ paintScript(lo,hi);
+    var firstHit=document.querySelector('#script-col .sw[data-i="'+lo+'"]');
+    if(firstHit) firstHit.scrollIntoView({block:"center",behavior:"smooth"});
+  } else { paintScript(-1,-1); }
+
+  // fill the fix bar
+  var fb=document.getElementById("fixbar"); fb.classList.remove("hidden");
+  var confPct=Math.round(d.conf*100);
+  var noteText = d.lowConf
+    ? "⚠ Low confidence ("+confPct+"% match) — check the script selection is right"
+    : (d.note || "Correction from script");
+  document.getElementById("fixbar-note").textContent=noteText;
+  document.getElementById("fixbar-correction").textContent = d.customSpan ? spanText(d.customSpan[0],d.customSpan[1]) : d.corrected;
+  var ef=document.getElementById("fb-edit-field");
+  ef.value = d.customSpan ? spanText(d.customSpan[0],d.customSpan[1]) : d.corrected;
+  ef.classList.add("hidden");
+
+  // progress
+  document.getElementById("rev-current").textContent=(idx+1);
+  document.getElementById("rev-remaining").textContent=(discrepancies.length-idx-1)+" left";
+  document.getElementById("rev-progress").style.width=(idx/discrepancies.length*100)+"%";
+}
+
+function resolveFix(kind){
+  if(currentFixIdx<0)return;
+  var d=discrepancies[currentFixIdx];
+  d.decision=kind;
+  if(kind==="accept"){
+    var ef=document.getElementById("fb-edit-field");
+    if(!ef.classList.contains("hidden") && ef.value.trim()!==""){ d.editedText=ef.value; }
+    else if(d.customSpan){ d.editedText=spanText(d.customSpan[0],d.customSpan[1]); }
+  }
+  // re-render the SRT column so the row reflects its new state consistently
+  renderSRTColumn(); refreshCounts();
+  // advance to next unresolved fix
+  var next=currentFixIdx+1;
+  focusFix(next);
+}
+
+function finishReview(){
+  currentFixIdx=-1;
+  document.getElementById("fixbar").classList.add("hidden");
+  document.getElementById("fb-edit-field").classList.add("hidden");
+  document.getElementById("rev-progress").style.width="100%";
+  document.getElementById("rev-current").textContent=discrepancies.length;
+  document.getElementById("rev-remaining").textContent="done";
+  var acc=discrepancies.filter(function(d){return d.decision==="accept";}).length;
+  var skip=discrepancies.filter(function(d){return d.decision!=="accept";}).length;
+  var s=document.getElementById("rev-summary");
+  s.classList.remove("hidden");
+  var manual=Object.keys(manualEdits).length;
+  s.innerHTML='<span class="s-acc">'+acc+' applied</span><span class="s-rej">'+skip+' skipped</span>'+(manual?'<span class="s-left">'+manual+' manual edit'+(manual===1?"":"s")+'</span>':'');
+  document.getElementById("panel-export").classList.remove("hidden");
+  var totalChanges=acc+manual;
+  document.getElementById("export-msg").textContent=totalChanges+" change"+(totalChanges===1?"":"s")+" will be applied ("+acc+" from script, "+manual+" manual). Timecodes unchanged.";
+  setStep(4);
+  document.getElementById("panel-export").scrollIntoView({behavior:"smooth"});
+}
+
+// ── build corrected SRT ──
+function buildSRT(){
+  // map cueIdx -> applied text. Priority: a manual per-cue edit wins over an
+  // accepted flagged correction, which wins over the original.
+  var applied={};
+  discrepancies.forEach(function(d){
+    if(d.decision==="accept") applied[d.cueIdx]= d.editedText!=null ? d.editedText : d.corrected;
+  });
+  Object.keys(manualEdits).forEach(function(ci){ applied[ci]=manualEdits[ci]; });
+  return cues.map(function(c,ci){
+    // untouched cues go out exactly as they came in, line breaks included
+    var text = applied[ci]!=null ? rewrapLike(applied[ci], c.rawLines)
+                                 : (c.rawLines ? c.rawLines.join("\n") : c.text);
+    return (ci+1)+"\n"+c.start+" --> "+c.end+"\n"+text;
+  }).join("\n\n")+"\n";
+}
+
+// ── WIRING ──
+wireDrop(document.getElementById("dz-srt"),document.getElementById("srt-input"),async function(file){
+  srtText=await readText(file);
+  var fn=document.getElementById("srt-fn");
+  // Check it's a usable subtitle file now, rather than at the align step.
+  var n=parseSRT(srtText).length;
+  if(!n){
+    fn.innerHTML='<span style="color:var(--del)">'+esc(file.name)+' \u2014 no subtitles found. Is it a valid .srt?</span>';
+    document.getElementById("dz-srt").classList.remove("loaded");
+    window._srtLoaded=false; checkReady(); return;
+  }
+  fn.textContent=file.name+" \u2014 "+n+" subtitle"+(n===1?"":"s");
+  document.getElementById("dz-srt").classList.add("loaded");
+  window._srtLoaded=true; checkReady();
+});
+
+document.querySelectorAll(".mode-tab").forEach(function(tab){
+  tab.addEventListener("click",function(){
+    scriptMode=tab.getAttribute("data-smode");
+    document.querySelectorAll(".mode-tab").forEach(function(t){t.classList.toggle("active",t===tab);});
+    var paste=scriptMode==="paste";
+    document.getElementById("dz-script").classList.toggle("hidden",paste);
+    document.getElementById("script-paste").classList.toggle("hidden",!paste);
+    checkReady();
+  });
+});
+document.getElementById("script-paste").addEventListener("input",function(){
+  scriptText=this.value; window._scriptLoaded=this.value.trim()!==""; checkReady();
+});
+wireDrop(document.getElementById("dz-script"),document.getElementById("script-input"),async function(file){
+  scriptText=await readScript(file);
+  document.getElementById("script-fn").textContent=file.name;
+  document.getElementById("dz-script").classList.add("loaded");
+  window._scriptLoaded=true; checkReady();
+  // Image-only PDF? Offer OCR rather than letting alignment fail on empty text.
+  var hint=document.getElementById("load-hint");
+  if(window._pdfNeedsOCR && window._ocrFile){
+    window._scriptLoaded=false; checkReady();   // not usable until OCR runs
+    hint.innerHTML='<span style="color:var(--sub)">This PDF has no text layer &mdash; '+
+      (window._ocrPages===1 ? 'its page is an image' : 'its '+window._ocrPages+' pages are images')+
+      ' (scanned or picture-per-page export), so there\'s nothing to read directly.</span><br>'+
+      '<button class="btn btn-sm" id="ocr-btn" style="margin-top:8px">Read text with OCR</button> '+
+      '<span class="hint" id="ocr-status" style="margin-left:8px"></span>';
+    document.getElementById("ocr-btn").addEventListener("click",async function(){
+      var btn=this, status=document.getElementById("ocr-status");
+      btn.disabled=true;
+      status.textContent="starting OCR…";
+      try{
+        scriptText=await ocrPDF(window._ocrFile,function(p,total){
+          status.textContent="reading page "+p+" of "+total+"…";
+        });
+        var words=scriptText.split(/\s+/).filter(Boolean).length;
+        if(words<20){
+          status.innerHTML='<span style="color:var(--del)">OCR found very little text ('+words+' words). The scan may be too low-quality &mdash; pasting the script text is the reliable route.</span>';
+          btn.disabled=false; return;
+        }
+        window._pdfNeedsOCR=false;
+        window._scriptLoaded=true; checkReady();
+        status.innerHTML='<span style="color:var(--add)">OCR complete &mdash; read '+words+' words. Ready to align.</span>';
+      }catch(err){
+        status.innerHTML='<span style="color:var(--del)">OCR failed: '+esc(err.message)+'</span>';
+        btn.disabled=false;
+      }
+    });
+  } else {
+    if(hint) hint.innerHTML="";
+  }
+});
+
+function checkReady(){
+  var ready = window._srtLoaded && window._scriptLoaded;
+  document.getElementById("align-btn").disabled=!ready;
+}
+
+document.getElementById("align-btn").addEventListener("click",function(){
+  var spin=document.getElementById("align-spin"); spin.classList.remove("hidden");
+  var hint=document.getElementById("load-hint");
+  setTimeout(function(){
+    try{
+      cues=parseSRT(srtText);
+      if(!cues.length){ hint.innerHTML='<span style="color:var(--del)">No cues found — is this a valid .srt?</span>'; spin.classList.add("hidden"); return; }
+      discrepancies=buildDiscrepancies();
+      flaggedByCue={}; currentFixIdx=-1; selAnchor=null;
+      var d=window._diag||{};
+      var diagLine='<span style="color:var(--muted)">read '+d.scriptCleanWords+' script words · '+cues.length+' cues · '+Math.round((d.overlap||0)*100)+'% overlap</span>';
+      if(!discrepancies.length){
+        hint.innerHTML='<span style="color:var(--add)">No discrepancies found — the subtitle already matches the script.</span><br>'+diagLine;
+        spin.classList.add("hidden"); return;
+      }
+      hint.innerHTML=diagLine;
+      document.getElementById("panel-review").classList.remove("hidden");
+      setStep(3);
+      buildReviewView();
+      document.getElementById("panel-review").scrollIntoView({behavior:"smooth"});
+    }catch(err){
+      var d2=window._diag||{};
+      var diag = d2.scriptChars!==undefined
+        ? '<br><span style="color:var(--muted)">diagnostic: script file was '+d2.scriptChars+' chars, cleaned to '+d2.scriptCleanWords+' words. First words read: “'+esc((d2.sample||"").trim())+'”</span>'
+        : '';
+      hint.innerHTML='<span style="color:var(--del)">'+esc(err.message)+'</span>'+diag;
+    }
+    spin.classList.add("hidden");
+  },30);
+});
+
+document.getElementById("export-btn").addEventListener("click",function(){
+  var srt=buildSRT();
+  var blob=new Blob([srt],{type:"text/plain"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="corrected.srt"; a.click();
+});
+document.getElementById("restart-btn").addEventListener("click",function(){ location.reload(); });
+
+// fix-bar actions (two-column review)
+document.getElementById("fb-accept").addEventListener("click",function(){ resolveFix("accept"); });
+document.getElementById("fb-skip").addEventListener("click",function(){ resolveFix("skip"); });
+document.getElementById("fb-edit").addEventListener("click",function(){
+  var ef=document.getElementById("fb-edit-field");
+  ef.classList.toggle("hidden");
+  if(!ef.classList.contains("hidden")) ef.focus();
+});
+document.getElementById("finish-btn").addEventListener("click",function(){ finishReview(); });
+</script>
+</body>
+</html>

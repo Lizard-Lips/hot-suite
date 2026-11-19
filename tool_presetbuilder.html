@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preset Builder — Lizard Lips</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d0a; --surface:#111511; --border:#232a23;
+    --phos:#8fff6a; --accent:#e8ff47; --accent2:#47c8ff;
+    --text:#e8f0e4; --muted:#5f6b5c;
+    --pass:#8fff6a; --fail:#ff6b6b; --warn:#ffcf47;
+    --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+    --glow:0 0 6px rgba(232,255,71,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;font-size:13px}
+  header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:16px;background:var(--surface)}
+  header h1{font-size:15px;font-weight:500;letter-spacing:.02em;color:var(--accent);text-shadow:var(--glow)}
+  header span{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  main{max-width:1060px;margin:0 auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:18px}
+  main{align-items:stretch !important}
+  .steps{display:flex;width:100%}
+  .step{flex:1;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    padding:8px 8px 8px 0;border-top:2px solid var(--border);white-space:nowrap}
+  .step.active{color:var(--accent);border-top-color:var(--accent)}
+  .step.done{color:var(--pass);border-top-color:var(--pass)}
+  .step i{font-style:normal;opacity:.6;margin-right:6px}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px;
+    display:flex;flex-direction:column;gap:14px;width:100%}
+  .panel-title{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent2);display:flex;gap:8px}
+  .panel-title .n{color:var(--muted)}
+  .dz{border:1.5px dashed var(--border);border-radius:4px;padding:24px;text-align:center;cursor:pointer;
+    transition:border-color .2s,background .2s}
+  .dz:hover,.dz.drag{border-color:var(--accent);background:rgba(232,255,71,.03)}
+  .dz.loaded{border-color:var(--accent2);border-style:solid}
+  .dz .t{font-size:15px;margin-bottom:4px}
+  .dz .s{font-size:11px;color:var(--muted)}
+  .dz .fn{font-size:11px;color:var(--accent2);margin-top:8px}
+  input[type=file]{display:none}
+  .tabs{display:flex;gap:4px}
+  .tabs button{font-family:var(--mono);font-size:11px;padding:5px 12px;border:1px solid var(--border);
+    background:var(--bg);color:var(--muted);cursor:pointer;border-radius:3px}
+  .tabs button.on{color:var(--accent);border-color:var(--accent);background:rgba(232,255,71,.04)}
+  textarea{width:100%;min-height:100px;resize:vertical;background:var(--bg);border:1px solid var(--border);
+    color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.7;padding:12px 14px;border-radius:4px;outline:none}
+  textarea:focus{border-color:var(--accent)}
+  textarea::placeholder{color:var(--muted);opacity:.6}
+  .btn{font-family:var(--mono);font-size:12px;padding:9px 17px;border-radius:3px;border:1px solid var(--accent);
+    background:var(--accent);color:var(--bg);cursor:pointer;font-weight:500;letter-spacing:.03em}
+  .btn:hover{opacity:.85}
+  .btn:disabled{opacity:.3;cursor:not-allowed}
+  .btn-ghost{background:none;color:var(--accent)}
+  .btn-sm{padding:6px 12px;font-size:11px}
+  .btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .hint{font-size:11px;color:var(--muted);line-height:1.6}
+  .hint b{color:var(--accent)}
+  .hidden{display:none!important}
+  /* what the base preset makes */
+  .spec{border:1px solid var(--border);border-radius:4px;overflow:hidden}
+  .spec-row{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:8px 13px;font-size:12px;
+    border-bottom:1px solid #1a201a}
+  .spec-row:last-child{border-bottom:0}
+  .spec-row .k{color:var(--muted)}
+  /* change list */
+  .chg{border:1px solid var(--border);border-radius:4px;overflow:hidden}
+  .chg-hd,.chg-row{display:grid;grid-template-columns:150px 1fr 1fr;gap:12px;padding:8px 13px;
+    font-size:12px;align-items:baseline}
+  .chg-hd{background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);font-size:9px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .chg-row{border-bottom:1px solid #1a201a}
+  .chg-row:last-child{border-bottom:0}
+  .chg-row .from{color:var(--muted);text-decoration:line-through}
+  .chg-row .to{color:var(--pass)}
+  .chg-row .val{color:var(--text)}
+  .chg-row .src-spec{color:var(--muted);font-size:11px;font-style:italic}
+  .chg-row .src-def{color:var(--warn);font-size:11px}
+  .skip{border:1px solid rgba(255,207,71,.3);background:rgba(255,207,71,.05);border-radius:4px;padding:10px 13px;
+    display:flex;flex-direction:column;gap:7px}
+  .skip-hd{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--warn)}
+  .skip-row{font-size:12px;line-height:1.5}
+  .skip-row b{color:var(--text);font-weight:500}
+  .skip-row span{color:var(--muted)}
+  .same{font-size:12px;color:var(--pass)}
+  .name-in{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);
+    font-size:12px;padding:8px 11px;border-radius:3px;outline:none;min-width:340px}
+  .name-in:focus{border-color:var(--accent)}
+  footer{padding:14px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;
+    font-size:10px;color:var(--muted)}
+  .warn-txt{color:var(--warn);opacity:.85}
+</style>
+</head>
+<body>
+<header>
+  <h1>PRESET BUILDER</h1>
+  <span>spec sheet &rarr; Premiere export preset</span>
+</header>
+
+<main>
+  <div class="steps">
+    <div class="step active" data-step="1"><i>01</i>Delivery spec</div>
+    <div class="step" data-step="2"><i>02</i>Check the preset</div>
+    <div class="step" data-step="3"><i>03</i>Download</div>
+  </div>
+
+  <div class="panel" id="p-spec">
+    <div class="panel-title"><span class="n">01</span> Delivery spec</div>
+    <div class="tabs">
+      <button class="on" data-m="upload">Upload spec sheet</button>
+      <button data-m="paste">Paste / type</button>
+    </div>
+    <div class="dz" id="dz-spec">
+      <div class="t">Drop the spec sheet</div>
+      <div class="s">PDF &middot; DOCX &middot; XLSX &middot; TXT</div>
+      <div class="fn" id="spec-fn"></div>
+    </div>
+    <input type="file" id="spec-input" accept=".pdf,.docx,.xlsx,.xls,.txt,.csv">
+    <textarea id="spec-paste" class="hidden" placeholder="e.g. 1080x1920, 25fps progressive, ProRes 422, MOV, 48kHz stereo"></textarea>
+    <div class="btn-row">
+      <button class="btn" id="read-btn">Make the preset</button>
+      <span class="hint hidden" id="spin">reading…</span>
+    </div>
+    <div class="hint" id="spec-hint"></div>
+  </div>
+
+  <div class="panel hidden" id="p-review">
+    <div class="panel-title"><span class="n">02</span> Your preset</div>
+    <div id="changes"></div>
+    <div id="skipped"></div>
+  </div>
+
+  <div class="panel hidden" id="p-out">
+    <div class="panel-title"><span class="n">03</span> Download</div>
+    <div class="btn-row">
+      <input class="name-in" id="preset-name" placeholder="preset name, as it'll appear in Premiere">
+      <button class="btn" id="dl-btn">Download .epr</button>
+    </div>
+    <div class="hint">In Premiere, open the Preset Manager and import the file. It appears under your presets, ready to export with.</div>
+  </div>
+</main>
+
+<footer>
+  <span class="warn-txt">&#9888; Import it and export a test before relying on it for a delivery</span>
+  <span>Lizard Lips &middot; Preset Builder</span>
+</footer>
+
+<script>
+"use strict";
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+// @@ENGINE:libs BEGIN — generated from lib_loader.js by sync_engine.py. Do not edit here.
+// ═══════════════════════════════════════════════════════════════════════════
+// LIBRARIES — fetched the first time something needs them, never with the page.
+// Opening the suite used to download every reader (PDF, Word, Excel, media,
+// zip, OCR) whichever tool you wanted. Edit here; sync_engine.py copies this
+// into each tool that uses it.
+// ═══════════════════════════════════════════════════════════════════════════
+var LL_LIBS = {
+  pdfjs:     { url:"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", what:"the PDF reader",
+               has:function(){ return !!window.pdfjsLib; },
+               ready:function(){ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } },
+  mammoth:   { url:"https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js", what:"the Word reader",
+               has:function(){ return !!window.mammoth; } },
+  xlsx:      { url:"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", what:"the Excel reader",
+               has:function(){ return !!window.XLSX; } },
+  mediainfo: { url:"https://cdn.jsdelivr.net/npm/mediainfo.js@0.3.1/dist/umd/index.min.js", what:"the media reader",
+               has:function(){ return !!(window.MediaInfo||window.mediaInfoFactory); } },
+  jszip:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", what:"the zip tools",
+               has:function(){ return !!window.JSZip; } },
+  tesseract: { url:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", what:"the text reader",
+               has:function(){ return !!window.Tesseract; } },
+  jspdf:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", what:"the PDF tools",
+               has:function(){ return !!(window.jspdf && window.jspdf.jsPDF); } },
+  autotable: { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js", what:"the PDF tools",
+               needs:"jspdf", has:function(){ return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API.autoTable); } },
+  exceljs:   { url:"https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js", what:"the Excel tools",
+               has:function(){ return !!window.ExcelJS; } }
+};
+function needLib(name){
+  var lib=LL_LIBS[name], cache=window.__llLibs||(window.__llLibs={});
+  function ready(){ if(lib.ready) lib.ready(); }
+  if(lib.has()){ ready(); return Promise.resolve(); }
+  // load what it depends on first (once), then itself
+  if(lib.needs && !LL_LIBS[lib.needs].has()) return needLib(lib.needs).then(function(){ return needLib(name); });
+  if(!cache[name]) cache[name]=new Promise(function(res,rej){
+    var s=document.createElement("script"); s.src=lib.url;
+    s.onload=function(){ res(); };
+    // a failed load isn't remembered, so trying again after reconnecting works
+    s.onerror=function(){ delete cache[name]; rej(new Error("couldn't load "+lib.what+" \u2014 check your internet connection and try again")); };
+    document.head.appendChild(s);
+  });
+  return cache[name].then(ready);
+}
+
+// The standard PDF fonts can't draw Ł, ș, ț and so on, so names from Polish or
+// Romanian deliveries would come out as garbage. DejaVu covers them.
+var LL_FONTS = {
+  regular:"https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf",
+  bold:   "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf"
+};
+function llFont(which){
+  var cache=window.__llFonts||(window.__llFonts={});
+  if(cache[which]) return cache[which];
+  var fail=function(){ delete cache[which]; throw new Error("couldn't load the PDF font \u2014 check your internet connection and try again"); };
+  cache[which]=fetch(LL_FONTS[which]).then(function(r){ if(!r.ok) fail(); return r.arrayBuffer(); }, fail).then(function(ab){
+    var bytes=new Uint8Array(ab), bin="";
+    for(var i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000));
+    return btoa(bin);
+  });
+  return cache[which];
+}
+// A PDF ready for tables, with fonts that can draw any European name.
+async function newPdf(opts){
+  await needLib("autotable");
+  var f=await Promise.all([llFont("regular"), llFont("bold")]);
+  var doc=new window.jspdf.jsPDF(opts||{orientation:"landscape", unit:"pt", format:"a4"});
+  doc.addFileToVFS("DejaVuSans.ttf", f[0]);      doc.addFont("DejaVuSans.ttf","DejaVu","normal");
+  doc.addFileToVFS("DejaVuSans-Bold.ttf", f[1]); doc.addFont("DejaVuSans-Bold.ttf","DejaVu","bold");
+  return doc;
+}
+function saveBlob(blob, name){
+  var url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+// @@ENGINE:libs END
+// @@ENGINE:audio BEGIN — generated from audio_core.js by sync_engine.py. Do not edit here.
+// ═══════════════════════════════════════════════════════════════════════════
+// AUDIO CORE — loudness measurement, and getting audio out of files.
+// Shared by Delivery QC, the Loudness Analyser and the monday app. Edit it here;
+// sync_engine.py copies it into each.
+//
+// Loudness follows ITU-R BS.1770-4 and EBU R128: K-weighting, gated 400ms blocks
+// for integrated loudness, 3s short-term blocks for loudness range (EBU Tech
+// 3342), and 4x oversampled true peak. The meter takes audio in pieces, so a
+// long master is measured as it streams in rather than held in memory whole.
+//
+// Uncompressed audio is read straight out of the file: QuickTime (ProRes
+// masters, typically), WAV, BWF, RF64 and AIFF. No decoding, no resampling, and
+// only the audio bytes are touched, so a multi-gigabyte master costs what its
+// audio costs. Compressed audio (AAC, MP3) is decoded by the browser.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// K-weighting filter coefficients for a sample rate (libebur128's designs).
+function kWeighting(sr){
+  var f0=1681.974450955533, G=3.999843853973347, Q=0.7071752369554196, K=Math.tan(Math.PI*f0/sr);
+  var Vh=Math.pow(10,G/20), Vb=Math.pow(Vh,0.4996667741545416), a0=1+K/Q+K*K;
+  var s={b0:(Vh+Vb*K/Q+K*K)/a0, b1:2*(K*K-Vh)/a0, b2:(Vh-Vb*K/Q+K*K)/a0, a1:2*(K*K-1)/a0, a2:(1-K/Q+K*K)/a0};
+  f0=38.13547087602444; Q=0.5003270373238773; K=Math.tan(Math.PI*f0/sr);
+  var d=1+K/Q+K*K;
+  var h={b0:1, b1:-2, b2:1, a1:2*(K*K-1)/d, a2:(1-K/Q+K*K)/d};
+  return {s:s, h:h};
+}
+
+// 4x interpolation filter for true peak: windowed sinc, 48 taps as 4 phases of 12.
+var TP_PHASES=(function(){
+  var L=48, mid=(L-1)/2, h=[], p, k, n;
+  for(n=0;n<L;n++){
+    var t=(n-mid)/4, s=t===0?1:Math.sin(Math.PI*t)/(Math.PI*t);
+    h.push(s*(0.5-0.5*Math.cos(2*Math.PI*(n+0.5)/L)));
+  }
+  var ph=[];
+  for(p=0;p<4;p++){
+    var c=new Float64Array(12), sum=0;
+    for(k=0;k<12;k++){ c[k]=h[p+4*k]; sum+=c[k]; }
+    for(k=0;k<12;k++) c[k]/=sum;
+    ph.push(c);
+  }
+  return ph;
+})();
+
+function LoudnessMeter(sampleRate){
+  this.sr=sampleRate;
+  this.subLen=Math.round(sampleRate/10);       // 100ms sub-blocks
+  this.pow=[];                                  // channel-weighted mean square per sub-block
+  this.tp=0; this.sp=0; this.frames=0;
+  this.k=kWeighting(sampleRate);
+}
+LoudnessMeter.prototype.channel=function(gain){ return new MeterChannel(this, gain); };
+
+function MeterChannel(m, gain){
+  this.m=m; this.g=gain;
+  this.s1=0; this.s2=0; this.s3=0; this.s4=0;  // shelf state
+  this.h1=0; this.h2=0; this.h3=0; this.h4=0;  // high-pass state
+  this.acc=0; this.n=0; this.idx=0; this.count=0;
+  this.hist=new Float64Array(12); this.hp=0;   // last 12 input samples, for true peak
+}
+MeterChannel.prototype.push=function(x){
+  var m=this.m, s=m.k.s, h=m.k.h, sub=m.subLen, g=this.g, pow=m.pow, ph=TP_PHASES;
+  var s1=this.s1,s2=this.s2,s3=this.s3,s4=this.s4,h1=this.h1,h2=this.h2,h3=this.h3,h4=this.h4;
+  var acc=this.acc, n=this.n, idx=this.idx, hist=this.hist, hp=this.hp;
+  var tp=m.tp, sp=m.sp;
+  for(var i=0;i<x.length;i++){
+    var v=x[i];
+    // K-weighting: high shelf, then high pass
+    var y=s.b0*v+s.b1*s1+s.b2*s2-s.a1*s3-s.a2*s4; s2=s1; s1=v; s4=s3; s3=y;
+    var z=h.b0*y+h.b1*h1+h.b2*h2-h.a1*h3-h.a2*h4; h2=h1; h1=y; h4=h3; h3=z;
+    acc+=z*z;
+    if(++n===sub){ pow[idx]=(pow[idx]||0)+g*acc/sub; idx++; acc=0; n=0; }
+    // peaks
+    hist[hp]=v; hp=(hp+1)%12;
+    var a=v<0?-v:v;
+    if(a>sp) sp=a;
+    if(a>=tp*0.5){               // only samples near the running peak can hide a higher one
+      for(var p=0;p<4;p++){
+        var c=ph[p], o=0;
+        for(var k=0;k<12;k++) o+=c[k]*hist[(hp-1-k+24)%12];
+        if(o<0) o=-o;
+        if(o>tp) tp=o;
+      }
+      if(a>tp) tp=a;
+    }
+  }
+  this.s1=s1;this.s2=s2;this.s3=s3;this.s4=s4;this.h1=h1;this.h2=h2;this.h3=h3;this.h4=h4;
+  this.acc=acc; this.n=n; this.idx=idx; this.hp=hp; this.count+=x.length;
+  m.tp=tp; m.sp=sp; if(this.count>m.frames) m.frames=this.count;
+};
+
+LoudnessMeter.prototype.result=function(){
+  var pow=this.pow, n=pow.length, i;
+  for(i=0;i<n;i++) if(pow[i]===undefined) pow[i]=0;
+  function lufs(p){ return -0.691+10*Math.log10(p); }
+  function mean(a){ var t=0; for(var j=0;j<a.length;j++) t+=a[j]; return a.length?t/a.length:0; }
+  // integrated: 400ms blocks every 100ms, absolute gate -70, relative gate -10
+  var blocks=[], run=0;
+  for(i=0;i<n;i++){ run+=pow[i]; if(i>=4) run-=pow[i-4]; if(i>=3) blocks.push(run/4); }
+  var abs=blocks.filter(function(p){ return lufs(p)>-70; });
+  var integrated=-Infinity;
+  if(abs.length){
+    var rel=lufs(mean(abs))-10;
+    var gated=abs.filter(function(p){ return lufs(p)>rel; });
+    if(gated.length) integrated=lufs(mean(gated));
+  }
+  // short-term: 3s blocks every 100ms; range per EBU Tech 3342
+  var st=[]; run=0;
+  for(i=0;i<n;i++){ run+=pow[i]; if(i>=30) run-=pow[i-30]; if(i>=29) st.push(run/30); }
+  var stMax=-Infinity; st.forEach(function(p){ var l=lufs(p); if(l>stMax) stMax=l; });
+  var lra=0, sa=st.filter(function(p){ return lufs(p)>-70; });
+  if(sa.length){
+    var relS=lufs(mean(sa))-20;
+    var sg=sa.filter(function(p){ return lufs(p)>relS; }).map(lufs).sort(function(a,b){ return a-b; });
+    if(sg.length>1) lra=sg[Math.round((sg.length-1)*0.95)]-sg[Math.round((sg.length-1)*0.10)];
+  }
+  return { integrated:integrated, lra:lra, stMax:stMax,
+           truePeak:20*Math.log10(this.tp||1e-10), samplePeak:20*Math.log10(this.sp||1e-10),
+           duration:this.frames/this.sr };
+};
+
+// Which channels make up the programme, and how much each counts (BS.1770).
+// 5.1 is measured as 5.1. Any other layout wider than stereo — an 8-channel
+// broadcast master with stems after the mix, say — is measured as its first
+// two channels, the stereo mix, and says so.
+function programmeChannels(count){
+  if(count<=2) return { use: count===1?[0]:[0,1], gains: count===1?[1]:[1,1], note:null };
+  if(count===6) return { use:[0,1,2,4,5], gains:[1,1,1,1.41,1.41], note:"5.1, LFE excluded" };
+  return { use:[0,1], gains:[1,1], note:"channels 1\u20132 measured as the stereo mix" };
+}
+
+// ── QuickTime / MP4 audio tracks ──
+function fourcc(dv,o){ return String.fromCharCode(dv.getUint8(o),dv.getUint8(o+1),dv.getUint8(o+2),dv.getUint8(o+3)); }
+function boxesIn(dv,start,end){
+  var out=[], o=start;
+  while(o+8<=end){
+    var size=dv.getUint32(o), type=fourcc(dv,o+4), hdr=8;
+    if(size===1){ size=dv.getUint32(o+8)*4294967296+dv.getUint32(o+12); hdr=16; }
+    else if(size===0) size=end-o;
+    if(size<hdr||o+size>end) break;
+    out.push({type:type, body:o+hdr, end:o+size});
+    o+=size;
+  }
+  return out;
+}
+function boxPath(dv,box,path){
+  for(var i=0;i<path.length && box;i++){
+    var kids=boxesIn(dv,box.body,box.end), next=null;
+    for(var j=0;j<kids.length;j++) if(kids[j].type===path[i]){ next=kids[j]; break; }
+    box=next;
+  }
+  return box;
+}
+async function bytesAt(file,off,len){ return new Uint8Array(await file.slice(off,off+len).arrayBuffer()); }
+
+// The uncompressed audio tracks in a QuickTime-family file, with where every
+// chunk of audio sits. Returns [] when there are none (AAC in an MP4, say).
+async function pcmTracks(file){
+  var off=0, moov=null, guard=0;
+  while(off+8<=file.size && guard++<100000){
+    var hb=await bytesAt(file,off,16), hv=new DataView(hb.buffer);
+    if(hb.length<8) break;
+    var size=hv.getUint32(0), type=fourcc(hv,4);
+    if(size===1) size=hv.getUint32(8)*4294967296+hv.getUint32(12); else if(size===0) size=file.size-off;
+    if(size<8) break;
+    if(type==="moov"){ moov={off:off,size:size}; break; }
+    off+=size;
+  }
+  if(!moov || moov.size>512*1024*1024) return [];
+  var mb=await bytesAt(file,moov.off,moov.size), dv=new DataView(mb.buffer);
+  var top={body:8, end:mb.length}, tracks=[];
+  boxesIn(dv,top.body,top.end).filter(function(b){ return b.type==="trak"; }).forEach(function(trak){
+    var mdia=boxPath(dv,trak,["mdia"]); if(!mdia) return;
+    var hdlr=boxPath(dv,mdia,["hdlr"]); if(!hdlr || fourcc(dv,hdlr.body+8)!=="soun") return;
+    var stbl=boxPath(dv,mdia,["minf","stbl"]); if(!stbl) return;
+    var stsd=boxPath(dv,stbl,["stsd"]); if(!stsd) return;
+    var E=stsd.body+8, fmt=fourcc(dv,E+4), ver=dv.getUint16(E+16);
+    var t={format:fmt};
+    if(ver===2){
+      t.rate=dv.getFloat64(E+40); t.channels=dv.getUint32(E+48); t.bits=dv.getUint32(E+56);
+      var flags=dv.getUint32(E+60);
+      t.float=!!(flags&1); t.little=!(flags&2); t.signed=!!(flags&4);
+      if(fmt!=="lpcm") t.unsupported=true;
+    } else {
+      t.channels=dv.getUint16(E+24); t.bits=dv.getUint16(E+26); t.rate=dv.getUint32(E+32)/65536;
+      t.little=(fmt==="sowt"); t.signed=(fmt!=="raw "); t.float=(fmt==="fl32"||fmt==="fl64");
+      if(fmt==="in24") t.bits=24; if(fmt==="in32"||fmt==="fl32") t.bits=32; if(fmt==="fl64") t.bits=64;
+      if(["sowt","twos","in24","in32","fl32","fl64","raw ","NONE"].indexOf(fmt)<0) t.unsupported=true;
+      // 24/32-bit and float are big-endian unless an 'enda' atom says otherwise
+      if(/in24|in32|fl32|fl64/.test(fmt)){
+        for(var q=E+36;q<Math.min(stsd.end-6,E+256);q++)
+          if(dv.getUint8(q)===101&&dv.getUint8(q+1)===110&&dv.getUint8(q+2)===100&&dv.getUint8(q+3)===97){ t.little=dv.getUint16(q+4)===1; break; }
+      }
+    }
+    if(t.unsupported || !t.channels || !t.rate || [8,16,24,32,64].indexOf(t.bits)<0) return;
+    t.bytesPerFrame=t.channels*t.bits/8;
+    // chunk table
+    var stsc=boxPath(dv,stbl,["stsc"]), stco=boxPath(dv,stbl,["stco"]), co64=boxPath(dv,stbl,["co64"]);
+    if(!stsc || !(stco||co64)) return;
+    var offs=[], cb=stco||co64, cn=dv.getUint32(cb.body+4);
+    for(var i=0;i<cn;i++) offs.push(stco ? dv.getUint32(cb.body+8+i*4)
+                                          : dv.getUint32(cb.body+8+i*8)*4294967296+dv.getUint32(cb.body+12+i*8));
+    var sn=dv.getUint32(stsc.body+4), runs=[];
+    for(i=0;i<sn;i++) runs.push([dv.getUint32(stsc.body+8+i*12), dv.getUint32(stsc.body+12+i*12)]);
+    t.chunks=[]; t.frames=0;
+    for(i=0;i<cn;i++){
+      var per=0;
+      for(var r=0;r<runs.length;r++) if(runs[r][0]<=i+1) per=runs[r][1];
+      t.chunks.push([offs[i], per]); t.frames+=per;
+    }
+    t.duration=t.frames/t.rate;
+    tracks.push(t);
+  });
+  return tracks;
+}
+
+// WAV, BWF and RF64: one data chunk of interleaved PCM, read in 1MB pieces.
+// The browser would resample on decode, which costs accuracy at the top of the
+// spectrum, exactly where K-weighting boosts.
+function pieces(t, start, bytes){
+  var per=Math.max(1, Math.floor(1048576/t.bytesPerFrame)), total=Math.floor(bytes/t.bytesPerFrame);
+  t.chunks=[]; t.frames=total;
+  for(var f=0; f<total; f+=per) t.chunks.push([start+f*t.bytesPerFrame, Math.min(per, total-f)]);
+  t.duration=total/t.rate; return t;
+}
+async function wavTrack(file){
+  var h=await bytesAt(file,0,12); if(h.length<12) return null;
+  var hv=new DataView(h.buffer), id=fourcc(hv,0);
+  if(!/^(RIFF|RF64|BW64)$/.test(id) || fourcc(hv,8)!=="WAVE") return null;
+  var off=12, fmt=null, data=null, big=null, guard=0;
+  while(off+8<=file.size && guard++<10000){
+    var c=await bytesAt(file,off,8), dv=new DataView(c.buffer), cid=fourcc(dv,0), size=dv.getUint32(4,true);
+    if(cid==="ds64"){ var d=new DataView((await bytesAt(file,off+8,16)).buffer); big=d.getUint32(8,true)+d.getUint32(12,true)*4294967296; }
+    else if(cid==="fmt "){
+      var fv=new DataView((await bytesAt(file,off+8,Math.min(size,40))).buffer);
+      fmt={tag:fv.getUint16(0,true), ch:fv.getUint16(2,true), rate:fv.getUint32(4,true), bits:fv.getUint16(14,true)};
+      if(fmt.tag===0xFFFE && size>=26) fmt.tag=fv.getUint16(24,true);     // extensible: the real format is in the sub-format
+    }
+    else if(cid==="data"){ data={off:off+8, size:(size===0xFFFFFFFF && big!=null) ? big : size}; break; }
+    off+=8+size+(size&1);
+  }
+  if(!fmt || !data || (fmt.tag!==1 && fmt.tag!==3) || [8,16,24,32,64].indexOf(fmt.bits)<0) return null;
+  var t={format:"wav", rate:fmt.rate, channels:fmt.ch, bits:fmt.bits, little:true, float:fmt.tag===3, signed:fmt.bits>8};
+  t.bytesPerFrame=t.channels*t.bits/8;
+  return pieces(t, data.off, Math.min(data.size, file.size-data.off));
+}
+async function aiffTrack(file){
+  var h=await bytesAt(file,0,12); if(h.length<12) return null;
+  var hv=new DataView(h.buffer), form=fourcc(hv,8);
+  if(fourcc(hv,0)!=="FORM" || (form!=="AIFF" && form!=="AIFC")) return null;
+  var off=12, t=null, ssnd=null, guard=0;
+  while(off+8<=file.size && guard++<10000){
+    var c=await bytesAt(file,off,8), dv=new DataView(c.buffer), cid=fourcc(dv,0), size=dv.getUint32(4);
+    if(cid==="COMM"){
+      var b=await bytesAt(file,off+8,Math.min(size,22)), v=new DataView(b.buffer);
+      var ex=((b[8]&0x7f)<<8|b[9])-16383, man=v.getUint32(10)*4294967296+v.getUint32(14);
+      var comp=form==="AIFC" && size>=22 ? fourcc(v,18) : "NONE";
+      t={format:"aiff", channels:v.getUint16(0), bits:v.getUint16(6), rate:man*Math.pow(2,ex-63),
+         little:comp==="sowt", float:/^fl(32|64)$/i.test(comp), signed:true};
+      if(!/^(NONE|twos|sowt|fl32|FL32|fl64|FL64)$/.test(comp)) return null;
+    }
+    else if(cid==="SSND"){ var sv=new DataView((await bytesAt(file,off+8,8)).buffer); ssnd={off:off+16+sv.getUint32(0), size:size-8-sv.getUint32(0)}; }
+    off+=8+size+(size&1);
+  }
+  if(!t || !ssnd || [8,16,24,32,64].indexOf(t.bits)<0) return null;
+  t.bytesPerFrame=t.channels*t.bits/8;
+  return pieces(t, ssnd.off, Math.min(ssnd.size, file.size-ssnd.off));
+}
+// Where a file's programme audio can be read without decoding, if it can.
+async function pcmSource(file){
+  var n=file.name, t=null;
+  try{
+    if(/\.(mov|mp4|m4v|m4a|qt)$/i.test(n)) return programmeTracks(await pcmTracks(file));
+    if(/\.(wav|wave|bwf|rf64)$/i.test(n)) t=await wavTrack(file);
+    else if(/\.(aif|aiff|aifc)$/i.test(n)) t=await aiffTrack(file);
+  }catch(e){ return null; }
+  return t ? programmeTracks([t]) : null;
+}
+
+function pcmToChannels(bytes,t,frames){
+  var ch=t.channels, bps=t.bits/8, out=[], c;
+  for(c=0;c<ch;c++) out.push(new Float32Array(frames));
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength), le=t.little, o=0;
+  for(var f=0;f<frames;f++){
+    for(c=0;c<ch;c++,o+=bps){
+      var v;
+      if(t.float) v = bps===4 ? dv.getFloat32(o,le) : dv.getFloat64(o,le);
+      else if(bps===2) v = dv.getInt16(o,le)/32768;
+      else if(bps===3){
+        var iv = le ? (bytes[o]|(bytes[o+1]<<8)|(bytes[o+2]<<16)) : ((bytes[o]<<16)|(bytes[o+1]<<8)|bytes[o+2]);
+        if(iv&0x800000) iv-=0x1000000; v=iv/8388608;
+      }
+      else if(bps===4) v = dv.getInt32(o,le)/2147483648;
+      else v = t.signed ? ((bytes[o]<<24)>>24)/128 : (bytes[o]-128)/128;
+      out[c][f]=v;
+    }
+  }
+  return out;
+}
+async function eachPcmChunk(file,t,fn,onProgress){
+  for(var i=0;i<t.chunks.length;i++){
+    var frames=t.chunks[i][1], len=frames*t.bytesPerFrame;
+    if(!len) continue;
+    var b=await bytesAt(file,t.chunks[i][0],len);
+    if(b.length<len) frames=Math.floor(b.length/t.bytesPerFrame);
+    fn(pcmToChannels(b,t,frames));
+    if(onProgress && i%64===0) onProgress(i/t.chunks.length);
+  }
+}
+
+// The audio that makes up the programme, from whichever tracks carry it: one
+// stereo (or 5.1, or wider) track, or a pair of mono tracks as left and right.
+function programmeTracks(tracks){
+  if(!tracks.length) return null;
+  var a=tracks[0];
+  if(a.channels===1 && tracks.length>1 && tracks[1].channels===1 && tracks[1].rate===a.rate)
+    return { parts:[[a,0,1],[tracks[1],0,1]], rate:a.rate, note:"tracks 1\u20132 measured as stereo" };
+  var pc=programmeChannels(a.channels);
+  return { parts:pc.use.map(function(c,i){ return [a,c,pc.gains[i]]; }), rate:a.rate, note:pc.note };
+}
+
+function decodeWithBrowser(file){
+  return file.arrayBuffer().then(function(ab){
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    return ctx.decodeAudioData(ab).then(function(buf){ try{ctx.close();}catch(e){} return buf; },
+                                         function(e){ try{ctx.close();}catch(_){} throw e; });
+  });
+}
+
+// Measure a whole file. QuickTime-family files with PCM audio stream straight
+// through the meter; anything else is decoded by the browser first.
+async function measureFileLoudness(file, onProgress){
+  var prog=await pcmSource(file);
+  if(prog){
+      var meter=new LoudnessMeter(prog.rate);
+      // each track is read once, feeding all of its programme channels
+      var byTrack=new Map();
+      prog.parts.forEach(function(p){ if(!byTrack.has(p[0])) byTrack.set(p[0],[]); byTrack.get(p[0]).push([p[1], meter.channel(p[2])]); });
+      var done=0, total=prog.parts.length;
+      for(var entry of byTrack){
+        var feeds=entry[1];
+        await eachPcmChunk(file, entry[0], function(chs){ feeds.forEach(function(f){ f[1].push(chs[f[0]]); }); },
+                           onProgress ? function(x){ onProgress((done+x*feeds.length)/total); } : null);
+        done+=feeds.length;
+      }
+      var r=meter.result(); r.source="pcm"; r.note=prog.note; return r;
+  }
+  var buf=await decodeWithBrowser(file);
+  var res=measureBuffer(buf); res.source="decoded"; return res;
+}
+
+// Measure audio already in memory (an AudioBuffer, or anything shaped like one).
+function measureBuffer(buf){
+  var m=new LoudnessMeter(buf.sampleRate), pc=programmeChannels(buf.numberOfChannels);
+  pc.use.forEach(function(c,i){ m.channel(pc.gains[i]).push(buf.getChannelData(c)); });
+  var r=m.result(); r.note=pc.note; return r;
+}
+
+// The whole of a file's audio in memory, for analysis that needs all of it at
+// once. QuickTime PCM is read directly; anything else is decoded by the browser.
+var FULL_AUDIO_LIMIT_S=20*60;
+async function decodeAudioFile(file){
+  var prog=await pcmSource(file);
+  if(prog){
+      var t0=prog.parts[0][0];
+      if(t0.duration>FULL_AUDIO_LIMIT_S)
+        throw new Error("this file runs over 20 minutes \u2014 too long to analyse in full here. Delivery QC measures loudness on long masters.");
+      var pair=prog.parts.length===2 && prog.parts[0][0]!==prog.parts[1][0];
+      var srcs=pair ? [prog.parts[0][0],prog.parts[1][0]] : [t0];
+      var chans=[];
+      for(var s=0;s<srcs.length;s++){
+        var t=srcs[s], data=[], o=0;
+        for(var c=0;c<t.channels;c++) data.push(new Float32Array(t.frames));
+        await eachPcmChunk(file,t,function(chs){ for(var c=0;c<chs.length;c++) data[c].set(chs[c],o); o+=chs[0].length; });
+        data.forEach(function(d){ chans.push(o<d.length ? d.subarray(0,o) : d); });
+      }
+      var rate=prog.rate;
+      return { sampleRate:rate, numberOfChannels:chans.length, length:chans[0].length, duration:chans[0].length/rate,
+               getChannelData:function(c){ return chans[c]; }, _pcm:true, _bits:t0.bits };
+  }
+  return decodeWithBrowser(file);
+}
+// @@ENGINE:audio END
+// @@ENGINE:spec BEGIN — generated from engine_spec.js by sync_engine.py. Do not edit here.
+// ═══════════════════════════════════════════════════════════════════════════
+// SPEC ENGINE — the one source of truth.
+// Spec parsing, media analysis, rule comparison, filename rules, loudness,
+// frame scanning and audio comparison. Shared by Spec Checker, Preset Builder
+// and the monday app. Edit it here; sync_engine.py copies it into each tool.
+// It must not reference anything belonging to a page.
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function readSpecFile(file){
+  var name = file.name.toLowerCase();
+  if (name.endsWith(".txt") || name.endsWith(".csv")) {
+    return await file.text();
+  }
+  if (name.endsWith(".pdf")) {
+    await needLib("pdfjs");
+    var buf = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    var out = [];
+    for (var i=1;i<=pdf.numPages;i++){
+      var page = await pdf.getPage(i);
+      var tc = await page.getTextContent();
+      out.push(tc.items.map(function(it){return it.str;}).join(" "));
+    }
+    return out.join("\n");
+  }
+  if (name.endsWith(".docx")) {
+    await needLib("mammoth");
+    var ab = await file.arrayBuffer();
+    var res = await mammoth.extractRawText({arrayBuffer:ab});
+    return res.value;
+  }
+  if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+    await needLib("xlsx");
+    var ab2 = await file.arrayBuffer();
+    var wb = XLSX.read(ab2, {type:"array"});
+    var txt = [];
+    wb.SheetNames.forEach(function(sn){
+      txt.push(XLSX.utils.sheet_to_csv(wb.Sheets[sn]));
+    });
+    return txt.join("\n");
+  }
+  throw new Error("Unsupported spec format");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 2 — pattern-match rules from spec text
+// ─────────────────────────────────────────────────────────────────────────────
+function extractRules(text){
+  var t = " " + text.replace(/\s+/g," ") + " ";
+  var low = t.toLowerCase();
+  var found = [];
+  function add(field, op, value, conf){ found.push({field:field, op:op, value:String(value), enabled:true, conf:conf||"hi"}); }
+  function has(field){ return found.some(function(r){return r.field===field;}); }
+
+  // Resolution — explicit WxH in PIXELS. Guard against physical sizes (mm/in/cm)
+  // being mistaken for a pixel resolution, e.g. "297x420mm" is A3, not pixels.
+  var mRes = t.match(/(\d{3,5})\s?[x×]\s?(\d{3,5})(?!\s?(?:mm|cm|in\b|inch|"))/i);
+  if (mRes) add("Resolution","=", mRes[1]+"x"+mRes[2], "hi");
+  else {
+    if (/\b(3840\s?[x×]\s?2160|\buhd\b|\b4k\b|2160p)\b/i.test(t)) add("Resolution","=","3840x2160","lo");
+    else if (/\b(1920\s?[x×]\s?1080|1080[pi]|full ?hd|\bhd\b)\b/i.test(t)) add("Resolution","=","1920x1080","lo");
+    else if (/\b(1280\s?[x×]\s?720|720p)\b/i.test(t)) add("Resolution","=","1280x720","lo");
+  }
+
+  // Frame rate
+  var mFps = t.match(/(\d{2}(?:\.\d{1,3})?)\s?(?:fps|f\/s|frames?\s?\/?\s?s|p)\b(?!\w)/i);
+  // guard: a number immediately followed by "-bit"/"bit" is bit depth, not fps
+  if (mFps && /\d\s?-?\s?bit/i.test(mFps[0])) mFps = null;
+  if (mFps && parseFloat(mFps[1])>=15 && parseFloat(mFps[1])<=120) add("Frame rate","=", parseFloat(mFps[1]), "hi");
+  else if (/\bpal\b/i.test(t)) add("Frame rate","=","25","lo");
+  else if (/\bntsc\b/i.test(t)) add("Frame rate","=","29.97","lo");
+  else {
+    var mFps2 = t.match(/\b(23\.976|24|25|29\.97|30|50|59\.94|60)\s?(?:hz|fps|p)\b/i);
+    if (mFps2) add("Frame rate","=", mFps2[1], "lo");
+  }
+
+  // ── alternatives: "H.264 or H.265", "MP4/MOV", "ProRes 422 or DNxHD" ──
+  // A spec that offers a choice becomes one "is one of" rule rather than a
+  // single value that would wrongly fail half the deliverables.
+  var altCodec = t.match(/\b((?:h\.?26[45]|hevc|avc|prores(?:\s?4{3}\d|\s?422(?:\s?hq)?)?|dnx(?:hd|hr)|xdcam)(?:\s*(?:or|\/|,)\s*(?:h\.?26[45]|hevc|avc|prores(?:\s?4{3}\d|\s?422(?:\s?hq)?)?|dnx(?:hd|hr)|xdcam))+)\b/i);
+  if (altCodec && !has("Video codec")) {
+    var parts = altCodec[1].split(/\s*(?:\bor\b|\/|,)\s*/i).map(function(x){return x.trim();}).filter(Boolean);
+    if (parts.length>1) add("Video codec","is one of", parts.join(", "), "hi");
+  }
+  var altCont = t.match(/\b((?:mp4|mov|mxf|quicktime)(?:\s*(?:or|\/|,)\s*(?:mp4|mov|mxf|quicktime))+)\b/i);
+  if (altCont) {
+    var cparts = altCont[1].split(/\s*(?:\bor\b|\/|,)\s*/i)
+        .map(function(x){ x=x.trim().toLowerCase(); return (x==="quicktime"?"mov":x).toUpperCase(); });
+    if (cparts.length>1) add("Container","is one of", cparts.join(", "), "hi");
+  }
+
+  // Video codec
+  var codecs = [
+    [/prores\s?(4444(?:\s?xq)?|422\s?(?:hq|lt|proxy)?|422)/i, function(m){return "ProRes "+m[1].toUpperCase().replace(/\s+/g," ");}],
+    [/\b(h\.?264|avc)\b/i, function(){return "H.264";}],
+    [/\b(h\.?265|hevc)\b/i, function(){return "H.265";}],
+    [/\bdnxhr\s?(hqx|hq|sq|lb|444)?/i, function(m){return "DNxHR"+(m[1]?" "+m[1].toUpperCase():"");}],
+    [/\bdnxhd\b/i, function(){return "DNxHD";}],
+    [/\bxdcam\b/i, function(){return "XDCAM";}]
+  ];
+  if(!has("Video codec")){
+    for (var c=0;c<codecs.length;c++){ var mm=t.match(codecs[c][0]); if(mm){ add("Video codec","=", codecs[c][1](mm), "hi"); break; } }
+  }
+
+  // Container
+  var mCont = t.match(/\b(mp4|mov|mxf|quicktime)\b/i);
+  if (mCont && !has("Container")){ var cv=mCont[1].toLowerCase(); if(cv==="quicktime")cv="mov"; add("Container","=", cv.toUpperCase(), "hi"); }
+
+  // Scan type
+  if (/\b1080i\b|interlac/i.test(t)) add("Scan","=","Interlaced","lo");
+  else if (/\b1080p\b|progressive/i.test(t)) add("Scan","=","Progressive","lo");
+
+  // Aspect ratio
+  var mAsp = t.match(/\b(16\s?:\s?9|4\s?:\s?3|2\.39\s?:\s?1|2\.35\s?:\s?1|1\.85\s?:\s?1)\b/);
+  if (mAsp) add("Aspect ratio","=", mAsp[1].replace(/\s/g,""), "hi");
+
+  // Bit depth
+  var mBd = t.match(/\b(8|10|12)\s?-?\s?bit\b/i);
+  if (mBd) add("Bit depth","=", mBd[1]+"-bit", "hi");
+
+  // Chroma subsampling
+  var mCh = t.match(/\b(4\s?:\s?2\s?:\s?0|4\s?:\s?2\s?:\s?2|4\s?:\s?4\s?:\s?4)\b/);
+  if (mCh) add("Chroma","=", mCh[1].replace(/\s/g,""), "hi");
+
+  // Audio codec (with common profiles)
+  if (/\bpcm\b/i.test(t) || /\blpcm\b/i.test(t)) add("Audio codec","=","PCM","hi");
+  else if (/\baac\b/i.test(t)) add("Audio codec","=", /\baac\s?-?lc\b/i.test(t)?"AAC LC":"AAC", "hi");
+  else if (/\bac-?3\b|\bdolby\s?digital\b/i.test(t)) add("Audio codec","=","AC-3","hi");
+  else if (/\bmp3\b/i.test(t)) add("Audio codec","=","MP3","hi");
+  else if (/\bflac\b/i.test(t)) add("Audio codec","=","FLAC","hi");
+  else if (/\bwav\b/i.test(t) && !has("Container")) add("Audio codec","=","PCM","lo");
+
+  // Audio channels
+  if (/\b7\.1\b/.test(t)) add("Audio channels","=","8","lo");
+  else if (/\b5\.1\b/.test(t)) add("Audio channels","=","6","lo");
+  else if (/\bstereo\b|\b2\.0\b|\b2\s?ch\b|\b2\s?channels?\b/i.test(t)) add("Audio channels","=","2","hi");
+  else if (/\bmono\b|\b1\s?ch\b|\b1\s?channel\b/i.test(t)) add("Audio channels","=","1","hi");
+
+  // Sample rate
+  var mSr = t.match(/\b(48|44\.1|96|88\.2|192)\s?k?hz\b/i);
+  if (mSr) add("Sample rate","=", (parseFloat(mSr[1])*1000), "hi");
+
+  // Audio bit depth (distinct from video bit depth — needs audio context)
+  var mAbd = t.match(/\b(16|24|32)\s?-?\s?bit\b(?=[^.]*(?:audio|pcm|wav|sample))/i)
+          || (/\b(pcm|wav)\b/i.test(t) ? t.match(/\b(16|24|32)\s?-?\s?bit\b/i) : null);
+  if (mAbd) add("Audio bit depth","=", mAbd[1]+"-bit", "lo");
+
+  // Audio bitrate (kbps — compressed audio)
+  var mAbr = t.match(/(\d{2,3})\s?kb(?:it)?(?:ps|\/s)\b/i);
+  if (mAbr) add("Audio bitrate","≥", mAbr[1]+" kbps", "lo");
+
+  // Audio track count ("2 audio tracks")
+  var mAtc = t.match(/\b(\d)\s?(?:audio\s?tracks?|discrete\s?tracks?)\b/i);
+  if (mAtc) add("Audio tracks","=", mAtc[1], "lo");
+
+  // ── STATIC / PRINT specs ──
+  // DPI / PPI ("300dpi", "300 ppi", "at least 150dpi")
+  var mDpi = t.match(/(\d{2,4})\s?(?:dpi|ppi)\b/i);
+  if (mDpi) add("DPI","≥", mDpi[1], "hi");
+
+  // Colour space (print vs digital — the most common delivery failure)
+  if (/\bcmyk\b/i.test(t)) add("Colour space","=","CMYK","hi");
+  else if (/\b(srgb|adobe\s?rgb|rgb)\b/i.test(t)) add("Colour space","=","RGB","hi");
+  else if (/\b(greyscale|grayscale|mono(chrome)?)\b/i.test(t)) add("Colour space","=","Greyscale","lo");
+
+  // Physical dimensions (mm or inches) — e.g. "6000x3000mm", "A3", "48 sheet"
+  var mMm = t.match(/(\d{2,5})\s?[x×]\s?(\d{2,5})\s?mm\b/i);
+  if (mMm) add("Physical size mm","=", mMm[1]+"x"+mMm[2]+" mm", "hi");
+  else {
+    var mIn = t.match(/(\d{1,3}(?:\.\d)?)\s?[x×]\s?(\d{1,3}(?:\.\d)?)\s?(?:in|inch(?:es)?|")\b/i);
+    if (mIn) add("Physical size","=", mIn[1]+"x"+mIn[2]+" in", "hi");
+    else {
+      // common paper sizes → mm
+      var paper = {A0:"841x1189",A1:"594x841",A2:"420x594",A3:"297x420",A4:"210x297",A5:"148x210"};
+      var mPaper = t.match(/\bA([0-5])\b/);
+      if (mPaper && paper["A"+mPaper[1]]) add("Physical size mm","=", paper["A"+mPaper[1]]+" mm", "lo");
+    }
+  }
+
+  // File size ceiling ("max 5MB", "under 2 MB", "no larger than 500KB")
+  var mFs = t.match(/(?:max(?:imum)?|under|no larger than|less than|≤|<)\s?(\d{1,4}(?:\.\d)?)\s?(mb|kb)\b/i);
+  if (mFs) add("File size","≤", mFs[1]+" "+mFs[2].toUpperCase(), "hi");
+
+  // Bleed ("3mm bleed", "5 mm bleed all round")
+  var mBleed = t.match(/(\d{1,2}(?:\.\d)?)\s?mm\s?bleed\b/i);
+  if (mBleed) add("Bleed","=", mBleed[1]+" mm", "lo");
+
+  // Video bit rate
+  var mBr = t.match(/(\d{1,4})\s?(?:mb(?:it)?(?:ps|\/s)|mbps)\b/i);
+  if (mBr) add("Video bitrate","≥", mBr[1]+" Mbps", "lo");
+
+  // Loudness
+  var mLuf = t.match(/(-?\d{1,2}(?:\.\d)?)\s?(?:lufs|lkfs)\b/i);
+  if (mLuf) add("Loudness","=", mLuf[1]+" LUFS", "hi");
+  var mTp = t.match(/(-\d{1,2}(?:\.\d)?)\s?dbtp\b/i) || t.match(/true\s?peak[^\d-]{0,24}(-\d{1,2}(?:\.\d)?)/i);
+  if (mTp) add("True peak","\u2264", mTp[1]+" dBTP", "hi");
+
+  // ProRes, named the same way the file side names it. Also catches specs the
+  // patterns above miss — "ProRes LT", or a bare "deliver as ProRes".
+  found.forEach(function(r){
+    if (r.field !== "Video codec") return;
+    if (r.op === "is one of") {
+      r.value = r.value.split(/\s*,\s*/).map(function(v){ return canonicalProRes(v) || v.trim(); }).join(", ");
+    } else {
+      var c = canonicalProRes(r.value); if (c) r.value = c;
+    }
+  });
+  if (!found.some(function(r){ return r.field === "Video codec"; })) {
+    var pm = t.match(/(?:apple\s+)?pro\s?res(?:\s*(?:422|4444))?(?:\s*(?:hq|lt|proxy|xq))?/i);
+    if (pm) found.push({field:"Video codec", op:"=", value:canonicalProRes(pm[0]), enabled:true, conf:"hi"});
+  }
+  return found;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 3 — render editable checklist
+// ─────────────────────────────────────────────────────────────────────────────
+var FIELDS = ["Resolution","Frame rate","Video codec","Container","Scan","Aspect ratio","Bit depth","Chroma","Video bitrate","Audio codec","Audio channels","Audio layout","Sample rate","Audio bit depth","Audio bitrate","Audio tracks","Loudness","Duration","DPI","Colour space","Physical size","Physical size mm","File size","Compression","Bleed"];
+var OPS = ["=","≥","≤","is one of"];
+if(FIELDS.indexOf("Filename")<0) FIELDS.unshift("Filename");
+if(OPS.indexOf("matches")<0) OPS.push("matches");
+if(FIELDS.indexOf("True peak")<0) FIELDS.push("True peak");
+["Colour primaries","Transfer","Matrix","Colour range"].forEach(function(f){
+  if(FIELDS.indexOf(f)<0) FIELDS.push(f); });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 4 — analyse asset with MediaInfo, normalise to comparable fields
+// ─────────────────────────────────────────────────────────────────────────────
+function readChunk(file){
+  return function(chunkSize, offset){
+    return new Promise(function(resolve, reject){
+      var r = new FileReader();
+      r.onload = function(e){ resolve(new Uint8Array(e.target.result)); };
+      r.onerror = function(e){ reject(e); };
+      r.readAsArrayBuffer(file.slice(offset, offset+chunkSize));
+    });
+  };
+}
+
+function normaliseStillFormat(f, file){
+  f=String(f||"").toLowerCase();
+  if(/jpeg|jpg/.test(f)) return "JPEG";
+  if(/png/.test(f)) return "PNG";
+  if(/tiff/.test(f)) return "TIFF";
+  if(/webp/.test(f)) return "WEBP";
+  if(/gif/.test(f)) return "GIF";
+  return (file.name.split(".").pop()||f).toUpperCase();
+}
+function normaliseColourSpace(cs){
+  cs=String(cs).toUpperCase();
+  if(/YUVK|CMYK/.test(cs)) return "CMYK";
+  if(/RGBA?/.test(cs)) return "RGB";
+  if(/Y{1,3}|GREY|GRAY/.test(cs) && !/RGB/.test(cs)) return "Greyscale";
+  return cs;
+}
+
+// Read pixel density. Checks JFIF APP0, EXIF APP1, PNG pHYs and TIFF IFD.
+// Returns {dpi, from} or {absent:true} when the file simply carries no density
+// (very common for web/video-derived images) so the UI can say so precisely.
+function readDensity(b, name){
+  try{
+    if (b[0]===0xFF && b[1]===0xD8) {   // ── JPEG ──
+      var i=2, jfifSeen=false;
+      while(i < b.length-4){
+        if(b[i]!==0xFF){ i++; continue; }
+        var marker=b[i+1], seglen=(b[i+2]<<8)|b[i+3];
+        // JFIF APP0: units 1=inch, 2=cm, 0=aspect ratio only (no real DPI)
+        if(marker===0xE0 && b[i+4]===0x4A && b[i+5]===0x46 && b[i+6]===0x49 && b[i+7]===0x46){
+          jfifSeen=true;
+          var units=b[i+11], xd=(b[i+12]<<8)|b[i+13];
+          if(xd>0){
+            if(units===1) return {dpi:xd, from:"JFIF"};
+            if(units===2) return {dpi:xd*2.54, from:"JFIF (cm)"};
+          }
+        }
+        // EXIF APP1: XResolution (0x011A) + ResolutionUnit (0x0128) in a TIFF IFD
+        if(marker===0xE1 && b[i+4]===0x45 && b[i+5]===0x78 && b[i+6]===0x69 && b[i+7]===0x66){
+          var ex=readTiffResolution(b, i+10);
+          if(ex && ex.dpi) return {dpi:ex.dpi, from:"EXIF"};
+        }
+        if(marker===0xDA) break;
+        if(seglen<=0) break;
+        i += 2+seglen;
+      }
+      return {absent:true, note: jfifSeen ? "JPEG carries no real density (JFIF units = aspect ratio only)" : "no density metadata in the JPEG"};
+    }
+    if (b[0]===0x89 && b[1]===0x50) {   // ── PNG ──
+      var j=8;
+      while(j < b.length-12){
+        var ln=(b[j]<<24)|(b[j+1]<<16)|(b[j+2]<<8)|b[j+3];
+        var t=String.fromCharCode(b[j+4],b[j+5],b[j+6],b[j+7]);
+        if(t==="pHYs"){
+          var px=(b[j+8]<<24)|(b[j+9]<<16)|(b[j+10]<<8)|b[j+11];
+          var unit=b[j+16];
+          if(unit===1 && px>0) return {dpi: px*0.0254, from:"pHYs"};
+        }
+        if(t==="IEND") break;
+        if(ln<0) break;
+        j += 12+ln;
+      }
+      return {absent:true, note:"PNG has no pHYs density chunk"};
+    }
+    // ── TIFF (II / MM byte order) ──
+    if ((b[0]===0x49&&b[1]===0x49) || (b[0]===0x4D&&b[1]===0x4D)) {
+      var tf=readTiffResolution(b, 0);
+      if(tf && tf.dpi) return {dpi:tf.dpi, from:"TIFF"};
+      return {absent:true, note:"TIFF has no resolution tags"};
+    }
+  }catch(e){}
+  return {absent:true, note:"no density metadata found"};
+}
+
+// Parse XResolution/ResolutionUnit out of a TIFF header at `base`.
+function readTiffResolution(b, base){
+  try{
+    var le = (b[base]===0x49 && b[base+1]===0x49);
+    function u16(o){ return le ? (b[o]|(b[o+1]<<8)) : ((b[o]<<8)|b[o+1]); }
+    function u32(o){ return le ? (b[o]|(b[o+1]<<8)|(b[o+2]<<16)|(b[o+3]<<24)>>>0)
+                              : (((b[o]<<24)|(b[o+1]<<16)|(b[o+2]<<8)|b[o+3])>>>0); }
+    var ifdOff = u32(base+4);
+    var ifd = base + ifdOff;
+    var count = u16(ifd);
+    var xres=null, unit=2;   // default unit = inch
+    for(var k=0;k<count;k++){
+      var e = ifd+2+k*12;
+      var tag = u16(e), type = u16(e+2), valOff = u32(e+8);
+      if(tag===0x011A && type===5){          // XResolution, RATIONAL
+        var ro = base+valOff;
+        var num=u32(ro), den=u32(ro+4);
+        if(den) xres = num/den;
+      }
+      if(tag===0x0128 && type===3) unit = u16(e+8);  // ResolutionUnit: 2=inch, 3=cm
+    }
+    if(xres){
+      if(unit===3) return {dpi: xres*2.54};
+      return {dpi: xres};
+    }
+  }catch(e){}
+  return null;
+}
+
+// JPEG with 4 components in the SOF marker is CMYK. Returns true/false/null.
+function detectCMYK(b, name){
+  try{
+    if (b[0]===0xFF && b[1]===0xD8){
+      var i=2;
+      while(i < b.length-4){
+        if(b[i]!==0xFF){ i++; continue; }
+        var marker=b[i+1], seglen=(b[i+2]<<8)|b[i+3];
+        if(marker===0xC0||marker===0xC1||marker===0xC2||marker===0xC9||marker===0xCA){
+          return b[i+9]===4;
+        }
+        if(marker===0xDA) break;
+        if(seglen<=0) break;
+        i += 2+seglen;
+      }
+    }
+  }catch(e){}
+  return null;
+}
+
+// Work out the real pixels-per-inch the asset delivers across the physical size
+// the spec asks for. This is the print-relevant number when the file carries no
+// embedded density, which is very common.
+function effectiveDPI(assetInfo){
+  if(!assetInfo || !assetInfo["Resolution"]) return null;
+  var wh = assetInfo["Resolution"].split("x").map(Number);
+  if(!wh[0] || !wh[1]) return null;
+  // find a physical size among the enabled rules
+  // The rule list travels with the asset (set by whichever tool is checking),
+  // so the engine never reaches for a page variable that may not exist.
+  var ruleList = (assetInfo && assetInfo._rules) || [];
+  var sizeRule = ruleList.filter(function(r){
+    return r.enabled && (r.field==="Physical size mm" || r.field==="Physical size");
+  })[0];
+  if(!sizeRule) return null;
+  var m = String(sizeRule.value).match(/([\d.]+)\s*[x×]\s*([\d.]+)/);
+  if(!m) return null;
+  var isMM = /mm/i.test(sizeRule.value);
+  var wUnit = parseFloat(m[1]), hUnit = parseFloat(m[2]);
+  var wIn = isMM ? wUnit/25.4 : wUnit;
+  var hIn = isMM ? hUnit/25.4 : hUnit;
+  if(!wIn || !hIn) return null;
+  // match orientation to the asset so we don't understate the result
+  var assetLandscape = wh[0] >= wh[1], sizeLandscape = wIn >= hIn;
+  if(assetLandscape !== sizeLandscape){ var t=wIn; wIn=hIn; hIn=t; }
+  // the limiting axis decides the effective dpi
+  var dpiW = wh[0]/wIn, dpiH = wh[1]/hIn;
+  var dpi = Math.min(dpiW, dpiH);
+  return { dpi: dpi, px: wh[0]+"x"+wh[1],
+           sizeLabel: isMM ? (Math.round(wIn*25.4)+"x"+Math.round(hIn*25.4)+"mm")
+                           : ((Math.round(wIn*10)/10)+"x"+(Math.round(hIn*10)/10)+"in") };
+}
+
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (Math.round(n/1024*10)/10)+" KB";
+  return (Math.round(n/(1024*1024)*10)/10)+" MB";
+}
+
+function track(result, type){
+  var tr = (result && result.media && result.media.track) || [];
+  return tr.filter(function(t){return (t["@type"]||t.type)===type;})[0] || {};
+}
+
+function normaliseMediaInfo(result, file){
+  var gen = track(result,"General"), vid = track(result,"Video"), aud = track(result,"Audio");
+  var out = { _type:"av", _raw:result };
+  // resolution
+  if (vid.Width && vid.Height) out["Resolution"] = Math.round(vid.Width)+"x"+Math.round(vid.Height);
+  // frame rate
+  if (vid.FrameRate) out["Frame rate"] = parseFloat(vid.FrameRate);
+  // video codec
+  var vcodec = vid.Format || vid.CodecID || "";
+  if (vid.Format_Profile && /prores/i.test(vcodec)) vcodec = "ProRes "+vid.Format_Profile;
+  if (vcodec) out["Video codec"] = normaliseCodec(vcodec, vid);
+  // container
+  if (gen.Format) out["Container"] = normaliseContainer(gen.Format, file, gen);
+  // scan
+  if (vid.ScanType) out["Scan"] = vid.ScanType;
+  // aspect
+  if (vid.DisplayAspectRatio) out["Aspect ratio"] = normaliseAspect(vid.DisplayAspectRatio);
+  // bit depth
+  if (vid.BitDepth) out["Bit depth"] = vid.BitDepth+"-bit";
+  // chroma
+  if (vid.ChromaSubsampling) out["Chroma"] = vid.ChromaSubsampling;
+  // ── AUDIO (comprehensive) ──
+  // audio codec (with profile for compressed formats)
+  if (aud.Format) out["Audio codec"] = normaliseAudioCodec(aud.Format, aud);
+  // channels
+  if (aud.Channels) out["Audio channels"] = String(aud.Channels);
+  // channel layout (e.g. "L R", "L R C LFE Ls Rs")
+  if (aud.ChannelLayout) out["Audio layout"] = normaliseLayout(aud.ChannelLayout, aud.Channels);
+  // sample rate (Hz)
+  if (aud.SamplingRate) out["Sample rate"] = String(Math.round(aud.SamplingRate));
+  // audio bit depth (PCM etc.)
+  if (aud.BitDepth) out["Audio bit depth"] = aud.BitDepth+"-bit";
+  // audio bitrate (kbps for compressed)
+  if (aud.BitRate) out["Audio bitrate"] = Math.round(aud.BitRate/1000)+" kbps";
+  // video bitrate
+  if (vid.BitRate) out["Video bitrate"] = (Math.round(vid.BitRate/1e6*10)/10)+" Mbps";
+  // track counts — useful for "must have N audio tracks" specs
+  if (gen.AudioCount) out["Audio tracks"] = String(gen.AudioCount);
+  // duration
+  if (gen.Duration) out["Duration"] = fmtDuration(gen.Duration);
+  // Loudness genuinely can't be read from the container. Mark it explicitly
+  // so the report explains *why* rather than a bare "not readable".
+  out["_loudnessUnmeasurable"] = true;
+  return out;
+}
+
+// ── ProRes flavours ─────────────────────────────────────────────────────────
+// One definition, used for both the spec and the file, so the two sides can't
+// name the same codec differently. Each flavour is a different codec: a Proxy
+// or LT file is not a "ProRes 422" delivery. A spec that names no flavour
+// ("deliver as ProRes") comes out as plain "ProRes" and accepts any of them.
+function canonicalProRes(s){
+  s = String(s || "");
+  if (!/pro\s?res/i.test(s)) return null;
+  if (/4444\s*xq|\bxq\b/i.test(s)) return "ProRes 4444 XQ";
+  if (/4444/.test(s))               return "ProRes 4444";
+  if (/proxy/i.test(s))             return "ProRes 422 Proxy";
+  if (/\blt\b/i.test(s))            return "ProRes 422 LT";
+  if (/\bhq\b/i.test(s))            return "ProRes 422 HQ";
+  if (/422/.test(s))                return "ProRes 422";
+  return "ProRes";
+}
+// Codec equality: ProRes compared by flavour, a bare "ProRes" accepting any.
+function codecMatches(want, got){
+  var w = canonicalProRes(want), g = canonicalProRes(got);
+  if (w || g) return !!(w && g) && (w === "ProRes" || w === g);
+  return String(want).toLowerCase().replace(/[\s.-]/g,"") === String(got).toLowerCase().replace(/[\s.-]/g,"");
+}
+
+function normaliseCodec(c, vid){
+  c = String(c);
+  if (/prores/i.test(c)) return canonicalProRes(c);
+  if (/avc|h\.?264/i.test(c)) return "H.264";
+  if (/hevc|h\.?265/i.test(c)) return "H.265";
+  if (/dnxhr/i.test(c)) return "DNxHR";
+  if (/dnxhd|vc-3/i.test(c)) return "DNxHD";
+  return c;
+}
+function normaliseContainer(f, file, gen){
+  f = String(f).toLowerCase();
+  // MediaInfo calls a QuickTime file "MPEG-4" and says QuickTime in its profile
+  if (gen && (/quicktime/i.test(gen.Format_Profile||"") || /^qt/i.test(String(gen.CodecID||"")))) return "MOV";
+  if (/quicktime|mov/.test(f)) return "MOV";
+  if (/mpeg-4|mp4/.test(f)) return "MP4";
+  if (/mxf/.test(f)) return "MXF";
+  var ext=(file.name.split(".").pop()||"").toUpperCase();
+  return f.toUpperCase()||ext;
+}
+function normaliseAudioCodec(f, aud){
+  f=String(f).toLowerCase();
+  if (/pcm/.test(f)) return "PCM";
+  if (/aac/.test(f)) {
+    var prof = aud && aud.Format_AdditionalFeatures ? " "+aud.Format_AdditionalFeatures : "";
+    return "AAC"+prof;  // e.g. "AAC LC"
+  }
+  if (/mp3|mpeg audio/.test(f)) return "MP3";
+  if (/ac-3|ac3|dolby/.test(f)) return "AC-3";
+  if (/flac/.test(f)) return "FLAC";
+  if (/alac/.test(f)) return "ALAC";
+  return f.toUpperCase();
+}
+function normaliseLayout(layout, channels){
+  var l = String(layout).toUpperCase().replace(/\s+/g," ").trim();
+  // Common friendly names
+  if (/^L R$/.test(l)) return "Stereo (L R)";
+  if (/^C$|^M$/.test(l) || channels==1) return "Mono";
+  if (/LFE/.test(l) && String(channels)==="6") return "5.1 ("+l+")";
+  if (/LFE/.test(l) && String(channels)==="8") return "7.1 ("+l+")";
+  return l;
+}
+function normaliseAspect(a){
+  a=parseFloat(a);
+  if (Math.abs(a-1.7778)<0.02) return "16:9";
+  if (Math.abs(a-1.3333)<0.02) return "4:3";
+  if (Math.abs(a-2.39)<0.03) return "2.39:1";
+  if (Math.abs(a-1.85)<0.02) return "1.85:1";
+  return a.toFixed(2)+":1";
+}
+function fmtDuration(sec){
+  sec=Math.round(parseFloat(sec)); var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return (h?h+"h ":"")+(m?m+"m ":"")+s+"s";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPARE — rule vs detected
+// ─────────────────────────────────────────────────────────────────────────────
+// Fields that only mean something for time-based media.
+var AV_ONLY = ["Frame rate","Video codec","Scan","Video bitrate","Audio codec","Audio channels",
+               "Audio layout","Sample rate","Audio bit depth","Audio bitrate","Audio tracks",
+               "Loudness","Duration"];
+// Fields that only mean something for stills.
+var STILL_ONLY = ["DPI","Physical size","Physical size mm","Bleed"];
+
+function compare(rule, got, assetInfo){
+  var isStatic = assetInfo && assetInfo._type==="static";
+  // Skip rules that can't apply to this asset type — clearer than a false flag.
+  if (isStatic && AV_ONLY.indexOf(rule.field)>=0)
+    return {verdict:"na", got:"—", note:"not applicable to a still"};
+  if (!isStatic && assetInfo && STILL_ONLY.indexOf(rule.field)>=0)
+    return {verdict:"na", got:"—", note:"not applicable to video/audio"};
+
+  if (rule.field==="Audio sync" || rule.field==="Audio loudness match") {
+    if (assetInfo && assetInfo._audioCmpNote)
+      return {verdict:"flag", got:"\u2014", note:assetInfo._audioCmpNote};
+    var ac = assetInfo && assetInfo._audioCmp;
+    if (!ac) return {verdict:"flag", got:"\u2014", note:"not compared"};
+    var tol = parseFloat(String(rule.value).replace(/[^\d.]/g,"")) ;
+    if (rule.field==="Audio sync") {
+      if (isNaN(tol)) tol = 20;                       // ms, a sensible default
+      var off = Math.abs(ac.offsetMs);
+      if (ac.confidence < 0.05)
+        return {verdict:"flag", got:got, note:"couldn't align confidently \u2014 the audio may be different material"};
+      if (ac.ambiguous)
+        return {verdict:"flag", got:"\u2014", note:"can\u2019t tell \u2014 the reference has nothing distinct to line up against (a steady tone, silence or a loop)"};
+      return {verdict: off<=tol ? "pass" : "fail", got:got,
+              note: off<=tol ? null : "out by "+Math.round(off)+" ms against the reference"};
+    }
+    if (isNaN(tol)) tol = 1;                          // LU
+    if (ac.levelDiff===null) return {verdict:"flag", got:got, note:"level not measurable"};
+    var dl = Math.abs(ac.levelDiff);
+    return {verdict: dl<=tol ? "pass" : "fail", got:got,
+            note: dl<=tol ? null : "level differs by "+(Math.round(dl*10)/10)+" LU"};
+  }
+  if (rule.field==="Picture clipping") {
+    if (assetInfo && assetInfo._levelNote)
+      return {verdict:"flag", got:"\u2014", note:"couldn't scan \u2014 "+assetInfo._levelNote};
+    var L = assetInfo && assetInfo._levels;
+    if (!L) return {verdict:"flag", got:"\u2014", note:"not scanned"};
+    // "legal" / "broadcast" means nothing significant crushed or clipped.
+    var strict = /legal|broadcast|safe/i.test(String(rule.value));
+    var lim = parseFloat(String(rule.value).match(/([\d.]+)\s*%/) ? RegExp.$1 : "2");
+    if (strict || !isNaN(lim)) {
+      var bad=[];
+      if (L.pctCrushed > lim) bad.push(L.pctCrushed.toFixed(1)+"% crushed to black");
+      if (L.pctClipped > lim) bad.push(L.pctClipped.toFixed(1)+"% clipped to white");
+      if (bad.length) return {verdict:"fail", got:got, note:bad.join(", ")+
+        " \u2014 measured on the decoded picture; a scope would also catch illegal code values"};
+      return {verdict:"pass", got:got};
+    }
+    return {verdict:"flag", got:got, note:"no threshold set"};
+  }
+  if (rule.field==="Black frames") {
+    if (assetInfo && assetInfo._blackNote)
+      return {verdict:"flag", got:"\u2014", note:"couldn't scan \u2014 "+assetInfo._blackNote};
+    if (got===undefined || got===null || got==="")
+      return {verdict:"flag", got:"\u2014", note:"not scanned"};
+    var wantNone = /^(none|0|no)$/i.test(String(rule.value).trim());
+    var found = got!=="none";
+    if (wantNone) {
+      if (!found) return {verdict:"pass", got:"none found"};
+      var rs=(assetInfo&&assetInfo._blackRanges)||[];
+      return {verdict:"fail", got:got,
+              note: rs.length ? "black at "+rs.slice(0,3).map(function(r){
+                       return r[0]===r[1] ? fmtT(r[0]) : fmtT(r[0])+"\u2013"+fmtT(r[1]); }).join(", ")
+                       +(rs.length>3?" (+"+(rs.length-3)+" more)":"") : null};
+    }
+    return {verdict: found ? "pass" : "fail", got:got};
+  }
+  if (got===undefined || got===null || got==="") {
+    // DPI: embedded density is often absent or meaningless. What actually matters
+    // for print is whether there are enough pixels for the required physical
+    // size — so derive an effective DPI from the spec's size when we have one.
+    if (rule.field==="DPI" && assetInfo && assetInfo._dpiAbsent) {
+      var eff = effectiveDPI(assetInfo);
+      if (eff) {
+        var need = parseFloat(rule.value);
+        var verdict = isNaN(need) ? "flag" : (eff.dpi >= need-1 ? "pass" : "fail");
+        return { verdict: verdict, got: Math.round(eff.dpi)+" effective",
+                 note: "no embedded DPI; "+eff.px+"px across "+eff.sizeLabel };
+      }
+      return { verdict:"flag", got:"—",
+               note: assetInfo._dpiAbsentNote+" — add a physical size to the spec so effective DPI can be checked" };
+    }
+    // Physical size can only be derived from pixels + embedded density. Without
+    // density there's no intrinsic physical size — the effective DPI row covers it.
+    if ((rule.field==="Physical size" || rule.field==="Physical size mm") && assetInfo && assetInfo._dpiAbsent)
+      return {verdict:"na", got:"—", note:"no embedded density, so the file has no fixed physical size — see the DPI row"};
+    // Bleed can't be verified from file metadata — it's a layout property, not
+    // something stored in the file. Say so plainly instead of a vague flag.
+    if (rule.field==="Bleed")
+      return {verdict:"na", got:"—", note:"not in file metadata — check the artwork layout"};
+    // Loudness is genuinely unmeasurable from a container — say so specifically.
+    if (rule.field==="Loudness" && assetInfo && assetInfo._loudnessNote)
+      return {verdict:"flag", got:"—", note:"couldn't measure — "+assetInfo._loudnessNote};
+    if (rule.field==="Loudness" && assetInfo && assetInfo._loudnessUnmeasurable)
+      return {verdict:"flag", got:"—", note:"not measured"};
+    return {verdict:"flag", got:"—", note:"not readable"};
+  }
+  var exp = rule.value.trim();
+  var g = String(got).trim();
+  // numeric-aware
+  var expNum = parseFloat(exp), gNum = parseFloat(g);
+  var bothNum = !isNaN(expNum) && !isNaN(gNum) && /^[-\d.]+/.test(exp) && /^[-\d.]+/.test(g);
+  // Unit-aware sizes: normalise MB/KB/B to bytes so "≤ 5 MB" vs "272.9 KB" works.
+  function toBytes(s){
+    var m=String(s).match(/([\d.]+)\s*(mb|kb|b)\b/i);
+    if(!m) return null;
+    var v=parseFloat(m[1]), u=m[2].toLowerCase();
+    return u==="mb" ? v*1024*1024 : u==="kb" ? v*1024 : v;
+  }
+  var expB=toBytes(exp), gB=toBytes(g);
+  if(expB!==null && gB!==null){ expNum=expB; gNum=gB; bothNum=true; }
+  // Physical size "297x420 mm" — compare both axes with a small tolerance
+  var expDim=String(exp).match(/([\d.]+)\s*[x×]\s*([\d.]+)/);
+  var gDim=String(g).match(/([\d.]+)\s*[x×]\s*([\d.]+)/);
+  if(expDim && gDim && /mm|in/.test(exp)){
+    var sizeTol = /mm/.test(exp) ? 2 : 0.1;   // 2mm or 0.1in slack
+    var okW=Math.abs(parseFloat(expDim[1])-parseFloat(gDim[1]))<=sizeTol;
+    var okH=Math.abs(parseFloat(expDim[2])-parseFloat(gDim[2]))<=sizeTol;
+    if(okW&&okH) return {verdict:"pass", got:g};
+    // allow swapped orientation as a flag rather than a hard fail
+    if(Math.abs(parseFloat(expDim[1])-parseFloat(gDim[2]))<=tol && Math.abs(parseFloat(expDim[2])-parseFloat(gDim[1]))<=tol)
+      return {verdict:"flag", got:g, note:"right size, rotated"};
+    return {verdict:"fail", got:g};
+  }
+
+  function eqLoose(a,b){
+    return a.toLowerCase().replace(/[\s-]/g,"") === b.toLowerCase().replace(/[\s-]/g,"");
+  }
+
+  if (rule.field==="Video codec" && (rule.op==="=" || rule.op==="is one of" || rule.op==="\u2208")) {
+    var wants = rule.op==="=" ? [exp] : exp.split(/\s*(?:,|\||\bor\b|\/)\s*/i).filter(Boolean);
+    var ok = wants.some(function(w){ return codecMatches(w, g); });
+    return {verdict: ok ? "pass" : "fail", got:g,
+            note: ok ? null : (wants.length>1 ? "none of: "+wants.join(", ") : null)};
+  }
+  if (rule.op==="=") {
+    // Loudness is a measurement, not a declared value — broadcast delivery
+    // normally allows ±0.5 LU, so exact equality is the wrong test.
+    if (rule.field==="Loudness" && bothNum)
+      return {verdict: Math.abs(expNum-gNum)<=0.5 ? "pass" : "fail", got:g};
+    if (bothNum) {
+      if (Math.abs(expNum-gNum) < 0.05) return {verdict:"pass", got:g};
+      // frame-rate friendliness: 23.976≈24 etc handled by tolerance only
+      return {verdict:"fail", got:g};
+    }
+    if (eqLoose(exp,g)) return {verdict:"pass", got:g};
+    // partial contains (e.g. "ProRes 422 HQ" vs "ProRes 422")
+    if (g.toLowerCase().indexOf(exp.toLowerCase())>=0 || exp.toLowerCase().indexOf(g.toLowerCase())>=0)
+      return {verdict:"flag", got:g, note:"close match"};
+    return {verdict:"fail", got:g};
+  }
+  if (rule.op==="≥") { if(bothNum) return {verdict: gNum>=expNum?"pass":"fail", got:g}; }
+  if (rule.op==="≤") { if(bothNum) return {verdict: gNum<=expNum?"pass":"fail", got:g}; }
+  if (rule.op==="is one of" || rule.op==="\u2208") {
+    // "H.264 or H.265", "MP4, MOV" — any one of them is acceptable
+    var opts = exp.split(/\s*(?:,|\||\bor\b|\/)\s*/i).map(function(x){return x.trim();}).filter(Boolean);
+    var hit = opts.some(function(o){
+      if (eqLoose(o,g)) return true;
+      return g.toLowerCase().indexOf(o.toLowerCase())>=0 || o.toLowerCase().indexOf(g.toLowerCase())>=0;
+    });
+    return {verdict: hit ? "pass" : "fail", got:g,
+            note: hit ? null : "none of: "+opts.join(", ")};
+  }
+  return {verdict:"flag", got:g, note:"uncompared"};
+}
+
+function ratioOf(res){
+  if(!res) return null;
+  var wh=String(res).split("x").map(Number);
+  if(!wh[0]||!wh[1]) return null;
+  return wh[0]/wh[1];
+}
+function checkFilename(fileName, pattern, info){
+  var base=String(fileName).replace(/\.[^.]+$/,"");
+  var segs=base.split("_");
+  var pats=String(pattern||"").trim().split("_").filter(function(x){return x!=="";});
+  if(!pats.length) return {verdict:"flag",got:base,note:"no pattern set"};
+  if(segs.length!==pats.length)
+    return {verdict:"fail",got:segs.length+" parts",
+            note:"expected "+pats.length+" parts separated by _"};
+  var probs=[], lies=[];
+  for(var i=0;i<pats.length;i++){
+    var pt=pats[i], sg=segs[i], n=i+1;
+    if(pt==="*") continue;
+    if(pt==="{ratio}"){
+      var m2=String(sg).match(/^(\d+)x(\d+)$/i);
+      if(!m2){ probs.push("part "+n+" should be a format like 9x16 or 960x1200, got \u201C"+sg+"\u201D"); continue; }
+      var w=+m2[1], h=+m2[2];
+      var res=info&&info["Resolution"];
+      // Small numbers are a ratio (9x16, 1x1). Big numbers are the actual
+      // pixel size (960x1200, 1200x628) and must match exactly.
+      if(w>=100||h>=100){
+        if(res && res.toLowerCase()!==(w+"x"+h).toLowerCase())
+          lies.push("name says "+sg+" but the file is "+res);
+      }else{
+        var actual=ratioOf(res);
+        if(actual!==null && Math.abs(actual-(w/h))>0.02)
+          lies.push("name says "+sg+" but the file is "+res);
+      }
+      continue;
+    }
+    if(pt==="{dur}"){
+      // Stills carry NA here rather than a number — nothing to check.
+      if(/^na$/i.test(sg)) continue;
+      var wantS=parseFloat(sg);
+      if(isNaN(wantS)){ probs.push("part "+n+" should be a length in seconds or NA, got \u201C"+sg+"\u201D"); continue; }
+      var actS=info&&info._durSec;
+      if(typeof actS==="number" && !isNaN(actS) && Math.abs(actS-wantS)>0.75)
+        lies.push("name says "+sg+"s but the file runs "+(Math.round(actS*10)/10)+"s");
+      continue;
+    }
+    if(pt==="{name}"){
+      if(!/^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$/.test(sg))
+        probs.push("part "+n+" should be PascalCase with hyphens only, got \u201C"+sg+"\u201D");
+      else if(!/^[A-Z]/.test(sg))
+        probs.push("part "+n+" should start with a capital, got \u201C"+sg+"\u201D");
+      continue;
+    }
+    var alt=pt.match(/^\[(.+)\]$/);
+    if(alt){
+      var opts=alt[1].split("|").map(function(x){return x.trim().toLowerCase();});
+      if(opts.indexOf(sg.toLowerCase())<0)
+        probs.push("part "+n+" should be one of "+alt[1]+", got \u201C"+sg+"\u201D");
+      continue;
+    }
+    if(pt.toLowerCase()!==sg.toLowerCase())
+      probs.push("part "+n+" should be \u201C"+pt+"\u201D, got \u201C"+sg+"\u201D");
+  }
+  if(lies.length) return {verdict:"fail",got:base,note:"name doesn't match the file",
+                          problems:lies, kind:"mismatch"};
+  if(probs.length){
+    // If most parts are wrong this isn't a naming slip, it's the wrong file.
+    // Different problem, different action — so say that instead of listing
+    // every correction.
+    var wrongFile = probs.length > Math.max(2, Math.floor(pats.length/2));
+    return {verdict:"fail", got:base,
+            note: wrongFile
+              ? "doesn't match the convention at all ("+probs.length+" of "+pats.length+" parts) \u2014 likely the wrong file"
+              : probs.length+" of "+pats.length+" parts wrong",
+            problems:probs, kind: wrongFile ? "wrongfile" : "naming"};
+  }
+  return {verdict:"pass",got:base};
+}
+
+// ── ONE MediaInfo instance for the whole run ──
+// Creating a factory per file would reload ~4MB of WASM each time; at batch
+// sizes that dominates the runtime. So we build it once and reuse it.
+var _mi=null;
+async function getMI(){
+  if(_mi) return _mi;
+  await needLib("mediainfo");
+  var ns=window.MediaInfo||window.mediaInfoFactory;
+  var factory=(typeof ns==="function")?ns:(ns&&(ns.mediaInfoFactory||ns.default));
+  if(typeof factory!=="function") throw new Error("MediaInfo failed to load");
+  _mi=await factory({format:"object",locateFile:function(p){
+    return "https://cdn.jsdelivr.net/npm/mediainfo.js@0.3.1/dist/"+p; }});
+  return _mi;
+}
+function isStill(file){
+  return /^image\//.test(file.type)||/\.(jpe?g|png|tiff?|webp|gif|bmp)$/i.test(file.name);
+}
+// Analyse one file with the shared instance.
+async function analyseOne(file){
+  var mi=await getMI();
+  var result=await mi.analyzeData(function(){return file.size;}, readChunk(file));
+  if(!isStill(file)) {
+    var out=normaliseMediaInfo(result,file);
+    out["File size"]=fmtBytes(file.size);
+    // Colour space and compression aren't always declared for video. Surface
+    // them when they are, rather than guessing from the codec.
+    var vt=track(result,"Video");
+    var cs=vt.colour_primaries||vt.ColorSpace;
+    if(cs && !out["Colour space"]) out["Colour space"]=String(cs);
+    // Colour tagging, when the file carries it. Untagged files report nothing
+    // rather than a guess.
+    if(vt.colour_primaries) out["Colour primaries"]=String(vt.colour_primaries);
+    if(vt.transfer_characteristics) out["Transfer"]=String(vt.transfer_characteristics);
+    if(vt.matrix_coefficients) out["Matrix"]=String(vt.matrix_coefficients);
+    if(vt.colour_range) out["Colour range"]=String(vt.colour_range);
+    if(vt.Compression_Mode && !out["Compression"]) out["Compression"]=vt.Compression_Mode;
+    // raw seconds, for checking a duration claimed in the filename
+    var g=track(result,"General");
+    var d=parseFloat(g.Duration);
+    if(!isNaN(d)) out._durSec=d;
+    return out;
+  }
+  // stills: MediaInfo for the basics, header bytes for density/CMYK
+  var gen=track(result,"General"), img=track(result,"Image");
+  var o={_type:"static"};
+  if(img.Width&&img.Height) o["Resolution"]=Math.round(img.Width)+"x"+Math.round(img.Height);
+  if(gen.Format||img.Format) o["Container"]=normaliseStillFormat(gen.Format||img.Format,file);
+  if(img.BitDepth) o["Bit depth"]=img.BitDepth+"-bit";
+  if(img.ColorSpace) o["Colour space"]=normaliseColourSpace(img.ColorSpace);
+  if(img.ChromaSubsampling) o["Chroma"]=img.ChromaSubsampling;
+  if(img.Compression_Mode) o["Compression"]=img.Compression_Mode;
+  // stills have no declared aspect ratio, so derive it from the dimensions
+  if(o["Resolution"]){
+    var whA=o["Resolution"].split("x").map(Number);
+    if(whA[0]&&whA[1]) o["Aspect ratio"]=normaliseAspect(whA[0]/whA[1]);
+  }
+  // only the head of the file is needed for density markers
+  var head=new Uint8Array(await file.slice(0,Math.min(file.size,524288)).arrayBuffer());
+  var dens=readDensity(head,file.name);
+  if(dens&&dens.dpi){
+    o["DPI"]=String(Math.round(dens.dpi));
+    if(o["Resolution"]){
+      var wh=o["Resolution"].split("x").map(Number);
+      var wIn=wh[0]/dens.dpi,hIn=wh[1]/dens.dpi;
+      o["Physical size"]=(Math.round(wIn*10)/10)+"x"+(Math.round(hIn*10)/10)+" in";
+      o["Physical size mm"]=Math.round(wIn*25.4)+"x"+Math.round(hIn*25.4)+" mm";
+    }
+  } else { o._dpiAbsent=true; o._dpiAbsentNote=(dens&&dens.note)||"no density metadata"; }
+  var c=detectCMYK(head,file.name);
+  if(c!==null) o["Colour space"]=c?"CMYK":(o["Colour space"]||"RGB");
+  o["File size"]=fmtBytes(file.size); o._fileSizeBytes=file.size;
+  return o;
+}
+
+
+// A file is only checkable if MediaInfo found a real stream in it. Corrupt or
+// non-media files come back with a General track and a file size and nothing
+// else — and every rule then reads "not readable", which used to add up to
+// zero failures and a PASS.
+function hasMediaStream(info){
+  if(!info) return false;
+  if(info._type==="static") return !!info["Resolution"];
+  var tracks = (info._raw && info._raw.media && info._raw.media.track) || [];
+  return tracks.some(function(t){ return /^(Video|Audio|Image)$/.test(t["@type"]); });
+}
+
+
+
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOUDNESS — measured by audio_core.js. QuickTime masters with PCM audio
+// (ProRes, typically) are read straight from the file, so they work too.
+// ─────────────────────────────────────────────────────────────────────────────
+async function measureLoudness(file, onProgress){
+  var r=await measureFileLoudness(file, onProgress);
+  if(!isFinite(r.integrated)) throw new Error("no audible audio to measure");
+  r.lufs=r.integrated;      // older callers read .lufs
+  return r;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BLACK FRAME DETECTION
+// Nothing in a file's header says whether it opens on black, so this decodes
+// frames and measures them. Samples densely at the head and tail (where black
+// actually matters for delivery) and more sparsely through the middle.
+// Only works for codecs the browser can decode — ProRes and MXF will refuse.
+// ─────────────────────────────────────────────────────────────────────────────
+var BLACK_LUMA = 16;      // mean luma at or below this counts as black (8-bit)
+var BLACK_EDGE = 1.5;     // seconds sampled densely at each end
+var BLACK_STEP = 0.25;    // sampling interval at the ends
+var BLACK_MID_SAMPLES = 24;
+
+function frameStats(ctx, w, h){
+  var d = ctx.getImageData(0,0,w,h).data;
+  var sum=0, n=0, mn=255, mx=0, at0=0, at255=0;
+  for(var i=0;i<d.length;i+=16){
+    var y = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+    sum+=y; n++;
+    if(y<mn)mn=y; if(y>mx)mx=y;
+    // Clipping means the picture has run out of headroom, not that a colour is
+    // saturated — a pure red (255,0,0) is legitimate. So require the whole
+    // pixel to be at the rail.
+    if(d[i]<=2 && d[i+1]<=2 && d[i+2]<=2) at0++;
+    if(d[i]>=253 && d[i+1]>=253 && d[i+2]>=253) at255++;
+  }
+  return { mean:n?sum/n:0, min:mn, max:mx, n:n, at0:at0, at255:at255 };
+}
+
+// One decode pass, both answers. Decoding is the expensive part, so black
+// detection and level measurement share it.
+async function scanVideo(file, onProgress){
+  if(!/\.(mp4|m4v|webm|ogg|mov)$/i.test(file.name))
+    throw new Error("browser can't decode this format");
+  var url = URL.createObjectURL(file);
+  var v = document.createElement("video");
+  v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+  try{
+    await new Promise(function(res, rej){
+      v.onloadeddata = res;
+      v.onerror = function(){ rej(new Error("browser couldn't decode the video")); };
+      setTimeout(function(){ rej(new Error("timed out opening the video")); }, 15000);
+    });
+    var dur = v.duration;
+    if(!isFinite(dur) || dur<=0) throw new Error("no readable duration");
+
+    var cw = 160, ch = Math.max(2, Math.round(160 * (v.videoHeight/v.videoWidth || 0.5625)));
+    var cv = document.createElement("canvas"); cv.width=cw; cv.height=ch;
+    var cx = cv.getContext("2d", {willReadFrequently:true});
+
+    var times = [];
+    for(var t=0; t<Math.min(BLACK_EDGE, dur); t+=BLACK_STEP) times.push(t);
+    for(var t2=Math.max(0, dur-BLACK_EDGE); t2<dur; t2+=BLACK_STEP) times.push(t2);
+    for(var k=1;k<BLACK_MID_SAMPLES;k++) times.push(dur*k/BLACK_MID_SAMPLES);
+    times = times.filter(function(x,i,a){ return x<dur && a.indexOf(x)===i; })
+                 .sort(function(a,b){return a-b;});
+
+    var black=[], tot=0, c0=0, c255=0, gMin=255, gMax=0, meanSum=0;
+    for(var i=0;i<times.length;i++){
+      if(onProgress) onProgress(i+1, times.length);
+      await seekTo(v, times[i]);
+      cx.drawImage(v, 0, 0, cw, ch);
+      var f = frameStats(cx, cw, ch);
+      if(f.mean <= BLACK_LUMA) black.push(times[i]);
+      tot+=f.n; c0+=f.at0; c255+=f.at255;
+      if(f.min<gMin)gMin=f.min; if(f.max>gMax)gMax=f.max;
+      meanSum+=f.mean;
+    }
+    return {
+      duration: dur, total: times.length,
+      black: black, ranges: groupTimes(black, BLACK_STEP*1.6),
+      levels: { minLuma:Math.round(gMin), maxLuma:Math.round(gMax),
+                meanLuma:Math.round(meanSum/Math.max(1,times.length)),
+                pctCrushed: tot? (c0/tot*100) : 0,
+                pctClipped: tot? (c255/tot*100) : 0 }
+    };
+  } finally {
+    try{ v.pause(); v.removeAttribute("src"); v.load(); }catch(e){}
+    URL.revokeObjectURL(url);
+  }
+}
+function seekTo(v, t){
+  return new Promise(function(res, rej){
+    var done=false;
+    v.onseeked = function(){ if(!done){ done=true; res(); } };
+    setTimeout(function(){ if(!done){ done=true; res(); } }, 3000);
+    try{ v.currentTime = t; }catch(e){ rej(e); }
+  });
+}
+function groupTimes(times, gap){
+  if(!times.length) return [];
+  var out=[], start=times[0], prev=times[0];
+  times.slice(1).forEach(function(t){
+    if(t-prev > gap){ out.push([start,prev]); start=t; }
+    prev=t;
+  });
+  out.push([start,prev]);
+  return out;
+}
+function fmtT(s){
+  var m=Math.floor(s/60), sec=(s%60);
+  return (m?m+"m ":"")+sec.toFixed(1)+"s";
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIO COMPARISON
+// Checks a file's own audio against an approved reference (a WAV). Two
+// questions: is it in sync, and is it at the same level. Sync is found by
+// cross-correlating loudness envelopes rather than raw samples — far cheaper,
+// and immune to phase and codec differences between a master and an encode.
+// ─────────────────────────────────────────────────────────────────────────────
+var ENV_RATE = 200;        // envelope samples per second
+var MAX_LAG_S = 5;         // how far out of sync we'll look
+var SYNC_MIN_MARGIN = 0.01; // the best alignment must beat any other this clearly
+
+function toEnvelope(buf){
+  // Exactly ENV_RATE points per second at any sample rate. Rounding the step to
+  // whole samples (221 at 44.1kHz, against an exact 240 at 48kHz) made one file's
+  // envelope run 0.23% slow, which drifts 90ms over 40 seconds.
+  var rate = buf.sampleRate, per = rate / ENV_RATE;
+  var chans = Math.min(2, buf.numberOfChannels);
+  var n = Math.floor(buf.length / per);
+  var env = new Float32Array(n);
+  var data = [];
+  for(var c=0;c<chans;c++) data.push(buf.getChannelData(c));
+  for(var i=0;i<n;i++){
+    var a0=Math.round(i*per), a1=Math.round((i+1)*per), s=0;
+    // every sample counts: skipping some made the shape depend on the rate too
+    for(var j=a0;j<a1;j++){
+      var v=0;
+      for(var c2=0;c2<chans;c2++) v += data[c2][j]||0;
+      s += v*v;
+    }
+    env[i] = Math.sqrt(s/(a1-a0));
+  }
+  return env;
+}
+function normalise(a){
+  var m=0; for(var i=0;i<a.length;i++) if(a[i]>m) m=a[i];
+  if(!m) return a;
+  var o=new Float32Array(a.length);
+  for(var j=0;j<a.length;j++) o[j]=a[j]/m;
+  return o;
+}
+// Best alignment of b against a, searched over ±MAX_LAG_S.
+// Properly normalised: dividing by the overlap count alone rewards large lags
+// where only a few samples happen to coincide, which pulls the answer miles out.
+function bestLag(a, b){
+  a=normalise(a); b=normalise(b);
+  var maxLag = Math.round(MAX_LAG_S * ENV_RATE);
+  var len = Math.min(a.length, b.length);
+  if(len < ENV_RATE) return {score:0, lag:0, margin:0};
+  var scores=[], best={score:-Infinity, lag:0};
+  for(var lag=-maxLag; lag<=maxLag; lag++){
+    var dot=0, ea=0, eb=0, n=0;
+    for(var i=0;i<len;i++){
+      var j=i+lag;
+      if(j<0 || j>=b.length) continue;
+      var x=a[i], y=b[j];
+      dot += x*y; ea += x*x; eb += y*y; n++;
+    }
+    // insist on a real overlap, otherwise a sliver can win on noise alone
+    if(n < len*0.5) continue;
+    var denom = Math.sqrt(ea*eb);
+    var sc = denom ? dot/denom : 0;
+    scores.push([lag, sc]);
+    if(sc > best.score) best={score:sc, lag:lag};
+  }
+  // How clearly the best alignment beats any other more than 100ms away. A
+  // steady tone, silence or a loop matches itself equally well anywhere, so
+  // its "best" offset is arbitrary and mustn't be reported as a measurement.
+  var runnerUp=-Infinity, away=Math.round(ENV_RATE/10);
+  scores.forEach(function(p){ if(Math.abs(p[0]-best.lag)>away && p[1]>runnerUp) runnerUp=p[1]; });
+  best.margin = isFinite(runnerUp) ? best.score-runnerUp : 1;
+  return best;
+}
+
+function decodeAudio(file){ return decodeAudioFile(file); }
+async function compareAudio(assetFile, refBuffer, refEnv){
+  var buf;
+  try{ buf = await decodeAudioFile(assetFile); }
+  catch(e){ throw new Error("couldn't read this file's audio"); }
+  var env = toEnvelope(buf);
+  var fit = bestLag(refEnv, env);
+  var offsetMs = (fit.lag / ENV_RATE) * 1000;
+  // level difference, measured the same way loudness is
+  var lufsA=null, lufsB=null;
+  try{ lufsA = measureBuffer(buf).integrated; lufsB = measureBuffer(refBuffer).integrated; }catch(e){}
+  return {
+    offsetMs: offsetMs,
+    confidence: fit.score,
+    margin: fit.margin,
+    ambiguous: fit.margin < SYNC_MIN_MARGIN,
+    levelDiff: (isFinite(lufsA)&&isFinite(lufsB)) ? (lufsA-lufsB) : null,
+    durationDiff: buf.duration - refBuffer.duration
+  };
+}
+// @@ENGINE:spec END
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRESET CORE
+// Rewrites a Premiere / Media Encoder export preset (.epr) to match a spec.
+//
+// It never builds a preset from scratch. A preset is a graph of ExporterParam
+// objects keyed by GUID-style identifiers, and a malformed one can import fine
+// and still export wrong. So we take one Premiere wrote, and change only the
+// values whose encoding has been verified against a real export.
+// ─────────────────────────────────────────────────────────────────────────────
+
+var PREMIERE_TICKS = 254016000000;     // Premiere's ticks per second
+
+// ProRes flavours, by the FourCC Premiere stores as a big-endian integer.
+var PRORES = {
+  "ProRes 422 Proxy": "apco",
+  "ProRes 422 LT":    "apcs",
+  "ProRes 422":       "apcn",
+  "ProRes 422 HQ":    "apch",
+  "ProRes 4444":      "ap4h",
+  "ProRes 4444 XQ":   "ap4x"
+};
+var FOURCC_NAME = {};
+Object.keys(PRORES).forEach(function(k){ FOURCC_NAME[PRORES[k]] = k; });
+
+function fourccToInt(s){
+  return ((s.charCodeAt(0)<<24)>>>0) + (s.charCodeAt(1)<<16) + (s.charCodeAt(2)<<8) + s.charCodeAt(3);
+}
+function intToFourcc(n){
+  n = Number(n)>>>0;
+  return String.fromCharCode((n>>>24)&255, (n>>>16)&255, (n>>>8)&255, n&255);
+}
+
+// Frame rates as exact ratios, so 23.976 doesn't drift.
+var FPS_RATIOS = {
+  "23.976":[24000,1001], "24":[24,1], "25":[25,1], "29.97":[30000,1001],
+  "30":[30,1], "50":[50,1], "59.94":[60000,1001], "60":[60,1]
+};
+function fpsToTicks(fps){
+  var key = String(fps).replace(/0+$/,"").replace(/\.$/,"");
+  var r = FPS_RATIOS[key] || FPS_RATIOS[String(Math.round(parseFloat(fps)*1000)/1000)];
+  if (r) return Math.round(PREMIERE_TICKS * r[1] / r[0]);
+  var f = parseFloat(fps);
+  return (f>0) ? Math.round(PREMIERE_TICKS / f) : null;
+}
+function ticksToFps(t){
+  var f = PREMIERE_TICKS / Number(t);
+  var best = null;
+  Object.keys(FPS_RATIOS).forEach(function(k){
+    var r = FPS_RATIOS[k], v = r[0]/r[1];
+    if (Math.abs(v-f) < 0.005) best = k;
+  });
+  return best || (Math.round(f*1000)/1000).toString();
+}
+
+var FIELD_NAMES = { "0":"Progressive", "1":"Upper field first", "2":"Lower field first" };
+
+function exporterFamily(doc){
+  var ft = doc.querySelector("PremiereData > ExporterFileType");
+  var code = ft ? intToFourcc(ft.textContent.trim()) : "";
+  if (code === "MooV") return { code:code, name:"QuickTime (.mov)", container:"MOV" };
+  return { code:code, name:"format '"+code+"'", container:"" };
+}
+
+// Find an ExporterParam by identifier.
+function findParam(doc, ident){
+  var all = doc.getElementsByTagName("ExporterParam");
+  for (var i=0;i<all.length;i++){
+    var id = all[i].getElementsByTagName("ParamIdentifier")[0];
+    if (id && id.textContent.trim() === ident) return all[i];
+  }
+  return null;
+}
+function getVal(doc, ident){
+  var p = findParam(doc, ident);
+  if (!p) return null;
+  var v = p.getElementsByTagName("ParamValue")[0];
+  return v ? v.textContent.trim() : null;
+}
+function setVal(doc, ident, value){
+  var p = findParam(doc, ident);
+  if (!p) return false;
+  var v = p.getElementsByTagName("ParamValue")[0];
+  if (!v) return false;                  // never invent a value slot
+  v.textContent = String(value);
+  return true;
+}
+
+// What the base preset currently produces, in plain terms.
+function describePreset(doc){
+  var fam = exporterFamily(doc);
+  var codec = getVal(doc, "ADBEVideoCodec");
+  var cc = codec ? intToFourcc(codec) : "";
+  var w = getVal(doc, "ADBEVideoWidth"), h = getVal(doc, "ADBEVideoHeight");
+  var fps = getVal(doc, "ADBEVideoFPS");
+  var fld = getVal(doc, "ADBEVideoFieldType");
+  return {
+    name: (doc.querySelector("PremiereData > PresetName")||{}).textContent || "",
+    family: fam,
+    codec: FOURCC_NAME[cc] || (cc ? "codec '"+cc+"'" : "unknown"),
+    fourcc: cc,
+    resolution: (w&&h) ? w+"x"+h : null,
+    fps: fps ? ticksToFps(fps) : null,
+    field: FIELD_NAMES[fld] || (fld==null ? null : "type "+fld),
+    sampleRate: getVal(doc, "ADBEAudioRatePerSecond"),
+    channels: getVal(doc, "ADBEAudioNumChannels")
+  };
+}
+
+// Normalise a codec name from a spec to one of our ProRes keys.
+function matchProRes(v){
+  var s = String(v).toLowerCase().replace(/\s+/g," ").trim();
+  if (!/prores/.test(s)) return null;
+  if (/4444\s*xq/.test(s)) return "ProRes 4444 XQ";
+  if (/4444/.test(s)) return "ProRes 4444";
+  if (/proxy/.test(s)) return "ProRes 422 Proxy";
+  if (/\blt\b/.test(s)) return "ProRes 422 LT";
+  if (/\bhq\b/.test(s)) return "ProRes 422 HQ";
+  return "ProRes 422";
+}
+
+// Apply spec rules to the preset. Returns what changed, and — as importantly —
+// what it could not do, so nothing is silently left wrong.
+function applySpec(doc, rules){
+  var changes = [], skipped = [], matched = [], fam = exporterFamily(doc);
+  var on = rules.filter(function(r){ return r.enabled; });
+  function field(f){ return on.filter(function(r){ return r.field===f; })[0]; }
+
+  // container / exporter family
+  var cont = field("Container");
+  if (cont){
+    var want = String(cont.value).toUpperCase();
+    if (fam.container && want.indexOf(fam.container)<0 && fam.container.indexOf(want)<0)
+      skipped.push({ what:"Container", want:cont.value,
+        why:"this preset exports "+fam.name+". Start from a preset in that format instead." });
+    else matched.push({ what:"Container", value:fam.container });
+  }
+
+  // codec
+  var vc = field("Video codec");
+  if (vc){
+    var values = String(vc.value).split(/\s*,\s*/);
+    var pr = null;
+    for (var i=0;i<values.length && !pr;i++) pr = matchProRes(values[i]);
+    if (pr && fam.code==="MooV"){
+      var before = describePreset(doc).codec;
+      if (before !== pr){
+        setVal(doc, "ADBEVideoCodec", fourccToInt(PRORES[pr]));
+        changes.push({ what:"Codec", from:before, to:pr });
+      } else matched.push({ what:"Codec", value:pr });
+    } else {
+      skipped.push({ what:"Codec", want:vc.value,
+        why: fam.code==="MooV"
+          ? "only ProRes flavours can be set in a QuickTime preset \u2014 for "+vc.value+", start from a preset that already uses it."
+          : "this preset's format isn't one we can rewrite the codec for." });
+    }
+  }
+
+  // resolution
+  var res = field("Resolution");
+  if (res){
+    var m = String(res.value).match(/(\d{2,5})\s*[x\u00d7]\s*(\d{2,5})/);
+    if (m){
+      var before2 = describePreset(doc).resolution;
+      var to = m[1]+"x"+m[2];
+      if (before2 !== to){
+        setVal(doc, "ADBEVideoWidth", m[1]);
+        setVal(doc, "ADBEVideoHeight", m[2]);
+        changes.push({ what:"Resolution", from:before2, to:to });
+      } else matched.push({ what:"Resolution", value:to });
+    }
+  }
+
+  // frame rate
+  var fr = field("Frame rate");
+  if (fr){
+    var ticks = fpsToTicks(fr.value);
+    if (ticks){
+      var before3 = describePreset(doc).fps;
+      var after3 = ticksToFps(ticks);
+      if (before3 !== after3){
+        setVal(doc, "ADBEVideoFPS", ticks);
+        changes.push({ what:"Frame rate", from:before3+" fps", to:after3+" fps" });
+      } else matched.push({ what:"Frame rate", value:after3+" fps" });
+    }
+  }
+
+  // field order
+  var sc = field("Scan");
+  if (sc){
+    var cur = getVal(doc, "ADBEVideoFieldType");
+    var v = String(sc.value).toLowerCase();
+    if (/progress/.test(v) && cur !== "0"){
+      setVal(doc, "ADBEVideoFieldType", 0);
+      changes.push({ what:"Field order", from:FIELD_NAMES[cur]||cur, to:"Progressive" });
+    } else if (/progress/.test(v)) matched.push({ what:"Field order", value:"Progressive" }); else if (/interlac/.test(v) && cur === "0"){
+      // An interlaced spec without a field order is ambiguous; don't guess.
+      skipped.push({ what:"Field order", want:"Interlaced",
+        why:"the spec doesn't say upper or lower field first. Set it in Premiere." });
+    }
+  }
+
+  // audio
+  var sr = field("Sample rate");
+  if (sr){
+    var rate = String(Math.round(parseFloat(sr.value)));
+    var cr = getVal(doc, "ADBEAudioRatePerSecond");
+    if (rate && cr !== rate){
+      setVal(doc, "ADBEAudioRatePerSecond", rate);
+      changes.push({ what:"Sample rate", from:cr+" Hz", to:rate+" Hz" });
+    } else if (rate) matched.push({ what:"Sample rate", value:rate+" Hz" });
+  }
+  var ch = field("Audio channels");
+  if (ch){
+    var n = String(parseInt(ch.value,10));
+    var cn = getVal(doc, "ADBEAudioNumChannels");
+    if (n && n!=="NaN" && cn !== n){
+      setVal(doc, "ADBEAudioNumChannels", n);
+      changes.push({ what:"Audio channels", from:cn, to:n });
+    } else if (n && n!=="NaN") matched.push({ what:"Audio channels", value:n });
+  }
+
+  // loudness is a property of the mix, not something an export preset sets
+  ["Loudness","True peak"].forEach(function(f){
+    var r = field(f);
+    if (r) skipped.push({ what:f, want:r.value,
+      why:"this is set in the mix, not the export preset. Measure the finished export with Loudness Analyser." });
+  });
+
+  // things we deliberately don't set
+  ["Bit depth","Audio bit depth","Video bitrate","Audio bitrate","Audio codec","Chroma"].forEach(function(f){
+    var r = field(f);
+    if (r) skipped.push({ what:f, want:r.value,
+      why:"not set automatically \u2014 check it in Premiere's export settings." });
+  });
+
+  return { changes:changes, skipped:skipped, matched:matched };
+}
+
+// Give the new preset its own name and identity, so importing it doesn't
+// collide with the one it was made from.
+function renamePreset(doc, name){
+  var pn = doc.querySelector("PremiereData > PresetName");
+  if (pn) pn.textContent = name;
+  var pid = doc.querySelector("PremiereData > PresetID");
+  if (pid) pid.textContent = uuid4();
+}
+function uuid4(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){
+    var r = Math.random()*16|0; return (c==="x"?r:(r&3|8)).toString(16);
+  });
+}
+function serialise(doc){
+  var s = new XMLSerializer().serializeToString(doc);
+  if (!/^<\?xml/.test(s)) s = '<?xml version="1.0" encoding="UTF-8"?>\n' + s;
+  return s;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OUTPUT — surgical text edits
+// A DOM round-trip reformats the file (collapses empty tags, moves the XML
+// declaration). That's valid XML, but there's no telling how forgiving
+// Premiere's parser is. So the DOM is only used to READ the preset; the output
+// is the original text with just the value characters replaced.
+// ─────────────────────────────────────────────────────────────────────────────
+function editText(xmlText, edits, newName, newId){
+  var out = xmlText;
+  // each ExporterParam block, found whole, so a value is only ever changed
+  // inside the block that owns its identifier
+  out = out.replace(/<ExporterParam\b[\s\S]*?<\/ExporterParam>/g, function(block){
+    var idm = block.match(/<ParamIdentifier>([^<]*)<\/ParamIdentifier>/);
+    if (!idm) return block;
+    var id = idm[1].trim();
+    if (!Object.prototype.hasOwnProperty.call(edits, id)) return block;
+    // only replace an existing value slot; never create one
+    return block.replace(/(<ParamValue>)[^<]*(<\/ParamValue>)/, "$1"+edits[id]+"$2");
+  });
+  if (newName != null)
+    out = out.replace(/(<PresetName>)[^<]*(<\/PresetName>)/, "$1"+escXml(newName)+"$2");
+  if (newId != null)
+    out = out.replace(/(<PresetID>)[^<]*(<\/PresetID>)/, "$1"+newId+"$2");
+  return out;
+}
+function escXml(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+// Collect the value edits applySpec made on the DOM, as identifier -> value,
+// so they can be replayed onto the original text.
+function collectEdits(baseDoc, workDoc){
+  var ids = ["ADBEVideoCodec","ADBEVideoWidth","ADBEVideoHeight","ADBEVideoFPS",
+             "ADBEVideoFieldType","ADBEAudioRatePerSecond","ADBEAudioNumChannels"];
+  var edits = {};
+  ids.forEach(function(id){
+    var a = getVal(baseDoc, id), b = getVal(workDoc, id);
+    if (b != null && a !== b) edits[id] = b;
+  });
+  return edits;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHELL
+// ─────────────────────────────────────────────────────────────────────────────
+// The base preset is built in. It was authored by Premiere, so rewriting it
+// keeps every structural detail Premiere expects; users never handle it.
+var TEMPLATES = {
+  prores: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PremiereData Version=\"3\">\n\t<PresetName>CLEARCAST_PRORES</PresetName>\n\t<PresetComments></PresetComments>\n\t<PresetUserComments></PresetUserComments>\n\t<PresetCreatorApp>Premiere Pro</PresetCreatorApp>\n\t<ExporterName></ExporterName>\n\t<ExporterClassID>1061109567</ExporterClassID>\n\t<ExporterFileType>1299148630</ExporterFileType>\n\t<ExportParamContainer ObjectRef=\"1\"/>\n\t<PresetID>d24ca488-f663-42fc-a639-0531c5cde1c8</PresetID>\n\t<DoAudio>true</DoAudio>\n\t<DoVideo>true</DoVideo>\n\t<FolderDisplayPath></FolderDisplayPath>\n\t<StandardFilters Version=\"1\">\n\t\t<CropType>0</CropType>\n\t\t<UseMaximumRenderQuality>true</UseMaximumRenderQuality>\n\t\t<UseFrameBlending>false</UseFrameBlending>\n\t\t<CustomStartTime>-101606400000000000</CustomStartTime>\n\t\t<TimeInterpolationType>0</TimeInterpolationType>\n\t</StandardFilters>\n\t<ExportXMPOptionKey>10</ExportXMPOptionKey>\n\t<IngestCopyVerificationType>-1</IngestCopyVerificationType>\n\t<DoEffects>true</DoEffects>\n\t<DoCaptions>true</DoCaptions>\n\t<DoMetadata>true</DoMetadata>\n\t<ExporterParamContainer ObjectID=\"1\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"2\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"2\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>10</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>0</ParamIdentifier>\n\t\t<ParamName></ParamName>\n\t\t<ExporterChildParams ObjectRef=\"3\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"3\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"4\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"47\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"76\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"4\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoTabGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"5\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"5\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"6\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"12\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"25\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"31\"/>\n\t\t\t<ParamContainerItem Index=\"4\" ObjectRef=\"34\"/>\n\t\t\t<ParamContainerItem Index=\"5\" ObjectRef=\"41\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"6\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoCodecGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"7\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"7\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"8\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"9\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"10\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"11\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"8\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1634755432</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoCodec</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"9\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEVideoResolution</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"10\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEDNxHDAlphaType</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"11\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>7</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEVideoCodecPrefsButton</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"12\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEBasicVideoGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"13\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"13\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"14\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"15\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"16\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"17\"/>\n\t\t\t<ParamContainerItem Index=\"4\" ObjectRef=\"18\"/>\n\t\t\t<ParamContainerItem Index=\"5\" ObjectRef=\"19\"/>\n\t\t\t<ParamContainerItem Index=\"6\" ObjectRef=\"20\"/>\n\t\t\t<ParamContainerItem Index=\"7\" ObjectRef=\"21\"/>\n\t\t\t<ParamContainerItem Index=\"8\" ObjectRef=\"22\"/>\n\t\t\t<ParamContainerItem Index=\"9\" ObjectRef=\"23\"/>\n\t\t\t<ParamContainerItem Index=\"10\" ObjectRef=\"24\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"14\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>7</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoMatchSource</ParamIdentifier>\n\t\t<ParamArbData Encoding=\"base64\" Checksum=\"2794294669\">DAAAAA==</ParamArbData>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"15\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>100</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIsSlider>true</ParamIsSlider>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIdentifier>ADBEVideoQuality</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"16\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1920</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoWidth</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"17\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1080</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoHeight</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"18\" ClassID=\"8def7863-204e-4206-8791-54a78f15c66b\" Version=\"1\">\n\t\t<ParamValue>10160640000</ParamValue>\n\t\t<ParamType>4</ParamType>\n\t\t<ParamOrdinalValue>4</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoFPS</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"19\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>5</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoFieldType</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"20\" ClassID=\"8d9836e8-d00a-4a00-bfc0-dfbb73540736\" Version=\"1\">\n\t\t<ParamValue>1,1</ParamValue>\n\t\t<ParamType>11</ParamType>\n\t\t<ParamOrdinalValue>6</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoAspect</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"21\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>203</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>7</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoGraphicsWhiteLuminance</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"22\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>8</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBERenderDeepColor</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"23\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>9</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEExportColorSpace</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"24\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>2</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>10</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoBitDepth</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"25\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAdvancedVideoGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"26\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"26\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"27\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"28\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"29\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"30\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"27\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEKeyframeEvery</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"28\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEExpandStills</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"29\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIdentifier>ADBEReorderFrames</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"30\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIdentifier>ADBEForceTCTimebase</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"31\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoBitrateGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"32\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"32\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"33\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"33\" ClassID=\"018cf63d-c58d-4d39-97df-36b6b2d6ef88\" Version=\"1\">\n\t\t<ParamValue>1000.</ParamValue>\n\t\t<ParamType>3</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEVideoBitrate</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"34\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>4</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEVideoHinterGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"35\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"35\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"36\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"37\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"38\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"39\"/>\n\t\t\t<ParamContainerItem Index=\"4\" ObjectRef=\"40\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"36\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoHinterBool</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"37\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoPayloadEncoding</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"38\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1440</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoHinterPacketSize</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"39\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>100</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoHinterPacketDurationLimit</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"40\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1000</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>4</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoHinterInterval</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"41\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>5</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoVRGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"42\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"42\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"43\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"44\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"45\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"46\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"43\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEVideoVRDoExport</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"44\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEVideoVRStereoscopic</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"45\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>360</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEVideoVRHFOV</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"46\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>180</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEVideoVRVFOV</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"47\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioTabGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"48\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"48\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"49\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"53\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"60\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"64\"/>\n\t\t\t<ParamContainerItem Index=\"4\" ObjectRef=\"67\"/>\n\t\t\t<ParamContainerItem Index=\"5\" ObjectRef=\"70\"/>\n\t\t\t<ParamContainerItem Index=\"6\" ObjectRef=\"73\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"49\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioCodecGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"50\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"50\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"51\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"52\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"51\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioCodec</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"52\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>7</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioCodecPrefsButton</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"53\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEBasicAudioGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"54\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"54\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"55\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"56\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"57\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"58\"/>\n\t\t\t<ParamContainerItem Index=\"4\" ObjectRef=\"59\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"55\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioCodec</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"56\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>7</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioCodecPrefsButton</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"57\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>48000</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioRatePerSecond</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"58\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>2</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioNumChannels</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"59\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>1</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>4</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioSampleType</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"60\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioChannelConfigurationGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"61\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"61\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"62\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"63\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"62\" ClassID=\"b93e10ab-6079-493d-a2b4-c7feb4a510b0\" Version=\"1\">\n\t\t<ParamType>9</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioChannelConfiguration</ParamIdentifier>\n\t\t<ParamArbData Encoding=\"base64\" Checksum=\"648058114\">eyJtQWxsb3dlZENoYW5uZWxMYXlvdXRWZWN0b3IiOltdLCJtQ2hhbm5lbExheW91dFZlY3RvciI6W1t7ImNoYW5uZWxsYWJlbCI6MTAwfSx7ImNoYW5uZWxsYWJlbCI6MTAxfV1dLCJtTWF4TnVtQXVkaW9DaGFubmVscyI6MiwibU1heE51bUF1ZGlvQ2hhbm5lbHNQZXJTdHJlYW0iOjIsIm1NYXhOdW1BdWRpb1N0cmVhbXMiOjIsIm1WZXJzaW9uIjoxfQ==</ParamArbData>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"63\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIdentifier>ADBEAudioStreamMonoDiscrete</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"64\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioTrackLayoutGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"65\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"65\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"66\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"66\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamValue>65535</ParamValue>\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioTrackLayout</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"67\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>4</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEChannelLayoutGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"68\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"68\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"69\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"69\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIsDisabled>true</ParamIsDisabled>\n\t\t<ParamIdentifier>ADBEChannelLayout</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"70\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>5</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioBitrateGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"71\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"71\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"72\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"72\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioBitrate</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"73\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>6</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAudioAmbiGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"74\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"74\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"75\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"75\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAudioAmbiDoExport</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"76\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAlternatesTabGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"77\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"77\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"78\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"85\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"88\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"78\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesBasicGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"79\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"79\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"80\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"81\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"82\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"83\"/>\n\t\t\t<ParamContainerItem Index=\"4\" ObjectRef=\"84\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"80\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesLoop</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"81\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesCompressHeader</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"82\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesAutoplay</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"83\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesStreamingBool</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"84\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>4</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAlternatesHintedMovieType</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"85\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesSettingsGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"86\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"86\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"87\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"87\" ClassID=\"d0f6b8af-8ddb-4381-acf8-3e817480d07d\" Version=\"1\">\n\t\t<ParamType>1</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesAlternateBool</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"88\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>8</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<ParamIsHidden>true</ParamIsHidden>\n\t\t<ParamIdentifier>ADBEAlternatesTargetDetailsGroup</ParamIdentifier>\n\t\t<ExporterChildParams ObjectRef=\"89\"/>\n\t</ExporterParam>\n\t<ExporterParamContainer ObjectID=\"89\" ClassID=\"5c20a4a5-5e7c-4032-85b8-26ad4531fe7b\" Version=\"1\">\n\t\t<ParamContainerItems Version=\"1\">\n\t\t\t<ParamContainerItem Index=\"0\" ObjectRef=\"90\"/>\n\t\t\t<ParamContainerItem Index=\"1\" ObjectRef=\"91\"/>\n\t\t\t<ParamContainerItem Index=\"2\" ObjectRef=\"92\"/>\n\t\t\t<ParamContainerItem Index=\"3\" ObjectRef=\"93\"/>\n\t\t\t<ParamContainerItem Index=\"4\" ObjectRef=\"94\"/>\n\t\t\t<ParamContainerItem Index=\"5\" ObjectRef=\"95\"/>\n\t\t\t<ParamContainerItem Index=\"6\" ObjectRef=\"96\"/>\n\t\t</ParamContainerItems>\n\t\t<ContainedParamsVersion>1</ContainedParamsVersion>\n\t</ExporterParamContainer>\n\t<ExporterParam ObjectID=\"90\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>0</ParamOrdinalValue>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEAlternatesConnection</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"91\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>1</ParamOrdinalValue>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEAlternatesLanguage</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"92\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>2</ParamOrdinalValue>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEAlternatesPlatform</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"93\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>3</ParamOrdinalValue>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEAlternatesQuality</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"94\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>4</ParamOrdinalValue>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEAlternatesComputerPower</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"95\" ClassID=\"9f049ab7-d48f-43e9-a8ca-4d7f21233625\" Version=\"1\">\n\t\t<ParamType>2</ParamType>\n\t\t<ParamOrdinalValue>5</ParamOrdinalValue>\n\t\t<IsOptionalParam>true</IsOptionalParam>\n\t\t<ParamIdentifier>ADBEAlternatesQTVersion</ParamIdentifier>\n\t</ExporterParam>\n\t<ExporterParam ObjectID=\"96\" ClassID=\"a43ab77d-3a01-4173-b6ea-aeb9b4ae884b\" Version=\"1\">\n\t\t<ParamType>6</ParamType>\n\t\t<ParamOrdinalValue>6</ParamOrdinalValue>\n\t\t<ParamIdentifier>ADBEAlternatesServerPath</ParamIdentifier>\n\t</ExporterParam>\n</PremiereData>\n"
+};
+
+var $=function(id){return document.getElementById(id);};
+var specMode="upload", built=null;
+
+function setStep(n){
+  document.querySelectorAll(".step").forEach(function(s){
+    var sn=+s.getAttribute("data-step");
+    s.classList.toggle("active",sn===n); s.classList.toggle("done",sn<n);
+  });
+}
+function wireDrop(dz,input,onFile){
+  dz.addEventListener("click",function(){input.click();});
+  dz.addEventListener("dragover",function(e){e.preventDefault();dz.classList.add("drag");});
+  dz.addEventListener("dragleave",function(){dz.classList.remove("drag");});
+  dz.addEventListener("drop",function(e){e.preventDefault();dz.classList.remove("drag");
+    if(e.dataTransfer.files[0])onFile(e.dataTransfer.files[0]);});
+  input.addEventListener("change",function(e){ if(e.target.files[0]) onFile(e.target.files[0]); });
+}
+function parseXml(s){ return new DOMParser().parseFromString(s,"application/xml"); }
+
+// ── spec input ──
+document.querySelectorAll(".tabs button").forEach(function(b){
+  b.addEventListener("click",function(){
+    specMode=b.getAttribute("data-m");
+    document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b);});
+    $("dz-spec").classList.toggle("hidden",specMode==="paste");
+    $("spec-paste").classList.toggle("hidden",specMode!=="paste");
+  });
+});
+wireDrop($("dz-spec"),$("spec-input"),function(file){
+  window._specFile=file; $("spec-fn").textContent=file.name; $("dz-spec").classList.add("loaded");
+});
+
+// Which built-in template can make this deliverable.
+function pickTemplate(rules){
+  var on=rules.filter(function(r){return r.enabled;});
+  var codec=(on.filter(function(r){return r.field==="Video codec";})[0]||{}).value||"";
+  var cont =(on.filter(function(r){return r.field==="Container";})[0]||{}).value||"";
+  var c=String(codec).toLowerCase(), k=String(cont).toLowerCase();
+  var wantsProRes = /prores/.test(c) || (!c && /mov/.test(k));
+  var wantsOther  = /h\.?26[45]|hevc|avc|dnx|xdcam|mpeg/.test(c) || /mp4|mxf/.test(k);
+  if (wantsProRes && !/mp4|mxf/.test(k)) return {key:"prores"};
+  if (wantsOther) return {key:null, reason: (codec||cont)+" isn't available yet \u2014 only ProRes (.mov) presets can be made for now."};
+  if (!c && !k) return {key:"prores", assumed:true};
+  return {key:null, reason:"the spec's codec ("+codec+") isn't one we can make a preset for yet."};
+}
+
+$("read-btn").addEventListener("click", async function(){
+  $("spin").classList.remove("hidden");
+  try{
+    var text;
+    if(specMode==="paste") text=$("spec-paste").value;
+    else { if(!window._specFile){ $("spin").classList.add("hidden"); return; }
+           text=await readSpecFile(window._specFile); }
+    if(!text.trim()){ $("spec-hint").textContent="Nothing to read."; $("spin").classList.add("hidden"); return; }
+    var rules = extractRules(text);
+    $("spec-hint").innerHTML="Found <b>"+rules.length+"</b> requirement"+(rules.length===1?"":"s")+" in the spec.";
+    // A preset needs at least one value that actually sets something. Without
+    // one, the result would be pure defaults dressed up as a spec-driven preset.
+    var SETS = ["Resolution","Frame rate","Video codec","Container","Scan","Sample rate","Audio channels"];
+    var usable = rules.some(function(r){ return r.enabled && SETS.indexOf(r.field)>=0; })
+                 || !!detectScan(text);
+    if(!usable){
+      $("changes").innerHTML='<div class="skip"><div class="skip-hd">Nothing to build a preset from</div>'+
+        '<div class="skip-row"><span>No resolution, frame rate, codec, format or audio settings were found in that. '+
+        'Check it\'s the technical delivery spec.</span></div></div>';
+      $("skipped").innerHTML=""; $("p-out").classList.add("hidden"); built=null;
+      $("p-review").classList.remove("hidden"); setStep(2);
+      $("spin").classList.add("hidden"); return;
+    }
+    var pick = pickTemplate(rules);
+    if(!pick.key){
+      $("changes").innerHTML='<div class="skip"><div class="skip-hd">Can\'t make this one yet</div>'+
+        '<div class="skip-row"><span>'+esc(pick.reason)+'</span></div></div>';
+      $("skipped").innerHTML=""; $("p-out").classList.add("hidden");
+      $("p-review").classList.remove("hidden"); setStep(2);
+      $("spin").classList.add("hidden"); return;
+    }
+    // Frame rate from notation like 1080i25, 1080p50 or 1080i/25, when the spec
+    // gives no separate frame rate. After an "i", 50/59.94/60 conventionally
+    // counts fields, so it's halved — and the conversion is shown, not hidden.
+    var fpsNote = null;
+    if(!rules.some(function(r){ return r.enabled && r.field==="Frame rate"; })){
+      var fm = text.match(/\b\d{3,4}\s*([pi])\s*\/?\s*(\d{2}(?:[.,]\d+)?)\b/i);
+      if(fm){
+        var n=parseFloat(fm[2].replace(",",".")), letter=fm[1].toLowerCase();
+        var isFields = letter==="i" && n>=48;
+        var fps = isFields ? Math.round(n/2*1000)/1000 : n;
+        rules.push({field:"Frame rate", op:"=", value:String(fps), enabled:true, conf:"hi"});
+        fpsNote = { match:fm, fields: isFields ? n : null, fps:fps };
+      }
+    }
+
+    var tplText = TEMPLATES[pick.key];
+    var base = parseXml(tplText), work = parseXml(tplText);
+    // scan is handled below from the text itself, so keep it out of applySpec
+    var res = applySpec(work, rules.filter(function(r){ return r.field!=="Scan"; }));
+
+    // Progressive unless the spec says otherwise. Interlaced keeps the field
+    // order the spec names; if it names none, upper field first (the UK/EU
+    // broadcast norm) is used and labelled as an assumption.
+    var sc = detectScan(text);
+    var fieldVal = !sc || sc.scan==="progressive" ? 0 : (sc.order==="lower" ? 2 : 1);
+    setVal(work, "ADBEVideoFieldType", fieldVal);
+    var edits = collectEdits(base, work);
+    built = { text:tplText, edits:edits, doc:work };
+
+    showPreset(work, rules, res, pick, sc, text, fpsNote);
+    if(!$("preset-name").value) $("preset-name").value = suggestName(work);
+    $("p-review").classList.remove("hidden");
+    $("p-out").classList.remove("hidden");
+    setStep(2);
+    $("p-review").scrollIntoView({behavior:"smooth"});
+  }catch(err){ $("spec-hint").innerHTML='<span style="color:var(--fail)">Couldn\'t read that: '+esc(err.message)+'</span>'; }
+  $("spin").classList.add("hidden");
+});
+
+
+
+// ── scan and field order ──────────────────────────────────────────────────────
+// Read straight from the spec text. Field order is named explicitly ("upper
+// field first", "TFF"), scan is named ("interlaced") or implied by notation
+// ("1080i", "1080i25", "50i", "25p", "1080p50").
+function detectScan(text){
+  var t=text||"";
+  var mU=t.match(/\b(?:upper|top)\s*field(?:\s*first|\s*dominant)?|\btff\b/i);
+  var mL=t.match(/\b(?:lower|bottom)\s*field(?:\s*first|\s*dominant)?|\bbff\b/i);
+  if(mU) return {scan:"interlaced", order:"upper", match:mU};
+  if(mL) return {scan:"interlaced", order:"lower", match:mL};
+  var mI=t.match(/interlac\w*|\b\d{2,4}(?:[.,]\d+)?\s*i(?:\d{2,3})?\b/i);
+  if(mI) return {scan:"interlaced", order:null, match:mI};
+  var mP=t.match(/progressive|\b\d{2,4}(?:[.,]\d+)?\s*p(?:\d{2,3})?\b/i);
+  if(mP) return {scan:"progressive", order:null, match:mP};
+  return null;
+}
+
+// ── quoting the spec ──────────────────────────────────────────────────────────
+// For each setting, find the wording in the spec that produced it and quote the
+// clause around it, so the user can see exactly what the tool read.
+function specPattern(field, value){
+  var v = String(value||"");
+  switch(field){
+    case "Resolution":{
+      var m=v.match(/(\d+)\s*x\s*(\d+)/i);
+      return m ? new RegExp(m[1]+"\\s*[x\u00d7]\\s*"+m[2],"i") : null;
+    }
+    case "Frame rate":{
+      var n=v.replace(/\.0+$/,"");
+      var alt = n==="23.976" ? "23[.,]976|23[.,]98" : n==="29.97" ? "29[.,]97" :
+                n==="59.94" ? "59[.,]94" : n.replace(".","[.,]");
+      return new RegExp("(?:"+alt+")\\s*(?:fps|p\\b|i\\b|frames|f\\/s)","i");
+    }
+    case "Video codec":{
+      var first=v.split(/\s*,\s*/)[0];
+      var words=first.split(/\s+/).map(function(w){return w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");});
+      return new RegExp(words.join("\\s*"),"i");
+    }
+    case "Container":
+      return /\b(?:mov|mp4|mxf|quicktime)\b/i;
+    case "Scan":
+      return /progressive|interlaced|\b\d{2,4}(?:[.,]\d+)?\s*[pi]\b/i;
+    case "Sample rate":{
+      var k=Math.round(parseFloat(v)/1000);
+      return new RegExp("(?:"+k+"(?:[.,]\\d)?\\s*k\\s*hz|"+Math.round(parseFloat(v))+")","i");
+    }
+    case "Audio channels":{
+      var c=parseInt(v,10);
+      if(c===2) return /stereo|\b2\s*(?:ch|channel)|\b2\.0\b/i;
+      if(c===1) return /mono|\b1\s*(?:ch|channel)/i;
+      if(c===6) return /5\.1|\b6\s*(?:ch|channel)/i;
+      return new RegExp("\\b"+c+"\\s*(?:ch|channel)","i");
+    }
+  }
+  return null;
+}
+// Quote the wording around a match. A short clause ("Frame rate: 25fps") reads
+// best whole. A long one (a prose sentence) would push the relevant words out of
+// view, so centre a window on the match instead, cut at word boundaries.
+function clauseAround(text, idx, len){
+  var cs=idx, ce=idx+len;
+  while(cs>0 && !/[\n,;]/.test(text[cs-1])) cs--;
+  while(ce<text.length && !/[\n,;]/.test(text[ce])) ce++;
+  var clause=text.slice(cs,ce).replace(/\s+/g," ").trim();
+  if(clause.length<=48) return clause;
+  var ws=Math.max(cs, idx-20), we=Math.min(ce, idx+len+20);
+  while(ws>cs && !/\s/.test(text[ws-1])) ws--;
+  while(we<ce && !/\s/.test(text[we])) we++;
+  var q=text.slice(ws,we).replace(/\s+/g," ").trim();
+  return (ws>cs?"\u2026":"")+q+(we<ce?"\u2026":"");
+}
+function quoteFor(text, field, value){
+  var re=specPattern(field, value);
+  if(!re || !text) return null;
+  var m=re.exec(text);
+  if(!m) return null;
+  return clauseAround(text, m.index, m[0].length);
+}
+
+// The preset as it'll export, with where each value came from.
+function showPreset(doc, rules, res, pick, sc, text, fpsNote){
+  var d = describePreset(doc);
+  var byField = {};
+  rules.filter(function(r){return r.enabled;}).forEach(function(r){ if(!byField[r.field]) byField[r.field]=r; });
+  function src(fields){
+    for(var i=0;i<fields.length;i++){
+      var r=byField[fields[i]];
+      if(r){
+        var q=quoteFor(text, r.field, r.value);
+        return { quote: q || String(r.value) };
+      }
+    }
+    return null;
+  }
+  var scanSrc = sc ? { quote: clauseAround(text, sc.match.index, sc.match[0].length) } : null;
+  var fieldAssumed = !!(sc && sc.scan==="interlaced" && !sc.order);
+  var rows = [
+    ["Format",        d.family.name,                          src(["Container","Video codec"])],
+    ["Codec",         d.codec,                                src(["Video codec"])],
+    ["Resolution",    d.resolution,                           src(["Resolution"])],
+    ["Frame rate",    d.fps ? d.fps+" fps" : null,
+       fpsNote ? { quote: clauseAround(text, fpsNote.match.index, fpsNote.match[0].length),
+                   note: fpsNote.fields ? fpsNote.fields+" fields = "+fpsNote.fps+" fps" : null }
+               : src(["Frame rate"])],
+    ["Scan",          d.field,                                scanSrc],
+    ["Sample rate",   d.sampleRate ? d.sampleRate+" Hz":null, src(["Sample rate"])],
+    ["Audio channels",d.channels,                             src(["Audio channels"])]
+  ].filter(function(r){ return r[1]; });
+  var anyDefault = rows.some(function(r){ return !r[2]; }) || fieldAssumed;
+  $("changes").innerHTML =
+    '<div class="chg"><div class="chg-hd"><span>Setting</span><span>Exports as</span><span>As described in spec</span></div>'+
+    rows.map(function(r){
+      return '<div class="chg-row"><span>'+esc(r[0])+'</span><span class="val">'+esc(r[1])+'</span>'+
+             (r[2] ? '<span class="src-spec">\u201C'+esc(r[2].quote)+'\u201D'+
+                       (r[2].note ? ' <span style="font-style:normal">\u00b7 '+esc(r[2].note)+'</span>' : '')+
+                       (r[0]==="Scan" && fieldAssumed ? ' <span class="src-def" style="font-style:normal">\u00b7 field order [default]</span>' : '')+
+                       '</span>'
+                   : '<span class="src-def">[default]</span>')+'</div>';
+    }).join("")+'</div>'+
+    (anyDefault ? '<div class="hint" style="margin-top:9px"><span style="color:var(--warn)">[default]</span> means the spec didn\'t mention it, so a standard value was used. Worth checking.</div>' : '');
+  var s=$("skipped");
+  if(res.skipped.length){
+    s.innerHTML='<div class="skip"><div class="skip-hd">Set these yourself in Premiere</div>'+
+      res.skipped.map(function(x){
+        return '<div class="skip-row"><b>'+esc(x.what)+'</b> '+esc(x.want)+' &mdash; <span>'+esc(x.why)+'</span></div>';
+      }).join("")+'</div>';
+  } else s.innerHTML='';
+}
+function suggestName(doc){
+  var d=describePreset(doc);
+  var bits=[String(d.codec||"PRESET").toUpperCase().replace(/\s+/g,"").replace(/[^A-Z0-9]/g,"")];
+  if(d.resolution) bits.push(d.resolution);
+  if(d.fps) bits.push(d.fps.replace(".","")+(d.field==="Progressive"?"p":"i"));
+  return bits.join("_");
+}
+
+// ── download ──
+$("dl-btn").addEventListener("click",function(){
+  if(!built) return;
+  var name=($("preset-name").value||"PRESET").trim();
+  var out=editText(built.text, built.edits, name, uuid4());
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([out],{type:"application/xml"}));
+  a.download=name.replace(/[^\w.-]+/g,"_")+".epr";
+  a.click();
+  setStep(3);
+});
+</script>
+</body>
+</html>

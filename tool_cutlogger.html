@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cut Logger — Lizard Lips</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:#0a0d0a; --surface:#111511; --border:#232a23;
+  --phos:#8fff6a; --accent:#e8ff47; --accent2:#47c8ff;
+  --text:#e8f0e4; --muted:#5f6b5c;
+  --pass:#8fff6a; --fail:#ff6b6b; --warn:#ffcf47;
+  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+  --glow:0 0 6px rgba(232,255,71,.45);
+}
+body { --danger: #ff7847; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+header {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+header h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+header span { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    gap: 20px;
+  }
+/* Drop zone */
+#dropzone {
+    width: 100%; max-width: 600px;
+    border: 1.5px dashed var(--border);
+    border-radius: 4px;
+    padding: 64px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative; overflow: hidden;
+  }
+#dropzone::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(232,255,71,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+#dropzone.drag-over { border-color: var(--accent); background: rgba(232,255,71,0.04); }
+#dropzone.has-file { border-color: var(--accent2); border-style: solid; }
+.drop-icon { width: 48px; height: 48px; margin: 0 auto 20px; color: var(--muted); transition: color 0.2s; }
+#dropzone.drag-over .drop-icon, #dropzone.has-file  .drop-icon { color: var(--accent); }
+.drop-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+.drop-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+#file-name { display: none; font-family: var(--mono); font-size: 13px; color: var(--accent2); margin-top: 16px; }
+#dropzone.has-file #file-name { display: block; }
+#dropzone.has-file .drop-title, #dropzone.has-file .drop-sub { display: none; }
+#file-input { display: none; }
+/* Panel shared */
+.panel {
+    width: 100%; max-width: 600px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    display: none; flex-direction: column; gap: 18px;
+  }
+.panel.visible { display: flex; }
+.panel-title {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase;
+    padding-bottom: 4px; border-bottom: 1px solid var(--border);
+  }
+/* Detected patterns */
+.detected-row {
+    display: flex; align-items: flex-start; gap: 12px; flex-direction: column;
+  }
+.detected-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+    font-family: var(--mono); font-size: 11px;
+    padding: 4px 10px; border-radius: 2px;
+    background: rgba(71,200,255,0.1); border: 1px solid rgba(71,200,255,0.25);
+    color: var(--accent2); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+.tag.active { background: rgba(71,200,255,0.2); border-color: var(--accent2); }
+.tag.inactive { opacity: 0.4; }
+.tag-x { font-size: 10px; opacity: 0.6; }
+.tag:hover { opacity: 1; }
+/* Custom filter input */
+.input-row { display: flex; gap: 8px; align-items: center; }
+.text-input {
+    flex: 1;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--mono); font-size: 12px;
+    padding: 8px 12px; border-radius: 3px; outline: none;
+    transition: border-color 0.2s;
+  }
+.text-input:focus { border-color: var(--accent); }
+.text-input::placeholder { color: var(--muted); }
+.add-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-family: var(--mono); font-size: 11px;
+    padding: 8px 14px; border-radius: 3px; cursor: pointer;
+    transition: all 0.15s;
+  }
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* Ep pattern */
+.ep-preview {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    min-height: 16px; margin-top: 4px;
+  }
+.ep-preview.ok { color: var(--accent2); }
+.ep-preview.bad { color: var(--danger); }
+/* Click-to-teach filename */
+.ep-sample {
+    font-family: var(--mono); font-size: 15px; line-height: 1.9;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 3px; padding: 12px 14px;
+    word-break: break-all; user-select: none; cursor: pointer;
+  }
+.ep-char {
+    padding: 2px 0; border-radius: 2px;
+    transition: background 0.1s, color 0.1s;
+  }
+.ep-char.digit:hover { background: rgba(232,255,71,0.15); }
+.ep-char.sel {
+    background: var(--accent); color: var(--bg); font-weight: 500;
+  }
+.ep-char.dim { color: var(--muted); }
+.ep-format-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.ep-format-btn {
+    font-family: var(--mono); font-size: 12px;
+    padding: 8px 12px; border-radius: 3px; cursor: pointer;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); transition: all 0.15s;
+    display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  }
+.ep-format-btn:hover { border-color: var(--accent); }
+.ep-format-btn.active { border-color: var(--accent); background: rgba(232,255,71,0.08); }
+.ep-format-btn .fmt-name { font-size: 10px; color: var(--muted); letter-spacing: 0.04em; }
+.ep-format-btn.active .fmt-name { color: var(--accent); }
+.ep-format-btn .fmt-ex { font-size: 13px; font-weight: 500; }
+/* Option row */
+.option-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+.option-label { font-size: 14px; font-weight: 600; }
+.option-desc { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+.toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+    position: absolute; inset: 0;
+    background: var(--border); border-radius: 99px;
+    cursor: pointer; transition: background 0.2s;
+  }
+.toggle input:checked + .toggle-track { background: var(--accent); }
+.toggle-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px;
+    background: var(--bg); border-radius: 50%;
+    transition: transform 0.2s; pointer-events: none;
+  }
+.toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+.option-select {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--mono); font-size: 12px;
+    padding: 6px 10px; border-radius: 3px; cursor: pointer; outline: none;
+  }
+.option-select:focus { border-color: var(--accent); }
+/* Generate */
+#dl-row { display: none; gap: 10px; width: 100%; max-width: 600px; }
+#dl-row.visible { display: flex; }
+.dl-btn {
+    flex: 1; padding: 16px; background: var(--accent); color: var(--bg);
+    font-family: var(--sans); font-size: 15px; font-weight: 800;
+    letter-spacing: -0.01em; border: 1px solid var(--accent); border-radius: 4px;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+.dl-btn.dl-ghost { flex: 0 0 auto; padding: 16px 20px; background: none; color: var(--accent); }
+.dl-btn:hover { opacity: 0.88; }
+.dl-btn:active { transform: scale(0.99); }
+.dl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.col-row { align-items: flex-start; }
+#col-tags { margin-top: 10px; }
+.tag.locked { opacity: 0.25; cursor: not-allowed; }
+.title-input { max-width: 280px; }
+.ep-switch { padding-top: 0; }
+.pv-wrap { max-height: 440px; overflow: auto; border: 1px solid var(--border); }
+table.pv { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+.pv th { position: sticky; top: 0; background: var(--surface); text-align: left; font-weight: 400; color: var(--muted);
+         padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.pv td { padding: 4px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pv td.mk { width: 1ch; padding-right: 0; color: var(--warn, #ffcf47); }
+.pv tr.bad td { color: var(--warn, #ffcf47); }
+.pv tr.other td { color: var(--muted); }
+#status { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; min-height: 20px; }
+#status.error { color: var(--danger); }
+#status.success { color: var(--accent); }
+/* Stats */
+#stats {
+    display: none; width: 100%; max-width: 600px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  }
+#stats.visible { display: grid; }
+.stat { background: var(--surface); padding: 16px; text-align: center; }
+.stat-num { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--accent); }
+.stat-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+/* Footer */
+footer { border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.footer-disclaimer {
+    padding: 11px 40px;
+    background: rgba(255,148,71,0.06);
+    border-bottom: 1px solid rgba(255,148,71,0.15);
+    color: var(--danger); text-align: center; letter-spacing: 0.02em;
+  }
+.footer-meta { padding: 14px 40px; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<header>
+  <h1>CUT LOGGER</h1>
+  <span>Premiere XML → Spreadsheet / v2.0</span>
+</header>
+
+<main>
+
+  <!-- Drop zone -->
+  <div id="dropzone">
+    <svg class="drop-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="8" y="6" width="32" height="36" rx="2"/>
+      <path d="M16 18h16M16 24h16M16 30h10"/>
+      <path d="M30 2v10h10" stroke-linecap="round"/><path d="M30 2l10 10"/>
+    </svg>
+    <div class="drop-title">Drop your Premiere XML here</div>
+    <div class="drop-sub">or click to browse — .xml files only</div>
+    <div id="file-name"></div>
+    <input type="file" id="file-input" accept=".xml">
+  </div>
+
+  <!-- Source filter panel -->
+  <div class="panel" id="panel-filter">
+    <div class="panel-title">Source footage filter — highlight these files</div>
+    <div class="detected-row">
+      <div style="font-size:13px;font-weight:600;">Auto-detected prefixes</div>
+      <div class="detected-tags" id="detected-tags">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Load a file to detect…</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Add custom filter</div>
+      <div class="input-row">
+        <input class="text-input" id="custom-filter-input" placeholder="e.g. MyShow_ or BBC_Wildlife">
+        <button class="add-btn" id="add-filter-btn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content type filter panel -->
+  <div class="panel" id="panel-content">
+    <div class="panel-title">Include in export</div>
+    <div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Media type</div>
+      <div class="detected-tags" id="type-tags"></div>
+    </div>
+    <div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">File type</div>
+      <div class="detected-tags" id="ext-tags"></div>
+    </div>
+    <div class="ep-preview" id="content-preview"></div>
+  </div>
+
+  <!-- Episode pattern panel -->
+  <div class="panel" id="panel-episode">
+    <div class="panel-title">Episode numbering</div>
+    <div class="option-row ep-switch">
+      <div>
+        <div class="option-label">This is a series</div>
+        <div class="option-desc" id="ep-mode-desc">Adds an Episode column, read from each filename</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="opt-episodic">
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <div id="ep-controls">
+
+    <div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Click the episode number in a filename</div>
+      <div class="option-desc" style="margin-top:0;margin-bottom:10px;">
+        Tap or drag across the digits that make up the episode code. The tool learns the pattern and applies it to every file.
+      </div>
+      <div id="ep-sample" class="ep-sample"></div>
+      <button class="add-btn" id="ep-clear-btn" style="margin-top:10px;display:none;">Clear selection</button>
+    </div>
+
+    <div id="ep-format-block" style="display:none;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Output format</div>
+      <div class="ep-format-row" id="ep-format-row"></div>
+    </div>
+
+    <div class="ep-preview" id="ep-preview">Load a file to begin…</div>
+    </div>
+  </div>
+
+  <!-- Options panel -->
+  <div class="panel" id="panel-options">
+    <div class="panel-title">Export options</div>
+    <div class="option-row col-row">
+      <div style="width:100%">
+        <div class="option-label">Columns</div>
+        <div class="option-desc">Click to include or leave out. Applies to every download.</div>
+        <div class="detected-tags" id="col-tags"></div>
+      </div>
+    </div>
+    <div class="option-row">
+      <div>
+        <div class="option-label">Sheet title</div>
+        <div class="option-desc">Shown at the top of the PDF and the Excel file</div>
+      </div>
+      <input class="text-input title-input" id="opt-title" placeholder="Sequence name">
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label">Include all clips</div>
+        <div class="option-desc">Show music, text cards, adj. layers etc. (greyed)</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="opt-all" checked>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </label>
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label">Deduplicate stereo pairs</div>
+        <div class="option-desc">Collapse paired L/R audio tracks into one row</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="opt-dedup" checked>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </label>
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label">Plain data format</div>
+        <div class="option-desc">For the CSV download, if you need to import it somewhere</div>
+      </div>
+      <select class="option-select" id="opt-format">
+        <option value="csv">CSV</option>
+        <option value="tsv">TSV</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- The log as it will be exported -->
+  <div class="panel" id="panel-preview">
+    <div class="panel-title">The log</div>
+    <div class="ep-preview" id="preview-count"></div>
+    <div class="pv-wrap"><table class="pv" id="preview-table"></table></div>
+  </div>
+
+  <div id="dl-row">
+    <button id="pdf-btn" class="dl-btn">Download PDF</button>
+    <button id="xlsx-btn" class="dl-btn">Download Excel</button>
+    <button id="generate-btn" class="dl-btn dl-ghost">CSV</button>
+  </div>
+  <div id="status"></div>
+
+  <div id="stats">
+    <div class="stat"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total clips</div></div>
+    <div class="stat"><div class="stat-num" id="stat-source">—</div><div class="stat-label">Source clips</div></div>
+    <div class="stat"><div class="stat-num" id="stat-eps">—</div><div class="stat-label">Episodes</div></div>
+    <div class="stat"><div class="stat-num" id="stat-flagged">—</div><div class="stat-label">Flagged</div></div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-disclaimer">
+    ⚠ Check the export against your timeline before you send it on
+  </div>
+  <div class="footer-meta">
+    <span id="footer-fps">Reads Premiere XMEML exports</span>
+    <span>A Lizard Lips Tool</span>
+  </div>
+</footer>
+<script>
+// ── TC helpers ──────────────────────────────────────────────────────────────
+let TIMEBASE = 25; // updated dynamically from each XML
+
+// Convert a frame count to timecode in a specific rate. Each value in the XML
+// carries its own rate: the sequence, and every source file, can differ — a
+// 23.976 archive clip in a 25fps promo — so nothing assumes one global rate.
+// Drop-frame (29.97/59.94 DF) skips frame numbers to stay on clock time.
+function framesToTC(frames, tb, df) {
+  if (frames === null || frames === undefined || !isFinite(frames) || frames < 0) return null;
+  tb = tb || TIMEBASE;
+  frames = Math.round(frames);
+  if (df && (tb === 30 || tb === 60)) {
+    const drop = tb === 30 ? 2 : 4;
+    const per10 = tb * 600 - drop * 9;        // 17982 at 29.97
+    const perMin = tb * 60 - drop;            // 1798 at 29.97
+    const d = Math.floor(frames / per10), m = frames % per10;
+    frames += drop * 9 * d + (m > drop ? drop * Math.floor((m - drop) / perMin) : 0);
+  }
+  const h = Math.floor(frames / (tb * 3600)); frames %= tb * 3600;
+  const mi = Math.floor(frames / (tb * 60));  frames %= tb * 60;
+  const se = Math.floor(frames / tb);
+  const f = frames % tb;
+  const sep = df ? ';' : ':';
+  return `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}:${String(se).padStart(2,'0')}${sep}${String(f).padStart(2,'0')}`;
+}
+
+// <rate> → { tb, ntsc }
+function readRate(el) {
+  if (!el) return null;
+  const r = el.querySelector(':scope > rate');
+  if (!r) return null;
+  const tbEl = r.querySelector(':scope > timebase');
+  const tb = tbEl ? parseInt(tbEl.textContent, 10) : NaN;
+  if (!isFinite(tb) || tb <= 0) return null;
+  const ntscEl = r.querySelector(':scope > ntsc');
+  return { tb, ntsc: !!(ntscEl && /true/i.test(ntscEl.textContent)) };
+}
+// <timecode> → { frame, tb, df }
+function readTimecode(el) {
+  if (!el) return null;
+  const tc = el.querySelector(':scope > timecode');
+  if (!tc) return null;
+  const fEl = tc.querySelector(':scope > frame');
+  const frame = fEl ? parseInt(fEl.textContent, 10) : NaN;
+  const rate = readRate(tc);
+  const fmt = tc.querySelector(':scope > displayformat');
+  const strEl = tc.querySelector(':scope > string');
+  const df = (fmt && /^DF$/i.test(fmt.textContent.trim())) || (strEl && /;/.test(strEl.textContent));
+  return { frame: isFinite(frame) ? frame : 0, tb: rate ? rate.tb : null, ntsc: !!(rate && rate.ntsc), df: !!df };
+}
+
+function getDirectInt(clip, tag, fallback = -1) {
+  for (const child of clip.children) {
+    if (child.tagName.toLowerCase() === tag) {
+      // parseInt(...) || fallback would turn a genuine 0 (a clip at the head
+      // of the sequence) into the fallback, so test for NaN instead
+      const n = parseInt(child.textContent, 10);
+      return isNaN(n) ? fallback : n;
+    }
+  }
+  return fallback;
+}
+
+function getName(clip) {
+  for (const child of clip.children) {
+    if ((child.tagName === 'name' || child.tagName === 'n') && child.textContent.trim())
+      return child.textContent.trim();
+  }
+  return null;
+}
+
+// ── Click-to-teach episode engine ───────────────────────────────────────────
+// The editor selects the episode digits in one sample filename. From that we
+// build an "anchored" matcher: the literal char just before the digits, the
+// digit run itself, and the literal char just after. That structure is then
+// found in every other filename — no regex typing required.
+
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// Build a matcher object from a sample filename + selected [start,end) char range.
+function buildEpisodeMatcher(sample, start, end) {
+  const digits = sample.slice(start, end);
+  if (!/^\d+$/.test(digits)) return null;
+
+  const before = start > 0 ? sample[start - 1] : '';
+  const after  = end < sample.length ? sample[end] : '';
+  const nDigits = digits.length;
+
+  // Anchor on non-digit neighbours so we don't drift into adjacent numbers.
+  let pre  = before && !/\d/.test(before) ? escapeRe(before) : '(?:^|[^\\d])';
+  let post = after  && !/\d/.test(after)  ? escapeRe(after)  : '(?![\\d])';
+
+  const regex = new RegExp(pre + '(\\d{' + nDigits + '})' + post);
+  return { regex, nDigits, sampleCode: digits };
+}
+
+// Formats available in the UI. Each takes the raw code string (e.g. "121").
+const EP_FORMATS = [
+  { name: 'Season + Episode', id: 'season_ep',  fn: c => c.length >= 3
+      ? `S${String(+c.slice(0, c.length - 2)).padStart(2,'0')} Ep${+c.slice(-2)}`
+      : `Ep${+c}` },
+  { name: 'Compact',          id: 'compact',    fn: c => c.length >= 3
+      ? `S${String(+c.slice(0, c.length - 2)).padStart(2,'0')}E${String(+c.slice(-2)).padStart(2,'0')}`
+      : `E${String(+c).padStart(2,'0')}` },
+  { name: 'Episode only',     id: 'ep_only',    fn: c => `Ep${+c}` },
+  { name: 'Whole code',       id: 'raw',        fn: c => `Ep${c}` },
+];
+
+function applyEpisodePattern(filename, pattern) {
+  if (!pattern || !pattern.matcher) return '';
+  const m = filename.match(pattern.matcher.regex);
+  if (!m) return '';
+  return pattern.formatFn(m[1]);
+}
+
+// ── Auto-detect source prefixes ─────────────────────────────────────────────
+function detectPrefixes(filenames) {
+  // Count filename "stems" — strip extension, split on _ and take first 1-2 segments
+  const stemCount = {};
+  filenames.forEach(f => {
+    const noExt = f.replace(/\.[^.]+$/, '');
+    // Try up to first 3 underscore segments as prefix candidates
+    const parts = noExt.split('_');
+    for (let i = 1; i <= Math.min(3, parts.length - 1); i++) {
+      const stem = parts.slice(0, i).join('_') + '_';
+      stemCount[stem] = (stemCount[stem] || 0) + 1;
+    }
+  });
+  // Keep stems that appear more than once and aren't too short
+  return Object.entries(stemCount)
+    .filter(([k, v]) => v > 1 && k.length > 3)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k]) => k)
+    .slice(0, 8); // max 8 suggestions
+}
+
+// ── XML Parser ──────────────────────────────────────────────────────────────
+function parseXML(xmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Invalid XML file');
+  const sequence = doc.querySelector('sequence');
+  if (!sequence) throw new Error('No sequence found in XML');
+
+  // The sequence's own rate, start timecode and display format. Clip start/end
+  // are counted from the head of the sequence, so the start timecode
+  // (10:00:00:00 on a broadcast master) has to be added back on.
+  const seqRate = readRate(sequence);
+  TIMEBASE = seqRate ? seqRate.tb : 25;
+  const seqTC = readTimecode(sequence);
+  const SEQ_START = seqTC ? seqTC.frame : 0;
+  const SEQ_DF = !!(seqTC && seqTC.df);
+  const seqNameEl = sequence.querySelector(':scope > name');
+  const NTSC = { 24: '23.976', 30: '29.97', 60: '59.94' };
+  SEQ_META = {
+    name:  seqNameEl ? seqNameEl.textContent.trim() : '',
+    fps:   seqRate && seqRate.ntsc && NTSC[TIMEBASE] ? NTSC[TIMEBASE] : String(TIMEBASE),
+    start: framesToTC(SEQ_START, TIMEBASE, SEQ_DF),
+  };
+  document.getElementById('footer-fps').textContent =
+    `Reads Premiere XMEML exports — sequence ${TIMEBASE}${seqRate && seqRate.ntsc ? ' (NTSC)' : ''}fps` +
+    (SEQ_START ? `, starts ${framesToTC(SEQ_START, TIMEBASE, SEQ_DF)}` : '');
+
+  // Each source file's timecode, in its own rate.
+  const fileTCMap = {};
+  doc.querySelectorAll('file').forEach(f => {
+    const fid = f.getAttribute('id');
+    if (fid && !(fid in fileTCMap)) {
+      const tc = readTimecode(f);
+      const fr = readRate(f);
+      if (tc || fr) fileTCMap[fid] = {
+        frame: tc ? tc.frame : 0,
+        tb: (tc && tc.tb) || (fr && fr.tb) || null,
+        ntsc: tc && tc.tb ? tc.ntsc : !!(fr && fr.ntsc),
+        df: !!(tc && tc.df)
+      };
+    }
+  });
+
+  const clipMap = {};
+  doc.querySelectorAll('clipitem').forEach(clip => {
+    const cid = clip.getAttribute('id');
+    if (cid) clipMap[cid] = {
+      start: getDirectInt(clip, 'start'),
+      end:   getDirectInt(clip, 'end'),
+      in:    getDirectInt(clip, 'in', 0),
+      out:   getDirectInt(clip, 'out', 0),
+    };
+  });
+
+  // Premiere writes -1 for a clip edge that sits under a transition. The real
+  // position is on the transitionitem beside it in the same track: the clip is
+  // on screen from the start of the transition at its head to the end of the
+  // transition at its tail.
+  function adjacentTransition(clip, dir) {
+    let el = dir < 0 ? clip.previousElementSibling : clip.nextElementSibling;
+    while (el && el.tagName !== 'transitionitem' && el.tagName !== 'clipitem')
+      el = dir < 0 ? el.previousElementSibling : el.nextElementSibling;
+    if (!el || el.tagName !== 'transitionitem') return null;
+    const ts = getDirectInt(el, 'start'), te = getDirectInt(el, 'end');
+    return (ts >= 0 && te >= 0) ? { start: ts, end: te } : null;
+  }
+
+  function resolveSeqPosition(clip) {
+    let start = getDirectInt(clip, 'start');
+    let end   = getDirectInt(clip, 'end');
+    const inF   = getDirectInt(clip, 'in', 0);
+    const outF  = getDirectInt(clip, 'out', 0);
+    const dur   = outF - inF;
+
+    if (start < 0) { const t = adjacentTransition(clip, -1); if (t) start = t.start; }
+    if (end   < 0) { const t = adjacentTransition(clip, +1); if (t) end   = t.end;   }
+
+    if (start >= 0 && end >= 0)  return { seqIn: start, seqOut: end, flagged: false };
+    if (start >= 0 && end < 0)   return { seqIn: start, seqOut: start + dur, flagged: false };
+    if (start < 0  && end >= 0)  return { seqIn: end - dur, seqOut: end, flagged: false };
+
+    // Last resort: borrow the position of a linked clip that does resolve.
+    for (const link of clip.querySelectorAll(':scope > link')) {
+      const ref = link.querySelector('linkclipref');
+      if (!ref) continue;
+      const rid = ref.textContent.trim();
+      if (rid === clip.getAttribute('id')) continue;
+      const lc = clipMap[rid];
+      if (lc && lc.start >= 0) return { seqIn: lc.start, seqOut: lc.start + dur, flagged: false };
+    }
+    return { seqIn: null, seqOut: null, flagged: true };
+  }
+
+  const rows = [];
+
+  function processTracks(tracks, mediaType) {
+    tracks.forEach((track, ti) => {
+      track.querySelectorAll(':scope > clipitem').forEach(clip => {
+        const name = getName(clip);
+        const inF  = getDirectInt(clip, 'in', 0);
+        const outF = getDirectInt(clip, 'out', 0);
+        if (!name) return;
+
+        const { seqIn, seqOut, flagged } = resolveSeqPosition(clip);
+        let ftc = null;
+        for (const child of clip.children) {
+          if (child.tagName === 'file') { ftc = fileTCMap[child.getAttribute('id')] || null; break; }
+        }
+        // Source timecode is counted in the source file's own rate, not the
+        // sequence's — otherwise a 23.976 clip in a 25fps cut reads minutes out.
+        // A clip's in and out points are counted in the clip's own rate —
+        // Premiere conforms that to the sequence's. Source timecode is counted
+        // in the source file's rate. A 50fps file in a 24fps edit therefore
+        // needs every in/out converted through real time before the file's
+        // start timecode is added; counting them at 50 instead made source
+        // timecodes come out too short by 50/24.
+        const clipRate = readRate(clip) || seqRate || { tb: TIMEBASE, ntsc: false };
+        const fileRate = (ftc && ftc.tb) ? { tb: ftc.tb, ntsc: ftc.ntsc } : clipRate;
+        const fps = r => r.tb * (r.ntsc ? 1000 / 1001 : 1);
+        const toFile = f => Math.round(f * fps(fileRate) / fps(clipRate));
+        const srcTB = fileRate.tb;
+        const srcDF = !!(ftc && ftc.df);
+        const tco = ftc ? ftc.frame : 0;
+        const notes = [];
+        if (flagged) notes.push('Seq TC unresolvable – verify in Premiere');
+
+        rows.push({
+          clipId:   clip.getAttribute('id'),
+          type:     mediaType,
+          track:    ti + 1,
+          filename: name,
+          srcIn:    framesToTC(tco + toFile(inF), srcTB, srcDF),
+          srcOut:   framesToTC(tco + toFile(outF), srcTB, srcDF),
+          seqIn:    seqIn !== null ? framesToTC(SEQ_START + seqIn, TIMEBASE, SEQ_DF) : '??:??:??:??',
+          seqOut:   seqOut !== null ? framesToTC(SEQ_START + seqOut, TIMEBASE, SEQ_DF) : '??:??:??:??',
+          seqInF:   seqIn !== null ? seqIn : 999999,
+          // on-screen duration, in sequence time
+          duration: seqIn !== null && seqOut !== null
+                      ? framesToTC(seqOut - seqIn, TIMEBASE, false)
+                      : framesToTC(outF - inF, clipRate.tb, false),
+          flagged,
+          noteText: notes.join(' · '),
+        });
+      });
+    });
+  }
+
+  const videoSection = sequence.querySelector(':scope > media > video');
+  if (videoSection) processTracks([...videoSection.querySelectorAll(':scope > track')], 'VIDEO');
+  const audioSection = sequence.querySelector(':scope > media > audio');
+  if (audioSection) processTracks([...audioSection.querySelectorAll(':scope > track')], 'AUDIO');
+
+  rows.sort((a, b) => a.seqInF - b.seqInF || (a.type === 'VIDEO' ? -1 : 1) || a.track - b.track);
+
+  const seenIds = new Set();
+  return rows.filter(r => { if (seenIds.has(r.clipId)) return false; seenIds.add(r.clipId); return true; });
+}
+
+// ── State ───────────────────────────────────────────────────────────────────
+let currentXML = null;
+let currentFilename = '';
+let allRows = [];
+let activeFilters = new Set();   // source filter strings
+let episodePattern = null;       // detected or custom
+let SEQ_META = { name: '', fps: '', start: '' };
+
+// Columns available in every download. Episode only exists when the content is
+// a series; Notes only appears if a row actually has one.
+const COLUMNS = [
+  { key: 'n',        label: 'Row',           on: true  },
+  { key: 'episode',  label: 'Episode',       on: true,  series: true },
+  { key: 'filename', label: 'Filename',      on: true  },
+  { key: 'type',     label: 'Type',          on: false },
+  { key: 'track',    label: 'Track',         on: false },
+  { key: 'srcIn',    label: 'Source in',     on: true,  tc: true },
+  { key: 'srcOut',   label: 'Source out',    on: true,  tc: true },
+  { key: 'seqIn',    label: 'Programme in',  on: true,  tc: true },
+  { key: 'seqOut',   label: 'Programme out', on: true,  tc: true },
+  { key: 'duration', label: 'Duration',      on: true,  tc: true },
+  { key: 'note',     label: 'Notes',         on: true,  ifAny: true },
+];
+let activeTypes = new Set();     // 'VIDEO' / 'AUDIO' to include
+let activeExts  = new Set();     // file extensions to include, e.g. '.mxf'
+
+// ── UI refs ──────────────────────────────────────────────────────────────────
+const dropzone      = document.getElementById('dropzone');
+const fileInput     = document.getElementById('file-input');
+const fileNameEl    = document.getElementById('file-name');
+const panelFilter   = document.getElementById('panel-filter');
+const panelContent  = document.getElementById('panel-content');
+const typeTags      = document.getElementById('type-tags');
+const extTags       = document.getElementById('ext-tags');
+const contentPreview= document.getElementById('content-preview');
+const panelEpisode  = document.getElementById('panel-episode');
+const panelOptions  = document.getElementById('panel-options');
+const detectedTags  = document.getElementById('detected-tags');
+const customInput   = document.getElementById('custom-filter-input');
+const addFilterBtn  = document.getElementById('add-filter-btn');
+const epPreview     = document.getElementById('ep-preview');
+const epSampleEl    = document.getElementById('ep-sample');
+const epClearBtn    = document.getElementById('ep-clear-btn');
+const epFormatBlock = document.getElementById('ep-format-block');
+const epFormatRow   = document.getElementById('ep-format-row');
+const generateBtn   = document.getElementById('generate-btn');
+const statusEl      = document.getElementById('status');
+const statsEl       = document.getElementById('stats');
+
+function setStatus(msg, type = '') { statusEl.textContent = msg; statusEl.className = type; }
+
+function renderFilterTags(prefixes) {
+  detectedTags.innerHTML = '';
+  prefixes.forEach(p => {
+    const tag = document.createElement('div');
+    tag.className = 'tag' + (activeFilters.has(p) ? ' active' : ' inactive');
+    tag.innerHTML = `${p}<span class="tag-x">✕</span>`;
+    tag.addEventListener('click', () => {
+      if (activeFilters.has(p)) activeFilters.delete(p);
+      else activeFilters.add(p);
+      tag.className = 'tag' + (activeFilters.has(p) ? ' active' : ' inactive');
+    });
+    detectedTags.appendChild(tag);
+  });
+  if (prefixes.length === 0) {
+    detectedTags.innerHTML = '<span style="font-family:var(--mono);font-size:11px;color:var(--muted)">No repeating prefixes found</span>';
+  }
+}
+
+// ── Content type / extension filter ──────────────────────────────────────────
+function getExt(filename) {
+  const m = filename.match(/(\.[^.\s]+)$/);
+  return m ? m[1].toLowerCase() : '(none)';
+}
+
+function makeChip(label, isActive, onToggle) {
+  const chip = document.createElement('div');
+  chip.className = 'tag' + (isActive ? ' active' : ' inactive');
+  chip.innerHTML = `${label}<span class="tag-x">✕</span>`;
+  chip.addEventListener('click', () => {
+    const nowActive = onToggle();
+    chip.className = 'tag' + (nowActive ? ' active' : ' inactive');
+    updateContentPreview();
+  });
+  return chip;
+}
+
+function renderContentFilters(rows) {
+  // Media types present
+  const types = [...new Set(rows.map(r => r.type))];       // VIDEO / AUDIO
+  activeTypes = new Set(types);                            // default: all on
+  typeTags.innerHTML = '';
+  types.forEach(t => {
+    typeTags.appendChild(makeChip(t, true, () => {
+      if (activeTypes.has(t)) activeTypes.delete(t); else activeTypes.add(t);
+      return activeTypes.has(t);
+    }));
+  });
+
+  // Extensions present
+  const exts = [...new Set(rows.map(r => getExt(r.filename)))].sort();
+  activeExts = new Set(exts);                              // default: all on
+  extTags.innerHTML = '';
+  exts.forEach(x => {
+    extTags.appendChild(makeChip(x, true, () => {
+      if (activeExts.has(x)) activeExts.delete(x); else activeExts.add(x);
+      return activeExts.has(x);
+    }));
+  });
+
+  updateContentPreview();
+}
+
+function passesContentFilter(r) {
+  return activeTypes.has(r.type) && activeExts.has(getExt(r.filename));
+}
+
+function updateContentPreview() {
+  const kept = allRows.filter(passesContentFilter).length;
+  contentPreview.textContent = `${kept} of ${allRows.length} clips match — untick any type to exclude it`;
+  contentPreview.className = 'ep-preview' + (kept === 0 ? ' bad' : ' ok');
+}
+
+function addCustomFilter(val) {
+  val = val.trim();
+  if (!val) return;
+  activeFilters.add(val);
+  // Add as a tag
+  const tag = document.createElement('div');
+  tag.className = 'tag active';
+  tag.innerHTML = `${val}<span class="tag-x">✕</span>`;
+  tag.addEventListener('click', () => {
+    if (activeFilters.has(val)) { activeFilters.delete(val); tag.className = 'tag inactive'; }
+    else { activeFilters.add(val); tag.className = 'tag active'; }
+  });
+  detectedTags.appendChild(tag);
+  customInput.value = '';
+}
+
+addFilterBtn.addEventListener('click', () => addCustomFilter(customInput.value));
+customInput.addEventListener('keydown', e => { if (e.key === 'Enter') addCustomFilter(customInput.value); });
+
+// ── Click-to-teach interaction ───────────────────────────────────────────────
+let epSampleName = '';   // the filename shown in the teach box
+let epSelStart = null;   // selection anchors (char indices)
+let epSelEnd = null;
+let epChosenFormat = EP_FORMATS[0];  // default: Season + Episode
+
+// Pick the best sample filename: the one with the most digits (likeliest to
+// actually contain an episode code).
+function pickSampleName(filenames) {
+  let best = filenames[0] || '', score = -1;
+  filenames.forEach(f => {
+    const digits = (f.match(/\d/g) || []).length;
+    if (digits > score) { score = digits; best = f; }
+  });
+  return best;
+}
+
+function renderSample() {
+  epSampleEl.innerHTML = '';
+  [...epSampleName].forEach((ch, i) => {
+    const span = document.createElement('span');
+    const isDigit = /\d/.test(ch);
+    span.className = 'ep-char' + (isDigit ? ' digit' : ' dim');
+    span.textContent = ch === ' ' ? '\u00A0' : ch;
+    span.dataset.i = i;
+    if (epSelStart !== null && i >= epSelStart && i < epSelEnd) span.classList.add('sel');
+    epSampleEl.appendChild(span);
+  });
+}
+
+// Extend a click on one digit to cover the whole contiguous digit run.
+function digitRunAt(str, i) {
+  let s = i, e = i;
+  while (s > 0 && /\d/.test(str[s - 1])) s--;
+  while (e < str.length && /\d/.test(str[e])) e++;
+  return [s, e];
+}
+
+function onSampleClick(e) {
+  const span = e.target.closest('.ep-char');
+  if (!span) return;
+  const i = +span.dataset.i;
+  if (!/\d/.test(epSampleName[i])) return;   // only digits are selectable
+  [epSelStart, epSelEnd] = digitRunAt(epSampleName, i);
+  commitSelection();
+}
+
+function commitSelection() {
+  renderSample();
+  epClearBtn.style.display = 'inline-block';
+  const matcher = buildEpisodeMatcher(epSampleName, epSelStart, epSelEnd);
+  if (!matcher) { setEpPreview('Selection must be digits only', 'bad'); return; }
+  episodePattern = { matcher, formatFn: epChosenFormat.fn };
+  renderFormatButtons(matcher.sampleCode);
+  epFormatBlock.style.display = 'block';
+  updateEpPreview();
+  renderColumnPicker();
+}
+
+function renderFormatButtons(sampleCode) {
+  epFormatRow.innerHTML = '';
+  EP_FORMATS.forEach(fmt => {
+    const btn = document.createElement('div');
+    btn.className = 'ep-format-btn' + (fmt.id === epChosenFormat.id ? ' active' : '');
+    btn.innerHTML = `<span class="fmt-name">${fmt.name}</span><span class="fmt-ex">${fmt.fn(sampleCode)}</span>`;
+    btn.addEventListener('click', () => {
+      epChosenFormat = fmt;
+      if (episodePattern) episodePattern.formatFn = fmt.fn;
+      renderFormatButtons(sampleCode);
+      updateEpPreview();
+    });
+    epFormatRow.appendChild(btn);
+  });
+}
+
+function updateEpPreview() {
+  const filenames = [...new Set(allRows.map(r => r.filename))];
+  const matched = filenames.filter(f => applyEpisodePattern(f, episodePattern));
+  if (matched.length === 0) { setEpPreview('No filenames matched that pattern', 'bad'); return; }
+  const eps = new Set(matched.map(f => applyEpisodePattern(f, episodePattern)));
+  const examples = matched.slice(0, 3)
+    .map(f => `"${applyEpisodePattern(f, episodePattern)}"`).join(', ');
+  setEpPreview(`✓ Tagged ${matched.length} of ${filenames.length} files, ${eps.size} episodes — e.g. ${examples}`, 'ok');
+}
+
+function setEpPreview(msg, type = '') { epPreview.textContent = msg; epPreview.className = 'ep-preview' + (type ? ' ' + type : ''); }
+
+function clearEpSelection() {
+  epSelStart = epSelEnd = null;
+  episodePattern = null;
+  epFormatBlock.style.display = 'none';
+  epClearBtn.style.display = 'none';
+  renderSample();
+  setEpPreview('Click the episode number above to begin', '');
+  renderColumnPicker();
+}
+
+epSampleEl.addEventListener('click', onSampleClick);
+epClearBtn.addEventListener('click', clearEpSelection);
+
+// Try to pre-select automatically so most files "just work" without any click.
+function autoTeach(filenames) {
+  epSampleName = pickSampleName(filenames);
+  renderSample();
+  // Only a three-digit code between underscores counts as an episode, and only
+  // if most files carry one. The old guess took any two or three digits before
+  // the extension — on promo files that's the duration ("..._9x16_15.mp4").
+  const EP = /_(\d{3})_/;
+  const share = filenames.length
+    ? filenames.filter(f => EP.test(f)).length / filenames.length : 0;
+  const m = epSampleName.match(EP);
+  if (m && share >= 0.5) {
+    setEpisodic(true, true);
+    const start = epSampleName.indexOf(m[0]) + 1;
+    epSelStart = start; epSelEnd = start + 3;
+    commitSelection();
+    setEpPreview(epPreview.textContent + '  (auto-detected — click a different number to change)', 'ok');
+  } else {
+    setEpisodic(false, true);
+  }
+}
+
+// The series switch. Off means no episode pattern and no Episode column.
+function setEpisodic(on, auto) {
+  const box = document.getElementById('opt-episodic');
+  box.checked = on;
+  document.getElementById('ep-controls').style.display = on ? '' : 'none';
+  document.getElementById('ep-mode-desc').textContent = on
+    ? (auto ? 'Episode codes found in the filenames — switch off if this isn\'t a series'
+            : 'Click the episode number in the filename below')
+    : 'Off — no Episode column. Switch on for a series.';
+  if (!on) {
+    epSelStart = epSelEnd = null;
+    episodePattern = null;
+    epFormatBlock.style.display = 'none';
+    epClearBtn.style.display = 'none';
+  }
+  renderColumnPicker();
+}
+
+// ── File load ────────────────────────────────────────────────────────────────
+function showFile(file) {
+  if (!file || !file.name.endsWith('.xml')) { setStatus('Please drop a valid .xml file', 'error'); return; }
+  currentFilename = file.name;
+  fileNameEl.textContent = file.name;
+  dropzone.classList.add('has-file');
+  statsEl.classList.remove('visible');
+  setStatus('Parsing…');
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentXML = e.target.result;
+    try {
+      allRows = parseXML(currentXML);
+      const filenames = [...new Set(allRows.map(r => r.filename))];
+
+      // Auto-detect prefixes
+      const prefixes = detectPrefixes(filenames);
+      activeFilters = new Set(prefixes.slice(0, 3)); // pre-select top 3
+      renderFilterTags(prefixes);
+
+      // Set up click-to-teach episode tagging (auto-tries a sensible default)
+      episodePattern = null;
+      autoTeach(filenames);
+
+      // Set up content-type / extension filter (all on by default)
+      renderContentFilters(allRows);
+
+      panelFilter.classList.add('visible');
+      panelContent.classList.add('visible');
+      panelEpisode.classList.add('visible');
+      panelOptions.classList.add('visible');
+      document.getElementById('panel-preview').classList.add('visible');
+      document.getElementById('dl-row').classList.add('visible');
+      const titleEl = document.getElementById('opt-title');
+      titleEl.value = SEQ_META.name || currentFilename.replace(/\.xml$/i, '');
+      renderColumnPicker();
+      renderPreview();
+      setStatus(`Loaded ${allRows.length} clips from ${filenames.length} unique files`);
+    } catch (err) {
+      setStatus(`Parse error: ${err.message}`, 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag-over'); showFile(e.dataTransfer.files[0]); });
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => showFile(fileInput.files[0]));
+
+// ── Generate ──────────────────────────────────────────────────────────────────
+// ── Columns ──────────────────────────────────────────────────────────────────
+function renderColumnPicker() {
+  const box = document.getElementById('col-tags');
+  if (!box) return;
+  box.innerHTML = '';
+  COLUMNS.forEach(c => {
+    const locked = c.series && !episodePattern;
+    const tag = document.createElement('div');
+    tag.className = 'tag' + (locked ? ' locked' : c.on ? ' active' : ' inactive');
+    tag.textContent = c.label;
+    if (locked) tag.title = 'Only for a series — switch on "This is a series" above';
+    else tag.addEventListener('click', () => { c.on = !c.on; renderColumnPicker(); });
+    box.appendChild(tag);
+  });
+}
+function activeColumns(rows) {
+  return COLUMNS.filter(c => c.on
+    && (!c.series || episodePattern)
+    && (!c.ifAny || rows.some(r => r.note)));
+}
+function cellValue(r, key, i) {
+  if (key === 'n') return i + 1;
+  const v = r[key];
+  return v == null ? '' : v;
+}
+
+// ── Rows, after every filter ─────────────────────────────────────────────────
+function collectRows() {
+  const includeAll  = document.getElementById('opt-all').checked;
+  const dedupStereo = document.getElementById('opt-dedup').checked;
+  let rows = allRows.map(r => ({
+    ...r,
+    isSource: activeFilters.size > 0 ? [...activeFilters].some(f => r.filename.includes(f)) : false,
+    episode:  episodePattern ? applyEpisodePattern(r.filename, episodePattern) : '',
+    note:     r.noteText || '',
+  }));
+  rows = rows.filter(passesContentFilter);
+  if (!includeAll) rows = rows.filter(r => r.isSource);
+  if (dedupStereo) {
+    const seen = new Set();
+    rows = rows.filter(r => {
+      if (r.type !== 'AUDIO') return true;
+      const k = `${r.filename}|${r.srcIn}|${r.seqIn}`;
+      if (seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+  }
+  return rows;
+}
+function sheetTitle() {
+  const t = (document.getElementById('opt-title').value || '').trim();
+  return t || SEQ_META.name || currentFilename.replace(/\.xml$/i, '');
+}
+// Filenames stay plain ASCII: they get emailed and dropped on servers, and
+// some browsers refuse a download name with Ł or ș in it.
+function fileBase() {
+  const map = { 'Ł':'L','ł':'l','Đ':'D','đ':'d','Ø':'O','ø':'o','ß':'ss','Æ':'AE','æ':'ae','Œ':'OE','œ':'oe','—':'-','–':'-' };
+  const plain = sheetTitle().replace(/[ŁłĐđØøßÆæŒœ—–]/g, c => map[c])
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return plain.replace(/[^\w.-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 80) || 'Timecodes';
+}
+function metaLine(rows) {
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const bits = [];
+  if (SEQ_META.name && SEQ_META.name !== sheetTitle()) bits.push(SEQ_META.name);
+  bits.push(SEQ_META.fps + ' fps');
+  if (SEQ_META.start && SEQ_META.start !== '00:00:00:00') bits.push('starts ' + SEQ_META.start);
+  bits.push(rows.length + ' clip' + (rows.length === 1 ? '' : 's'));
+  bits.push(date);
+  return bits.join('  ·  ');
+}
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function showStats(rows) {
+  document.getElementById('stat-total').textContent   = rows.length;
+  document.getElementById('stat-source').textContent  = rows.filter(r => r.isSource).length;
+  document.getElementById('stat-eps').textContent     = new Set(rows.filter(r => r.episode).map(r => r.episode)).size;
+  document.getElementById('stat-flagged').textContent = rows.filter(r => r.flagged).length;
+  statsEl.classList.add('visible');
+}
+
+// @@ENGINE:libs BEGIN — generated from lib_loader.js by sync_engine.py. Do not edit here.
+// ═══════════════════════════════════════════════════════════════════════════
+// LIBRARIES — fetched the first time something needs them, never with the page.
+// Opening the suite used to download every reader (PDF, Word, Excel, media,
+// zip, OCR) whichever tool you wanted. Edit here; sync_engine.py copies this
+// into each tool that uses it.
+// ═══════════════════════════════════════════════════════════════════════════
+var LL_LIBS = {
+  pdfjs:     { url:"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", what:"the PDF reader",
+               has:function(){ return !!window.pdfjsLib; },
+               ready:function(){ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } },
+  mammoth:   { url:"https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js", what:"the Word reader",
+               has:function(){ return !!window.mammoth; } },
+  xlsx:      { url:"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", what:"the Excel reader",
+               has:function(){ return !!window.XLSX; } },
+  mediainfo: { url:"https://cdn.jsdelivr.net/npm/mediainfo.js@0.3.1/dist/umd/index.min.js", what:"the media reader",
+               has:function(){ return !!(window.MediaInfo||window.mediaInfoFactory); } },
+  jszip:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", what:"the zip tools",
+               has:function(){ return !!window.JSZip; } },
+  tesseract: { url:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", what:"the text reader",
+               has:function(){ return !!window.Tesseract; } },
+  jspdf:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", what:"the PDF tools",
+               has:function(){ return !!(window.jspdf && window.jspdf.jsPDF); } },
+  autotable: { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js", what:"the PDF tools",
+               needs:"jspdf", has:function(){ return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API.autoTable); } },
+  exceljs:   { url:"https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js", what:"the Excel tools",
+               has:function(){ return !!window.ExcelJS; } }
+};
+function needLib(name){
+  var lib=LL_LIBS[name], cache=window.__llLibs||(window.__llLibs={});
+  function ready(){ if(lib.ready) lib.ready(); }
+  if(lib.has()){ ready(); return Promise.resolve(); }
+  // load what it depends on first (once), then itself
+  if(lib.needs && !LL_LIBS[lib.needs].has()) return needLib(lib.needs).then(function(){ return needLib(name); });
+  if(!cache[name]) cache[name]=new Promise(function(res,rej){
+    var s=document.createElement("script"); s.src=lib.url;
+    s.onload=function(){ res(); };
+    // a failed load isn't remembered, so trying again after reconnecting works
+    s.onerror=function(){ delete cache[name]; rej(new Error("couldn't load "+lib.what+" \u2014 check your internet connection and try again")); };
+    document.head.appendChild(s);
+  });
+  return cache[name].then(ready);
+}
+
+// The standard PDF fonts can't draw Ł, ș, ț and so on, so names from Polish or
+// Romanian deliveries would come out as garbage. DejaVu covers them.
+var LL_FONTS = {
+  regular:"https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf",
+  bold:   "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf"
+};
+function llFont(which){
+  var cache=window.__llFonts||(window.__llFonts={});
+  if(cache[which]) return cache[which];
+  var fail=function(){ delete cache[which]; throw new Error("couldn't load the PDF font \u2014 check your internet connection and try again"); };
+  cache[which]=fetch(LL_FONTS[which]).then(function(r){ if(!r.ok) fail(); return r.arrayBuffer(); }, fail).then(function(ab){
+    var bytes=new Uint8Array(ab), bin="";
+    for(var i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000));
+    return btoa(bin);
+  });
+  return cache[which];
+}
+// A PDF ready for tables, with fonts that can draw any European name.
+async function newPdf(opts){
+  await needLib("autotable");
+  var f=await Promise.all([llFont("regular"), llFont("bold")]);
+  var doc=new window.jspdf.jsPDF(opts||{orientation:"landscape", unit:"pt", format:"a4"});
+  doc.addFileToVFS("DejaVuSans.ttf", f[0]);      doc.addFont("DejaVuSans.ttf","DejaVu","normal");
+  doc.addFileToVFS("DejaVuSans-Bold.ttf", f[1]); doc.addFont("DejaVuSans-Bold.ttf","DejaVu","bold");
+  return doc;
+}
+function saveBlob(blob, name){
+  var url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+// @@ENGINE:libs END
+
+// ── PDF: a sheet to read and send ────────────────────────────────────────────
+async function exportPDF(rows) {
+  const doc = await newPdf({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+  const cols = activeColumns(rows), title = sheetTitle();
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 40;
+  doc.setFont('DejaVu', 'bold'); doc.setFontSize(16); doc.setTextColor(20);
+  doc.text(title, M, 48);
+  doc.setFont('DejaVu', 'normal'); doc.setFontSize(9); doc.setTextColor(110);
+  doc.text(metaLine(rows), M, 64);
+
+  // A series with more than one episode reads best grouped, one table each.
+  const grouped = cols.some(c => c.key === 'episode') && new Set(rows.map(r => r.episode)).size > 1;
+  const tcols = grouped ? cols.filter(c => c.key !== 'episode') : cols;
+  const groups = [];
+  if (grouped) {
+    const map = new Map();
+    rows.forEach((r, i) => { const k = r.episode || '—'; if (!map.has(k)) map.set(k, []); map.get(k).push([r, i]); });
+    map.forEach((list, k) => groups.push([k, list]));
+  } else groups.push(['', rows.map((r, i) => [r, i])]);
+
+  let y = 80;
+  groups.forEach(([ep, list]) => {
+    if (grouped) {
+      if (y > H - 120) { doc.addPage(); y = M + 10; }
+      doc.setFont('DejaVu', 'bold'); doc.setFontSize(11); doc.setTextColor(20);
+      doc.text(/[a-z]/i.test(ep) ? ep : 'Episode ' + ep, M, y + 12); y += 20;
+    }
+    const colStyles = {};
+    tcols.forEach((c, i) => {
+      if (c.tc) colStyles[i] = { cellWidth: 84 };
+      else if (c.key === 'n') colStyles[i] = { cellWidth: 26, halign: 'right' };
+      else if (c.key === 'type' || c.key === 'track') colStyles[i] = { cellWidth: 44 };
+    });
+    doc.autoTable({
+      startY: y,
+      head: [tcols.map(c => c.label)],
+      body: list.map(([r, i]) => tcols.map(c => String(cellValue(r, c.key, i)))),
+      theme: 'plain',
+      styles: { font: 'DejaVu', fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 5, right: 5 }, textColor: 30, overflow: 'linebreak' },
+      headStyles: { font: 'DejaVu', fontStyle: 'bold', fillColor: [34, 34, 34], textColor: 255 },
+      alternateRowStyles: { fillColor: [246, 246, 246] },
+      columnStyles: colStyles,
+      margin: { left: M, right: M, bottom: M + 10 },
+      didParseCell: d => {
+        if (d.section === 'body' && tcols[d.column.index].key === 'note' && d.cell.raw) d.cell.styles.textColor = [170, 95, 0];
+      },
+    });
+    y = doc.lastAutoTable.finalY + 22;
+  });
+
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFont('DejaVu', 'normal'); doc.setFontSize(8); doc.setTextColor(140);
+    doc.text(title, M, H - 22);
+    doc.text('Page ' + i + ' of ' + pages, W - M, H - 22, { align: 'right' });
+  }
+  download(doc.output('blob'), fileBase() + '_Timecodes.pdf');
+  return fileBase() + '_Timecodes.pdf';
+}
+
+// ── Excel: a sheet to sort and filter ────────────────────────────────────────
+async function exportXLSX(rows) {
+  await needLib('exceljs');
+  const cols = activeColumns(rows);
+  const wb = new window.ExcelJS.Workbook();
+  wb.creator = 'Lizard Lips Hot Suite';
+  const ws = wb.addWorksheet('Timecodes', { views: [{ state: 'frozen', ySplit: 4 }] });
+  const F = (extra) => Object.assign({ name: 'Arial', size: 10 }, extra || {});
+
+  ws.getCell('A1').value = sheetTitle();  ws.getCell('A1').font = F({ size: 14, bold: true });
+  ws.getCell('A2').value = metaLine(rows); ws.getCell('A2').font = F({ size: 9, color: { argb: 'FF6E6E6E' } });
+
+  const head = ws.getRow(4);
+  cols.forEach((c, i) => {
+    const cell = head.getCell(i + 1);
+    cell.value = c.label;
+    cell.font = F({ bold: true, color: { argb: 'FFFFFFFF' } });
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF222222' } };
+    cell.alignment = { vertical: 'middle' };
+  });
+  head.height = 20;
+
+  rows.forEach((r, ri) => {
+    const row = ws.getRow(5 + ri);
+    cols.forEach((c, ci) => {
+      const cell = row.getCell(ci + 1);
+      const v = cellValue(r, c.key, ri);
+      // numbers stay numbers; timecodes and names stay text, so Excel can't
+      // reinterpret 00:01:10:09 as a time of day
+      cell.value = (c.key === 'n' || c.key === 'track') ? Number(v) : String(v);
+      cell.font = (c.key === 'note' && v) ? F({ color: { argb: 'FFAA5F00' } }) : F();
+      if (ri % 2) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF6F6F6' } };
+    });
+  });
+
+  ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + rows.length, column: cols.length } };
+  cols.forEach((c, i) => {
+    const longest = Math.max(c.label.length, ...rows.map((r, ri) => String(cellValue(r, c.key, ri)).length));
+    ws.getColumn(i + 1).width = c.tc ? 14 : c.key === 'n' ? 6 : Math.min(c.key === 'note' ? 50 : 60, Math.max(10, longest + 2));
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
+  download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+           fileBase() + '_Timecodes.xlsx');
+  return fileBase() + '_Timecodes.xlsx';
+}
+
+// ── CSV: plain data ──────────────────────────────────────────────────────────
+function exportCSV(rows) {
+  const format = document.getElementById('opt-format').value;
+  const sep = format === 'tsv' ? '\t' : ',';
+  // A cell starting with = + - or @ is read as a formula when the CSV is opened
+  // in Excel: a clip called "-Opening titles.mov" shows #NAME?, and a crafted
+  // name could run a formula. A leading apostrophe marks it as text.
+  const safe = v => { const t = String(v == null ? '' : v); return /^[=+\-@\t\r]/.test(t) ? "'" + t : t; };
+  const q = format === 'tsv' ? v => safe(v).replace(/[\t\r\n]+/g, ' ') : v => `"${safe(v).replace(/"/g, '""')}"`;
+  const cols = activeColumns(rows);
+  const lines = [cols.map(c => q(c.label)).join(sep)];
+  rows.forEach((r, i) => lines.push(cols.map(c => q(cellValue(r, c.key, i))).join(sep)));
+  const ext = format === 'tsv' ? 'tsv' : 'csv';
+  download(new Blob([lines.join('\n')], { type: format === 'tsv' ? 'text/tab-separated-values' : 'text/csv' }),
+           fileBase() + '_Timecodes.' + ext);
+  return fileBase() + '_Timecodes.' + ext;
+}
+
+// ── The log on screen ────────────────────────────────────────────────────────
+// Exactly what the downloads will contain, so a wrong filter or a missing
+// column shows up before the sheet goes anywhere. Rows whose programme
+// position couldn't be worked out are marked.
+const PREVIEW_MAX = 500;
+function escHtml(v) { return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function renderPreview() {
+  if (!allRows.length) return;
+  const rows = collectRows(), cols = activeColumns(rows);
+  const bad = rows.filter(r => r.flagged).length;
+  document.getElementById('preview-count').textContent =
+    rows.length + ' row' + (rows.length === 1 ? '' : 's') +
+    (bad ? ', ' + bad + ' need checking (marked !)' : '') +
+    (rows.length > PREVIEW_MAX ? '. Showing the first ' + PREVIEW_MAX + '; the downloads have them all.' : '');
+  const other = activeFilters.size > 0;
+  let h = '<thead><tr><th></th>' + cols.map(c => '<th>' + escHtml(c.label) + '</th>').join('') + '</tr></thead><tbody>';
+  rows.slice(0, PREVIEW_MAX).forEach((r, i) => {
+    const cls = r.flagged ? 'bad' : (other && !r.isSource ? 'other' : '');
+    h += '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td class="mk">' + (r.flagged ? '!' : '') + '</td>' +
+         cols.map(c => '<td>' + escHtml(cellValue(r, c.key, i)) + '</td>').join('') + '</tr>';
+  });
+  document.getElementById('preview-table').innerHTML = h + '</tbody>';
+}
+let previewQueued = false;
+function schedulePreview() {
+  if (previewQueued || !allRows.length) return;
+  previewQueued = true;
+  requestAnimationFrame(() => { previewQueued = false; renderPreview(); });
+}
+// any change to filters, episodes, columns or options redraws it
+['click', 'change', 'input'].forEach(ev => document.querySelector('main').addEventListener(ev, schedulePreview));
+
+// ── Wiring ───────────────────────────────────────────────────────────────────
+document.getElementById('opt-episodic').addEventListener('change', e => {
+  setEpisodic(e.target.checked, false);
+  if (e.target.checked) { renderSample(); setEpPreview('Click the episode number above to begin', ''); }
+});
+const DL_BUTTONS = ['pdf-btn', 'xlsx-btn', 'generate-btn'].map(id => document.getElementById(id));
+async function runExport(fn, label) {
+  if (!allRows.length) { setStatus('Load an XML first', 'error'); return; }
+  DL_BUTTONS.forEach(b => b.disabled = true);
+  setStatus('Preparing ' + label + '…');
+  try {
+    const rows = collectRows();
+    if (!rows.length) throw new Error('nothing to export with the current filters');
+    const name = await fn(rows);
+    showStats(rows);
+    setStatus(`✓ ${rows.length} clip${rows.length === 1 ? '' : 's'} → ${name}`, 'success');
+  } catch (err) {
+    setStatus(`Couldn't make the ${label}: ${err.message}`, 'error');
+  } finally {
+    DL_BUTTONS.forEach(b => b.disabled = false);
+  }
+}
+document.getElementById('pdf-btn').addEventListener('click', () => runExport(exportPDF, 'PDF'));
+document.getElementById('xlsx-btn').addEventListener('click', () => runExport(exportXLSX, 'Excel file'));
+generateBtn.addEventListener('click', () => runExport(exportCSV, 'CSV'));
+</script>
+</body>
+</html>

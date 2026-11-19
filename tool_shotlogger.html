@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shot Logger — Lizard Lips</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0d0a; --surface:#111511; --border:#232a23;
+  --phos:#8fff6a; --accent:#e8ff47; --accent2:#47c8ff;
+  --text:#e8f0e4; --muted:#5f6b5c;
+  --pass:#8fff6a; --fail:#ff6b6b; --warn:#ffcf47;
+  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+  --glow:0 0 6px rgba(232,255,71,.45);
+}
+body { --pass: var(--phos); --fail: #ff6b6b; --warn: #ffcf47; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; display:flex; flex-direction:column; }
+header { padding:24px 40px; border-bottom:1px solid var(--border); display:flex; align-items:baseline; justify-content:space-between; }
+.header-left { display:flex; align-items:baseline; gap:16px; }
+header h1 { font-size:18px; font-weight:800; letter-spacing:-0.02em; color:var(--accent); }
+header span { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:0.08em; }
+main { flex:1; display:flex; flex-direction:column; align-items:center; padding:50px 40px; gap:24px; }
+/* Drop zone */
+#dropzone {
+    width:100%; max-width:720px; border:1.5px dashed var(--border); border-radius:4px;
+    padding:56px 40px; text-align:center; cursor:pointer;
+    transition:border-color 0.2s, background 0.2s; position:relative; overflow:hidden;
+  }
+#dropzone::before {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(circle at 50% 0%, rgba(232,255,71,0.04) 0%, transparent 70%);
+  }
+#dropzone.drag-over { border-color:var(--accent); background:rgba(232,255,71,0.04); }
+#dropzone.has-file { border-color:var(--accent2); border-style:solid; }
+#dropzone.has-file::before { background:radial-gradient(circle at 50% 0%, rgba(71,200,255,0.04) 0%, transparent 70%); }
+.drop-icon { font-size:32px; margin-bottom:12px; color:var(--muted); transition:color 0.2s; }
+#dropzone.drag-over .drop-icon, #dropzone.has-file .drop-icon { color:var(--accent); }
+.drop-title { font-size:16px; font-weight:700; margin-bottom:6px; }
+.drop-sub { font-family:var(--mono); font-size:11px; color:var(--muted); }
+.drop-formats { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:6px; opacity:0.6; }
+#file-name { display:none; font-family:var(--mono); font-size:13px; color:var(--accent2); margin-top:14px; }
+#dropzone.has-file .drop-title, #dropzone.has-file .drop-sub, #dropzone.has-file .drop-formats { display:none; }
+#dropzone.has-file #file-name { display:block; }
+#file-input { display:none; }
+/* Settings panel */
+#settings-panel {
+    display:none; width:100%; max-width:720px;
+    background:var(--surface); border:1px solid var(--border); border-radius:4px;
+    padding:20px 24px; gap:20px; flex-direction:column;
+  }
+#settings-panel.visible { display:flex; }
+.settings-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.setting-item { display:flex; flex-direction:column; gap:6px; }
+.setting-label { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+.setting-control {
+    padding:8px 12px; background:var(--bg); border:1px solid var(--border);
+    border-radius:3px; color:var(--text); font-family:var(--mono); font-size:12px;
+    cursor:pointer; transition:border-color 0.15s;
+  }
+.setting-control:hover, .setting-control:focus { border-color:var(--accent); outline:none; }
+.setting-hint { font-family:var(--mono); font-size:9px; color:var(--muted); opacity:0.7; }
+/* Analyse button */
+#analyse-btn {
+    display:none; width:100%; max-width:720px; padding:15px;
+    background:var(--accent); color:var(--bg); font-family:var(--sans);
+    font-size:15px; font-weight:800; border:none; border-radius:4px;
+    cursor:pointer; transition:opacity 0.15s, transform 0.1s; letter-spacing:-0.01em;
+  }
+#analyse-btn:hover { opacity:0.9; }
+#analyse-btn:active { transform:scale(0.99); }
+#analyse-btn.visible { display:block; }
+/* Progress */
+#progress-wrap { display:none; width:100%; max-width:720px; flex-direction:column; gap:10px; }
+#progress-wrap.visible { display:flex; }
+.progress-bar-track { width:100%; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+.progress-bar-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 0.2s ease; width:0%; }
+#progress-label { font-family:var(--mono); font-size:11px; color:var(--muted); }
+#progress-sub { font-family:var(--mono); font-size:10px; color:var(--muted); opacity:0.6; }
+/* Results */
+#results { display:none; width:100%; max-width:720px; flex-direction:column; gap:20px; }
+#results.visible { display:flex; }
+.section-title { font-family:var(--mono); font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); padding-bottom:8px; border-bottom:1px solid var(--border); }
+/* Stats bar */
+.stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border-radius:4px; overflow:hidden; }
+.stat-cell { background:var(--surface); padding:14px 16px; display:flex; flex-direction:column; gap:4px; }
+.stat-val { font-family:var(--mono); font-size:18px; font-weight:500; color:var(--accent); }
+.stat-lbl { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); }
+/* Timeline scrubber */
+#timeline-wrap { position:relative; width:100%; }
+#timeline {
+    width:100%; height:48px; background:var(--surface); border-radius:4px;
+    border:1px solid var(--border); position:relative; overflow:hidden; cursor:pointer;
+  }
+.tl-thumb { position:absolute; top:0; height:100%; cursor:pointer; transition:opacity 0.15s; }
+.tl-thumb:hover { opacity:0.8; }
+.tl-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.tl-cut { position:absolute; top:0; width:2px; height:100%; background:var(--accent); opacity:0.8; pointer-events:none; }
+.tl-capture { position:absolute; top:0; width:1px; height:100%; background:var(--accent2); opacity:0.5; pointer-events:none; }
+#tl-playhead { position:absolute; top:0; width:2px; height:100%; background:var(--fail); pointer-events:none; z-index:10; }
+/* Shot grid */
+#shot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.shot-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:4px;
+    overflow:hidden; transition:border-color 0.15s; cursor:pointer;
+  }
+.shot-card:hover { border-color:var(--accent2); }
+.shot-card.is-cut { border-color:rgba(232,255,71,0.4); }
+.shot-thumb { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:#0a0a0c; }
+.shot-info { padding:8px 10px; display:flex; flex-direction:column; gap:3px; }
+.shot-tc { font-family:var(--mono); font-size:11px; color:var(--accent); }
+.shot-num { font-family:var(--mono); font-size:10px; color:var(--muted); }
+.shot-badge { font-family:var(--mono); font-size:9px; padding:2px 5px; border-radius:2px; display:inline-block; margin-top:2px; }
+.shot-badge.cut { background:rgba(232,255,71,0.12); color:var(--accent); }
+.shot-badge.capture { background:rgba(71,200,255,0.1);  color:var(--accent2); }
+.shot-badge.text { background:rgba(251,146,60,0.12);  color:var(--warn); }
+.shot-ocr { font-family:var(--mono); font-size:9px; color:var(--warn); margin-top:4px; line-height:1.4; max-height:36px; overflow:hidden; word-break:break-word; }
+/* Lightbox */
+#lightbox {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92);
+    z-index:100; align-items:center; justify-content:center; cursor:pointer;
+  }
+#lightbox.open { display:flex; }
+#lightbox-img { max-width:90vw; max-height:90vh; border-radius:4px; border:1px solid var(--border); }
+#lightbox-info { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:12px; color:var(--muted); background:var(--surface); padding:8px 16px; border-radius:3px; border:1px solid var(--border); }
+/* Export row */
+.export-row { display:flex; gap:10px; }
+.exp-btn {
+    flex:1; padding:11px; border:1px solid var(--border); border-radius:3px;
+    background:var(--surface); color:var(--text); font-family:var(--mono);
+    font-size:11px; cursor:pointer; transition:border-color 0.15s, background 0.15s;
+    letter-spacing:0.04em;
+  }
+.exp-btn:hover { border-color:var(--accent); background:rgba(232,255,71,0.04); }
+/* Hidden video/canvas for processing */
+#proc-video { display:none; }
+#proc-canvas { display:none; }
+#diff-canvas { display:none; }
+footer { padding:20px 40px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+.footer-disclaimer { font-family:var(--mono); font-size:10px; color:var(--muted); opacity:0.6; }
+.footer-meta { display:flex; gap:24px; }
+.footer-meta span { font-family:var(--mono); font-size:10px; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <h1>Shot Logger</h1>
+    <span>SCENE DETECTION · FRAME CAPTURE</span>
+  </div>
+</header>
+
+<main>
+
+  <div id="dropzone" tabindex="0">
+    <input type="file" id="file-input" accept="video/*,.mp4,.mov,.avi,.mkv,.webm">
+    <div class="drop-icon">▶</div>
+    <div class="drop-title">Drop video file</div>
+    <div class="drop-sub">Drag & drop or click to browse</div>
+    <div class="drop-formats">.mp4 · .mov · .webm · .avi · max 2 mins recommended</div>
+    <div id="file-name">—</div>
+  </div>
+
+  <div id="settings-panel">
+    <div class="settings-row">
+      <div class="setting-item">
+        <div class="setting-label">Scene sensitivity</div>
+        <select class="setting-control" id="sensitivity">
+          <option value="0.12">Low — major cuts only</option>
+          <option value="0.07" selected>Medium — standard</option>
+          <option value="0.04">High — subtle changes</option>
+          <option value="0.02">Very high — every change</option>
+        </select>
+        <div class="setting-hint">Pixel difference threshold</div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-label">Captures per shot</div>
+        <select class="setting-control" id="captures-per-shot">
+          <option value="1">1 — first frame only</option>
+          <option value="2" selected>2 — start &amp; mid</option>
+          <option value="3">3 — start, mid, end</option>
+          <option value="4">4 — evenly spaced</option>
+        </select>
+        <div class="setting-hint">Frames saved per detected shot</div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-label">Scan interval</div>
+        <select class="setting-control" id="scan-interval">
+          <option value="0.25">Every 0.25s — precise</option>
+          <option value="0.5" selected>Every 0.5s — standard</option>
+          <option value="1.0">Every 1s — fast</option>
+        </select>
+        <div class="setting-hint">How often to check for cuts</div>
+      </div>
+    </div>
+  </div>
+
+  <button id="analyse-btn">Detect Scenes</button>
+
+  <div id="progress-wrap">
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div id="progress-label">Loading…</div>
+    <div id="progress-sub"></div>
+  </div>
+
+  <div id="results">
+
+    <div class="section-title">Overview</div>
+    <div class="stats-bar">
+      <div class="stat-cell"><div class="stat-val" id="stat-duration">—</div><div class="stat-lbl">Duration</div></div>
+      <div class="stat-cell"><div class="stat-val" id="stat-shots">—</div><div class="stat-lbl">Shots detected</div></div>
+      <div class="stat-cell"><div class="stat-val" id="stat-frames">—</div><div class="stat-lbl">Frames captured</div></div>
+      <div class="stat-cell"><div class="stat-val" id="stat-avg">—</div><div class="stat-lbl">Avg shot length</div></div>
+    </div>
+
+    <div class="section-title">Timeline</div>
+    <div id="timeline-wrap">
+      <div id="timeline">
+        <div id="tl-playhead" style="left:0"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">00:00</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="tl-end">—</span>
+      </div>
+    </div>
+
+    <div class="section-title">Shots</div>
+    <div id="shot-grid"></div>
+
+    <div class="section-title">Export</div>
+    <div class="export-row">
+      <button class="exp-btn" id="btn-zip">Download All Frames (ZIP)</button>
+      <button class="exp-btn" id="btn-csv">Export Shot List (CSV)</button>
+      <button class="exp-btn" id="btn-contact">Contact Sheet (PDF)</button>
+    </div>
+
+  </div>
+
+</main>
+
+<div id="lightbox">
+  <img id="lightbox-img" src="" alt="">
+  <div id="lightbox-info">—</div>
+</div>
+
+<video id="proc-video" muted preload="auto"></video>
+<canvas id="proc-canvas"></canvas>
+<canvas id="diff-canvas"></canvas>
+
+<footer>
+  <div class="footer-disclaimer">⚠ Fast cuts and dissolves can be missed. A guide, not a guarantee.</div>
+  <div class="footer-meta">
+    <span>No files leave your machine</span>
+    <span>A Lizard Lips Tool</span>
+  </div>
+</footer>
+<script>
+// @@ENGINE:libs BEGIN — generated from lib_loader.js by sync_engine.py. Do not edit here.
+// ═══════════════════════════════════════════════════════════════════════════
+// LIBRARIES — fetched the first time something needs them, never with the page.
+// Opening the suite used to download every reader (PDF, Word, Excel, media,
+// zip, OCR) whichever tool you wanted. Edit here; sync_engine.py copies this
+// into each tool that uses it.
+// ═══════════════════════════════════════════════════════════════════════════
+var LL_LIBS = {
+  pdfjs:     { url:"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", what:"the PDF reader",
+               has:function(){ return !!window.pdfjsLib; },
+               ready:function(){ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } },
+  mammoth:   { url:"https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js", what:"the Word reader",
+               has:function(){ return !!window.mammoth; } },
+  xlsx:      { url:"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", what:"the Excel reader",
+               has:function(){ return !!window.XLSX; } },
+  mediainfo: { url:"https://cdn.jsdelivr.net/npm/mediainfo.js@0.3.1/dist/umd/index.min.js", what:"the media reader",
+               has:function(){ return !!(window.MediaInfo||window.mediaInfoFactory); } },
+  jszip:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", what:"the zip tools",
+               has:function(){ return !!window.JSZip; } },
+  tesseract: { url:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", what:"the text reader",
+               has:function(){ return !!window.Tesseract; } },
+  jspdf:     { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", what:"the PDF tools",
+               has:function(){ return !!(window.jspdf && window.jspdf.jsPDF); } },
+  autotable: { url:"https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js", what:"the PDF tools",
+               needs:"jspdf", has:function(){ return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API.autoTable); } },
+  exceljs:   { url:"https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js", what:"the Excel tools",
+               has:function(){ return !!window.ExcelJS; } }
+};
+function needLib(name){
+  var lib=LL_LIBS[name], cache=window.__llLibs||(window.__llLibs={});
+  function ready(){ if(lib.ready) lib.ready(); }
+  if(lib.has()){ ready(); return Promise.resolve(); }
+  // load what it depends on first (once), then itself
+  if(lib.needs && !LL_LIBS[lib.needs].has()) return needLib(lib.needs).then(function(){ return needLib(name); });
+  if(!cache[name]) cache[name]=new Promise(function(res,rej){
+    var s=document.createElement("script"); s.src=lib.url;
+    s.onload=function(){ res(); };
+    // a failed load isn't remembered, so trying again after reconnecting works
+    s.onerror=function(){ delete cache[name]; rej(new Error("couldn't load "+lib.what+" \u2014 check your internet connection and try again")); };
+    document.head.appendChild(s);
+  });
+  return cache[name].then(ready);
+}
+
+// The standard PDF fonts can't draw Ł, ș, ț and so on, so names from Polish or
+// Romanian deliveries would come out as garbage. DejaVu covers them.
+var LL_FONTS = {
+  regular:"https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf",
+  bold:   "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf"
+};
+function llFont(which){
+  var cache=window.__llFonts||(window.__llFonts={});
+  if(cache[which]) return cache[which];
+  var fail=function(){ delete cache[which]; throw new Error("couldn't load the PDF font \u2014 check your internet connection and try again"); };
+  cache[which]=fetch(LL_FONTS[which]).then(function(r){ if(!r.ok) fail(); return r.arrayBuffer(); }, fail).then(function(ab){
+    var bytes=new Uint8Array(ab), bin="";
+    for(var i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000));
+    return btoa(bin);
+  });
+  return cache[which];
+}
+// A PDF ready for tables, with fonts that can draw any European name.
+async function newPdf(opts){
+  await needLib("autotable");
+  var f=await Promise.all([llFont("regular"), llFont("bold")]);
+  var doc=new window.jspdf.jsPDF(opts||{orientation:"landscape", unit:"pt", format:"a4"});
+  doc.addFileToVFS("DejaVuSans.ttf", f[0]);      doc.addFont("DejaVuSans.ttf","DejaVu","normal");
+  doc.addFileToVFS("DejaVuSans-Bold.ttf", f[1]); doc.addFont("DejaVuSans-Bold.ttf","DejaVu","bold");
+  return doc;
+}
+function saveBlob(blob, name){
+  var url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+// @@ENGINE:libs END
+
+// ── State ─────────────────────────────────────────────────────────────────────
+var currentFile   = null;
+var shots         = [];      // [{ time, frames:[{time,dataURL}], isCut }]
+var allFrames     = [];      // flat list of all captured frames
+
+// ── Drop zone ─────────────────────────────────────────────────────────────────
+var dropzone  = document.getElementById("dropzone");
+var fileInput = document.getElementById("file-input");
+
+dropzone.addEventListener("click", function() { fileInput.click(); });
+dropzone.addEventListener("keydown", function(e) { if(e.key==="Enter"||e.key===" ") fileInput.click(); });
+fileInput.addEventListener("change", function() { if(fileInput.files[0]) loadFile(fileInput.files[0]); });
+dropzone.addEventListener("dragover",  function(e) { e.preventDefault(); dropzone.classList.add("drag-over"); });
+dropzone.addEventListener("dragleave", function()  { dropzone.classList.remove("drag-over"); });
+dropzone.addEventListener("drop", function(e) {
+  e.preventDefault(); dropzone.classList.remove("drag-over");
+  var f = e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+
+function loadFile(file) {
+  currentFile = file;
+  dropzone.classList.add("has-file");
+  document.getElementById("file-name").textContent = file.name;
+  document.getElementById("settings-panel").classList.add("visible");
+  document.getElementById("analyse-btn").classList.add("visible");
+  document.getElementById("results").classList.remove("visible");
+  shots = []; allFrames = [];
+}
+
+// ── Progress ──────────────────────────────────────────────────────────────────
+function setP(pct, msg, sub) {
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-label").textContent = msg;
+  document.getElementById("progress-sub").textContent = sub || "";
+}
+
+// ── Format timecode ───────────────────────────────────────────────────────────
+function fmtTC(secs) {
+  // Round once, to whole hundredths, then split. Rounding the fraction on its
+  // own let 5.996s display as "00:05.100" instead of "00:06.00".
+  if (!isFinite(secs) || secs < 0) secs = 0;
+  var cs = Math.round(secs * 100);
+  var h  = Math.floor(cs / 360000); cs %= 360000;
+  var m  = Math.floor(cs / 6000);   cs %= 6000;
+  var s  = Math.floor(cs / 100);
+  var hs = cs % 100;
+  if (h > 0) return pad(h)+":"+pad(m)+":"+pad(s)+"."+pad(hs);
+  return pad(m)+":"+pad(s)+"."+pad(hs);
+}
+function pad(n) { return n < 10 ? "0"+n : ""+n; }
+
+// ── Canvas pixel diff ─────────────────────────────────────────────────────────
+// Returns normalised difference 0..1 between two ImageData objects
+function pixelDiff(a, b) {
+  var data1 = a.data, data2 = b.data;
+  var len = data1.length;
+  var diff = 0;
+  // Sample every 4th pixel (every RGBA group) for speed
+  for (var i = 0; i < len; i += 16) {
+    diff += Math.abs(data1[i]   - data2[i])   / 255;
+    diff += Math.abs(data1[i+1] - data2[i+1]) / 255;
+    diff += Math.abs(data1[i+2] - data2[i+2]) / 255;
+  }
+  return diff / (len / 16 * 3);
+}
+
+// ── Main analysis ─────────────────────────────────────────────────────────────
+document.getElementById("analyse-btn").addEventListener("click", runAnalysis);
+
+function runAnalysis() {
+  if (!currentFile) return;
+
+  var sensitivity     = parseFloat(document.getElementById("sensitivity").value);
+  var capturesPerShot = parseInt(document.getElementById("captures-per-shot").value);
+  var scanInterval    = parseFloat(document.getElementById("scan-interval").value);
+
+  document.getElementById("analyse-btn").classList.remove("visible");
+  document.getElementById("results").classList.remove("visible");
+  document.getElementById("progress-wrap").classList.add("visible");
+  shots = []; allFrames = [];
+
+  var video  = document.getElementById("proc-video");
+  var canvas = document.getElementById("proc-canvas");
+  var ctx    = canvas.getContext("2d");
+
+  var url = URL.createObjectURL(currentFile);
+  // An undecodable file never fires loadedmetadata, so without these the tool
+  // sat on the progress screen forever with the button hidden.
+  var settled = false;
+  function failLoad(msg){
+    if (settled) return; settled = true;
+    video.removeEventListener("loadedmetadata", onMeta);
+    try { video.removeAttribute("src"); video.load(); } catch(e) {}
+    URL.revokeObjectURL(url);
+    document.getElementById("progress-wrap").classList.remove("visible");
+    document.getElementById("analyse-btn").classList.add("visible");
+    var st = document.getElementById("load-error");
+    if (!st) {
+      st = document.createElement("div"); st.id = "load-error";
+      st.style.cssText = "color:var(--fail,#ff6b6b);font-size:12px;margin-top:10px";
+      document.getElementById("analyse-btn").insertAdjacentElement("afterend", st);
+    }
+    st.textContent = msg;
+  }
+  video.onerror = function(){ failLoad("Couldn't decode this video \u2014 it may be corrupt, empty, or a format the browser can't play."); };
+  var loadTimer = setTimeout(function(){ failLoad("Timed out opening this video \u2014 it may be corrupt or in a format the browser can't play."); }, 20000);
+  var oldErr = document.getElementById("load-error"); if (oldErr) oldErr.textContent = "";
+  video.src = url;
+
+  video.addEventListener("loadedmetadata", onMeta);
+  function onMeta() {
+    if (settled) return; settled = true; clearTimeout(loadTimer); video.onerror = null;
+    video.removeEventListener("loadedmetadata", onMeta);
+
+    var duration = video.duration;
+    var W = 320, H = Math.round(320 / (video.videoWidth / video.videoHeight)) || 180;
+    canvas.width = W; canvas.height = H;
+
+    setP(2, "Video loaded — " + fmtTC(duration), "Scanning for scene changes…");
+
+    var maxT  = Math.max(0, duration - 0.1);
+    var times = [];
+    for (var t = 0; t <= maxT; t += scanInterval) times.push(parseFloat(t.toFixed(3)));
+    if (times[times.length-1] < maxT) times.push(parseFloat(maxT.toFixed(3)));
+
+    var prevImageData = null;
+    var cutTimes = [0]; // always start with a shot at 0
+    var idx = 0;
+
+    // Scan phase: seek through video sampling frames for cut detection.
+    // Uses a named handler + timeout fallback so we can cleanly remove
+    // the listener before starting the capture phase.
+    var SEEK_TIMEOUT = 2000;
+    var seekTimer    = null;
+    var scanDone     = false; // guard against double-entry into finaliseCuts
+
+    function onScanSeeked() {
+      if (scanDone) return;
+      if (seekTimer) { clearTimeout(seekTimer); seekTimer = null; }
+      var t = video.currentTime;
+      ctx.drawImage(video, 0, 0, W, H);
+      var imageData = ctx.getImageData(0, 0, W, H);
+      if (prevImageData !== null) {
+        var diff = pixelDiff(prevImageData, imageData);
+        if (diff > sensitivity && t > 0.1) {
+          var lastCut = cutTimes[cutTimes.length - 1];
+          if (t - lastCut > 0.3) cutTimes.push(parseFloat(t.toFixed(3)));
+        }
+      }
+      prevImageData = imageData;
+      idx++;
+      var pct = 5 + (idx / times.length) * 55;
+      setP(pct, "Scanning… " + fmtTC(t), (cutTimes.length - 1) + " cuts found so far");
+      scanStep();
+    }
+
+    function scanStep() {
+      if (scanDone) return;
+      if (idx >= times.length) return finaliseCuts();
+      if (seekTimer) { clearTimeout(seekTimer); seekTimer = null; }
+      // Fallback: if seeked never fires, grab whatever frame we're on
+      seekTimer = setTimeout(function() {
+        if (!scanDone) onScanSeeked();
+      }, SEEK_TIMEOUT);
+      video.currentTime = times[idx];
+    }
+
+    video.addEventListener("seeked", onScanSeeked);
+    scanStep();
+
+    function finaliseCuts() {
+      var safeDuration = Math.max(0, duration - 0.1);
+      scanDone = true;
+      if (seekTimer) { clearTimeout(seekTimer); seekTimer = null; }
+      video.removeEventListener("seeked", onScanSeeked);
+
+      setP(62, "Capturing frames…", capturesPerShot + " frame(s) per shot");
+
+      // Build shot list from cut times
+      var shotList = [];
+      for (var i = 0; i < cutTimes.length; i++) {
+        var shotStart = cutTimes[i];
+        var shotEnd   = (i + 1 < cutTimes.length) ? cutTimes[i+1] : safeDuration;
+        var shotDur   = shotEnd - shotStart;
+        var capTimes  = [];
+        for (var k = 0; k < capturesPerShot; k++) {
+          var frac = capturesPerShot === 1 ? 0 : k / (capturesPerShot - 1);
+          // Small offset from start/end to avoid black frames on cut points
+          var capT = shotStart + Math.max(0.05, frac * shotDur - 0.05);
+          capT = Math.min(capT, Math.min(shotEnd, duration) - 0.1);
+          capT = Math.max(capT, shotStart + 0.02);
+          capTimes.push(parseFloat(capT.toFixed(3)));
+        }
+        shotList.push({ start: shotStart, end: shotEnd, dur: shotDur, capTimes: capTimes });
+      }
+
+      // Capture frames sequentially with timeout fallback
+      var shotIdx = 0, capIdx = 0;
+      var capturedShots = [];
+      var capTimer  = null;
+      var CAP_TIMEOUT = 2000;
+      var capDone   = false;
+
+      function onCapSeeked() {
+        if (capDone) return;
+        if (capTimer) { clearTimeout(capTimer); capTimer = null; }
+        if (shotIdx >= shotList.length) { finishCapture(); return; }
+        var shot = shotList[shotIdx];
+        var t    = shot.capTimes[capIdx];
+        var fw = video.videoWidth  || 1280;
+        var fh = video.videoHeight || 720;
+        var fc = document.createElement("canvas");
+        fc.width = fw; fc.height = fh;
+        fc.getContext("2d").drawImage(video, 0, 0, fw, fh);
+        capturedShots[capturedShots.length - 1].frames.push({ time: t, dataURL: fc.toDataURL("image/jpeg", 0.88) });
+        capIdx++;
+        if (capIdx >= shot.capTimes.length) { capIdx = 0; shotIdx++; }
+        var overall = Math.min(shotIdx / shotList.length, 1);
+        setP(62 + overall * 33, "Capturing frames…", "Shot " + Math.min(shotIdx+1, shotList.length) + " of " + shotList.length);
+        scheduleCapture();
+      }
+
+      function scheduleCapture() {
+        if (shotIdx >= shotList.length) { finishCapture(); return; }
+        var shot = shotList[shotIdx];
+        if (capIdx === 0) capturedShots.push({ start: shot.start, end: shot.end, dur: shot.dur, frames: [] });
+        var t = shot.capTimes[capIdx];
+        if (capTimer) { clearTimeout(capTimer); capTimer = null; }
+        capTimer = setTimeout(function() { if (!capDone) onCapSeeked(); }, CAP_TIMEOUT);
+        video.currentTime = t;
+      }
+
+      function finishCapture() {
+        if (capDone) return;
+        capDone = true;
+        if (capTimer) { clearTimeout(capTimer); capTimer = null; }
+        video.removeEventListener("seeked", onCapSeeked);
+        finalise(capturedShots);
+      }
+
+      video.addEventListener("seeked", onCapSeeked);
+      scheduleCapture();
+    }
+
+    function finalise(capturedShots) {
+      URL.revokeObjectURL(url);
+      shots = capturedShots;
+      allFrames = [];
+      shots.forEach(function(s, si) {
+        s.frames.forEach(function(f, fi) {
+          allFrames.push({ shotIdx: si, frameIdx: fi, time: f.time, dataURL: f.dataURL, shotStart: s.start });
+        });
+      });
+
+      setP(96, "Rendering results…", "");
+      setTimeout(function() {
+        renderResults(duration);
+        document.getElementById("progress-wrap").classList.remove("visible");
+        document.getElementById("results").classList.add("visible");
+        document.getElementById("analyse-btn").classList.add("visible");
+        // Kick off OCR in background after UI is shown
+        runOCR();
+      }, 100);
+    }
+  }
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+function renderResults(duration) {
+  // Stats
+  document.getElementById("stat-duration").textContent = fmtTC(duration);
+  document.getElementById("stat-shots").textContent    = shots.length;
+  document.getElementById("stat-frames").textContent   = allFrames.length;
+  var avgSecs = duration / shots.length;
+  document.getElementById("stat-avg").textContent = avgSecs.toFixed(1) + "s";
+  document.getElementById("tl-end").textContent = fmtTC(duration);
+
+  // Timeline
+  var tl = document.getElementById("timeline");
+  // Clear old markers but keep playhead
+  Array.from(tl.querySelectorAll(".tl-cut,.tl-thumb,.tl-capture")).forEach(function(el) { el.remove(); });
+
+  shots.forEach(function(shot, si) {
+    // Cut marker
+    var cutEl = document.createElement("div");
+    cutEl.className = "tl-cut";
+    cutEl.style.left = (shot.start / duration * 100) + "%";
+    tl.appendChild(cutEl);
+
+    // Thumbnail strip using first frame
+    if (shot.frames.length > 0) {
+      var th = document.createElement("div");
+      th.className = "tl-thumb";
+      th.style.left  = (shot.start / duration * 100) + "%";
+      th.style.width = Math.max(0.3, (shot.dur / duration * 100)) + "%";
+      var img = document.createElement("img");
+      img.src = shot.frames[0].dataURL;
+      th.appendChild(img);
+      th.addEventListener("click", function() { openLightbox(shot.frames[0].dataURL, "Shot " + (si+1) + " — " + fmtTC(shot.start)); });
+      tl.insertBefore(th, tl.firstChild);
+    }
+
+    // Capture markers
+    shot.frames.forEach(function(f) {
+      var cap = document.createElement("div");
+      cap.className = "tl-capture";
+      cap.style.left = (f.time / duration * 100) + "%";
+      tl.appendChild(cap);
+    });
+  });
+
+  // Shot grid
+  var grid = document.getElementById("shot-grid");
+  grid.innerHTML = "";
+
+  shots.forEach(function(shot, si) {
+    shot.frames.forEach(function(frame, fi) {
+      var card = document.createElement("div");
+      card.className = "shot-card" + (fi === 0 ? " is-cut" : "");
+
+      var img = document.createElement("img");
+      img.className = "shot-thumb";
+      img.src = frame.dataURL;
+      img.loading = "lazy";
+
+      var info = document.createElement("div");
+      info.className = "shot-info";
+
+      var tc = document.createElement("div");
+      tc.className = "shot-tc";
+      tc.textContent = fmtTC(frame.time);
+
+      var num = document.createElement("div");
+      num.className = "shot-num";
+      num.textContent = "Shot " + (si+1) + (shot.frames.length > 1 ? " · frame " + (fi+1) + "/" + shot.frames.length : "") + " · " + shot.dur.toFixed(2) + "s";
+
+      var badge = document.createElement("div");
+      badge.className = "shot-badge " + (fi === 0 ? "cut" : "capture");
+      badge.textContent = fi === 0 ? "CUT" : "CAPTURE";
+
+      info.appendChild(tc);
+      info.appendChild(num);
+      info.appendChild(badge);
+      card.appendChild(img);
+      card.appendChild(info);
+
+      var capturedDataURL = frame.dataURL;
+      var capturedInfo    = "Shot " + (si+1) + " · " + fmtTC(frame.time) + " · " + shot.dur.toFixed(2) + "s";
+      card.addEventListener("click", function() { openLightbox(capturedDataURL, capturedInfo); });
+      grid.appendChild(card);
+    });
+  });
+}
+
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+function openLightbox(dataURL, info) {
+  document.getElementById("lightbox-img").src = dataURL;
+  document.getElementById("lightbox-info").textContent = info;
+  document.getElementById("lightbox").classList.add("open");
+}
+document.getElementById("lightbox").addEventListener("click", function() {
+  document.getElementById("lightbox").classList.remove("open");
+});
+
+// ── OCR pass ─────────────────────────────────────────────────────────────────
+// Runs after results are rendered. Processes each captured frame through
+// Tesseract.js OCR, updates shot cards in-place with any detected text,
+// and flags frames where text differs from the previous frame.
+var ocrWorker = null;
+
+async function runOCR() {
+  if (!allFrames.length) return;
+
+  try {
+    await needLib("tesseract");
+    ocrWorker = await Tesseract.createWorker("eng", 1, {
+      logger: function() {} // suppress verbose logging
+    });
+  } catch(e) {
+    console.warn("Tesseract init failed:", e);
+    return;
+  }
+
+  var prevText = "";
+  for (var i = 0; i < allFrames.length; i++) {
+    var frame = allFrames[i];
+    try {
+      var result = await ocrWorker.recognize(frame.dataURL);
+      var raw    = result.data.text || "";
+      // Clean up: remove isolated punctuation, short garbage, normalise whitespace
+      var text   = raw
+        .replace(/[^\x20-\x7E\n]/g, "")   // printable ASCII only
+        .replace(/\n+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/^[^a-zA-Z0-9]+$/, "");  // if no alphanumeric chars, discard
+
+      frame.ocrText    = text;
+      frame.ocrChanged = (text.length > 2 && text !== prevText);
+      if (text.length > 2) prevText = text;
+
+      // Update the shot card in-place
+      updateCardOCR(frame, i);
+
+      // Update the shot object too (for CSV export)
+      if (shots[frame.shotIdx] && shots[frame.shotIdx].frames[frame.frameIdx]) {
+        shots[frame.shotIdx].frames[frame.frameIdx].ocrText    = frame.ocrText;
+        shots[frame.shotIdx].frames[frame.frameIdx].ocrChanged = frame.ocrChanged;
+      }
+    } catch(e) {
+      frame.ocrText = ""; frame.ocrChanged = false;
+    }
+  }
+
+  await ocrWorker.terminate();
+  ocrWorker = null;
+}
+
+function updateCardOCR(frame, flatIdx) {
+  var cards = document.getElementById("shot-grid").querySelectorAll(".shot-card");
+  var card  = cards[flatIdx];
+  if (!card) return;
+
+  if (frame.ocrText && frame.ocrText.length > 2) {
+    // Add or update OCR text line
+    var existing = card.querySelector(".shot-ocr");
+    if (!existing) {
+      existing = document.createElement("div");
+      existing.className = "shot-ocr";
+      card.querySelector(".shot-info").appendChild(existing);
+    }
+    existing.textContent = "\"" + frame.ocrText.substring(0, 80) + (frame.ocrText.length > 80 ? "…" : "") + "\"";
+
+    // Add text-change badge if text differs from previous frame
+    if (frame.ocrChanged) {
+      var badgeRow = card.querySelector(".shot-info");
+      var existing_badge = card.querySelector(".shot-badge.text");
+      if (!existing_badge) {
+        var badge = document.createElement("div");
+        badge.className = "shot-badge text";
+        badge.textContent = "TEXT CHANGE";
+        badgeRow.insertBefore(badge, badgeRow.querySelector(".shot-ocr"));
+      }
+    }
+  }
+}
+
+// ── Export: ZIP ───────────────────────────────────────────────────────────────
+document.getElementById("btn-zip").addEventListener("click", function() {
+  if (!allFrames.length) return;
+  var btn = document.getElementById("btn-zip");
+  btn.textContent = "Zipping…";
+
+  needLib("jszip").then(function(){
+  var zip = new JSZip();
+  allFrames.forEach(function(f, i) {
+    var base64 = f.dataURL.split(",")[1];
+    var filename = "shot" + pad2(f.shotIdx+1) + "_frame" + (f.frameIdx+1) + "_" + fmtFilename(f.time) + ".jpg";
+    zip.file(filename, base64, { base64: true });
+  });
+
+  zip.generateAsync({ type:"blob" }).then(function(blob) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "shot-logger-frames.zip";
+    a.click();
+    btn.textContent = "Download All Frames (ZIP)";
+  });
+  }).catch(function(err){ btn.textContent = "Download all frames (zip)"; alert("Couldn\u2019t make the zip: "+err.message); });
+});
+
+function pad2(n) { return n < 10 ? "0"+n : ""+n; }
+function fmtFilename(secs) { return fmtTC(secs).replace(/[:.]/g, "-"); }
+
+// ── Export: CSV ───────────────────────────────────────────────────────────────
+document.getElementById("btn-csv").addEventListener("click", function() {
+  if (!shots.length) return;
+  var rows = [
+    ["Shot Logger — Shot List"],
+    ["Generated", new Date().toLocaleString()],
+    [""],
+    ["Shot #","Start TC","End TC","Duration (s)","Frame 1 TC","Frame 1 Text","Frame 2 TC","Frame 2 Text","Frame 3 TC","Frame 3 Text","Frame 4 TC","Frame 4 Text"]
+  ];
+  shots.forEach(function(s, i) {
+    var row = [i+1, fmtTC(s.start), fmtTC(s.end), s.dur.toFixed(3)];
+    for (var k = 0; k < 4; k++) {
+      if (s.frames[k]) {
+        row.push(fmtTC(s.frames[k].time));
+        row.push(s.frames[k].ocrText || "");
+      } else {
+        row.push(""); row.push("");
+      }
+    }
+    rows.push(row);
+  });
+  var csv = rows.map(function(r) {
+    return r.map(function(c) { return '"'+(c+"").replace(/"/g,'""')+'"'; }).join(",");
+  }).join("\n");
+  var a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  a.download = "shot-list.csv";
+  a.click();
+});
+
+// ── Export: Contact Sheet PDF ─────────────────────────────────────────────────
+document.getElementById("btn-contact").addEventListener("click", function() {
+  if (!allFrames.length) return;
+  var btn = document.getElementById("btn-contact");
+  btn.textContent = "Building PDF…";
+
+  // Build an HTML page and print it
+  var cols = 4;
+  var cells = allFrames.map(function(f) {
+    return '<div style="break-inside:avoid;background:#141417;border:1px solid #242428;border-radius:3px;overflow:hidden;font-family:monospace;">' +
+      '<img src="'+f.dataURL+'" style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;">' +
+      '<div style="padding:5px 7px;font-size:9px;color:#47c8ff;">'+fmtTC(f.time)+'</div>' +
+      '<div style="padding:0 7px 5px;font-size:8px;color:#666;">Shot '+(f.shotIdx+1)+' · Frame '+(f.frameIdx+1)+'</div>' +
+      '</div>';
+  }).join("");
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Shot Logger — Contact Sheet</title>' +
+    '<style>body{background:#0d0d0f;margin:0;padding:20px;}' +
+    'h2{font-family:monospace;font-size:14px;color:#e8ff47;margin-bottom:16px;letter-spacing:0.1em;}' +
+    '.grid{display:grid;grid-template-columns:repeat('+cols+',1fr);gap:8px;}' +
+    '@media print{body{background:#fff;}h2{color:#000;}.grid div{border-color:#ccc!important;background:#f5f5f5!important;}' +
+    'img{filter:none;}}</style></head>' +
+    '<body><h2>SHOT LOGGER — CONTACT SHEET · '+new Date().toLocaleDateString()+'</h2>' +
+    '<div class="grid">'+cells+'</div>' +
+    '<script>window.onload=function(){window.print();}<\/script></body></html>';
+
+  var win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
+  btn.textContent = "Contact Sheet (PDF)";
+});
+
+// ── Timeline click to seek preview ───────────────────────────────────────────
+document.getElementById("timeline").addEventListener("click", function(e) {
+  var rect = this.getBoundingClientRect();
+  var frac = (e.clientX - rect.left) / rect.width;
+  // Find closest shot
+  if (!shots.length) return;
+  var targetTime = frac * parseFloat(document.getElementById("stat-duration").textContent.replace(/[^0-9.:]/g,"") || 0);
+  document.getElementById("tl-playhead").style.left = (frac * 100) + "%";
+  // Find and highlight the shot at this time
+  shots.forEach(function(s, i) {
+    if (targetTime >= s.start && targetTime < s.end) {
+      var cards = document.getElementById("shot-grid").querySelectorAll(".shot-card");
+      var offset = 0;
+      for (var k = 0; k < i; k++) offset += shots[k].frames.length;
+      if (cards[offset]) cards[offset].scrollIntoView({ behavior:"smooth", block:"nearest" });
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE xmeml><xmeml version="4"><sequence id="sequence-1"><name>NTSC</name>
+<rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+<timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><string>00:00:00;00</string><frame>0</frame><displayformat>DF</displayformat></timecode>
+<media><video><track>
+<clipitem id="clipitem-1"><name>ntsc_doc.mov</name><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><start>107892</start><end>107922</end><in>1800</in><out>1830</out>
+<file id="file-1"><name>ntsc_doc.mov</name><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><string>00:00:00;00</string><frame>0</frame><displayformat>DF</displayformat></timecode></file></clipitem>
+</track></video></media></sequence></xmeml>

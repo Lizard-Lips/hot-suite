@@ -1,0 +1,7 @@
+<?xml version="1.0"?><xmeml version="4"><sequence id="s"><name>Formula names</name><rate><timebase>25</timebase></rate>
+<media><video><track><clipitem id="c0"><name>-Opening titles.mov</name><start>0</start><end>25</end><in>0</in><out>25</out>
+<file id="f0"><name>-Opening titles.mov</name><timecode><rate><timebase>25</timebase></rate><frame>0</frame></timecode></file></clipitem><clipitem id="c1"><name>=Final=cut.mov</name><start>25</start><end>50</end><in>0</in><out>25</out>
+<file id="f1"><name>=Final=cut.mov</name><timecode><rate><timebase>25</timebase></rate><frame>0</frame></timecode></file></clipitem><clipitem id="c2"><name>+1 alt take.mov</name><start>50</start><end>75</end><in>0</in><out>25</out>
+<file id="f2"><name>+1 alt take.mov</name><timecode><rate><timebase>25</timebase></rate><frame>0</frame></timecode></file></clipitem><clipitem id="c3"><name>@handle_promo.mov</name><start>75</start><end>100</end><in>0</in><out>25</out>
+<file id="f3"><name>@handle_promo.mov</name><timecode><rate><timebase>25</timebase></rate><frame>0</frame></timecode></file></clipitem><clipitem id="c4"><name>Normal_clip.mov</name><start>100</start><end>125</end><in>0</in><out>25</out>
+<file id="f4"><name>Normal_clip.mov</name><timecode><rate><timebase>25</timebase></rate><frame>0</frame></timecode></file></clipitem></track></video></media></sequence></xmeml>

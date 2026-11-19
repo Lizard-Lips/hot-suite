@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE xmeml><xmeml version="4"><sequence id="seq"><name>Ślepnąc — Clearance</name>
+<rate><timebase>25</timebase><ntsc>FALSE</ntsc></rate>
+<timecode><rate><timebase>25</timebase></rate><string>10:00:00:00</string><frame>900000</frame><displayformat>NDF</displayformat></timecode>
+<media><video><track><clipitem id="c1"><name>Ślepnąc_101_Kraków_ujęcie.mov</name><start>0</start><end>250</end><in>0</in><out>250</out>
+<file id="f1"><name>Ślepnąc_101_Kraków_ujęcie.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem><clipitem id="c2"><name>Ślepnąc_101_Łódź_noc.mov</name><start>250</start><end>500</end><in>300</in><out>550</out>
+<file id="f2"><name>Ślepnąc_101_Łódź_noc.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem><clipitem id="c3"><name>Ślepnąc_102_Ștefan_și_Țara.mov</name><start>500</start><end>750</end><in>0</in><out>250</out>
+<file id="f3"><name>Ślepnąc_102_Ștefan_și_Țara.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem><clipitem id="c4"><name>Ślepnąc_102_Gdańsk_świt.mov</name><start>750</start><end>1000</end><in>100</in><out>350</out>
+<file id="f4"><name>Ślepnąc_102_Gdańsk_świt.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem></track></video></media></sequence></xmeml>

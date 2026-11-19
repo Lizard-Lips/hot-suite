@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE xmeml><xmeml version="4"><sequence id="seq"><name>Conformed rates</name>
+<rate><timebase>24</timebase><ntsc>FALSE</ntsc></rate>
+<timecode><rate><timebase>24</timebase></rate><frame>0</frame><displayformat>NDF</displayformat></timecode>
+<media><video><track><clipitem id="c1"><name>Gameplay_50fps_A.mov</name><rate><timebase>24</timebase><ntsc>FALSE</ntsc></rate>
+<start>0</start><end>10080</end><in>0</in><out>10080</out>
+<file id="f1"><name>Gameplay_50fps_A.mov</name><rate><timebase>50</timebase><ntsc>FALSE</ntsc></rate>
+<timecode><rate><timebase>50</timebase><ntsc>FALSE</ntsc></rate><frame>1890000</frame><displayformat>NDF</displayformat></timecode></file></clipitem>
+<clipitem id="c2"><name>Capture_50fps_B.mov</name><rate><timebase>24</timebase><ntsc>FALSE</ntsc></rate>
+<start>163</start><end>459</end><in>0</in><out>296</out>
+<file id="f2"><name>Capture_50fps_B.mov</name><rate><timebase>50</timebase><ntsc>FALSE</ntsc></rate>
+<timecode><rate><timebase>50</timebase><ntsc>FALSE</ntsc></rate><frame>0</frame><displayformat>NDF</displayformat></timecode></file></clipitem>
+<clipitem id="c3"><name>Trailer_2997DF_C.mov</name><rate><timebase>24</timebase><ntsc>FALSE</ntsc></rate>
+<start>0</start><end>5211</end><in>0</in><out>5211</out>
+<file id="f3"><name>Trailer_2997DF_C.mov</name><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+<timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><frame>85539</frame><displayformat>DF</displayformat></timecode></file></clipitem>
+<clipitem id="c4"><name>Native_24fps_D.mov</name><rate><timebase>24</timebase><ntsc>FALSE</ntsc></rate>
+<start>600</start><end>840</end><in>48</in><out>288</out>
+<file id="f4"><name>Native_24fps_D.mov</name><rate><timebase>24</timebase><ntsc>FALSE</ntsc></rate>
+<timecode><rate><timebase>24</timebase><ntsc>FALSE</ntsc></rate><frame>86400</frame><displayformat>NDF</displayformat></timecode></file></clipitem>
+</track></video></media></sequence></xmeml>
