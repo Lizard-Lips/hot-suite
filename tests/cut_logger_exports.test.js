@@ -24,7 +24,7 @@ const cols=p=>p.evaluate(()=>[...document.querySelectorAll('#col-tags .tag')].ma
   let name=await grab(p,'#generate-btn','/tmp/_cl.csv'); const csv=fs.readFileSync('/tmp/_cl.csv','utf8');
   ok('CSV has no Episode column', !/Episode/.test(csv.split('\n')[0]), csv.split('\n')[0]);
   ok('programme timecode includes the 10:00:00:00 start', /10:00:00:00/.test(csv));
-  ok('file named after the sequence', name==='September_Promo_Range_Timecodes.csv', name);
+  ok('file named after the sequence', name==='Autumn_Promo_Range_Timecodes.csv', name);
   ok('no page errors', !p._errs.length, p._errs.join(' | '));
   await p.context().close();
 

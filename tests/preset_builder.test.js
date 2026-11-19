@@ -48,7 +48,8 @@ function val(epr,id){ const k=(epr.match(/<ExporterParam\b[\s\S]*?<\/ExporterPar
   r=await make(b,'please make it look nice'); ok('nothing usable → refuses, no download', /Nothing to build/.test(r.ui.refuse) && !r.ui.dl);
   r=await make(b,'1920x1080, 25fps, H.264, MP4'); ok('H.264 → refuses, no download', /Can.t make/.test(r.ui.refuse) && !r.ui.dl);
   console.log('output minimality');
-  const tpl=fs.readFileSync(path.resolve(__dirname,'fixtures','CLEARCAST_PRORES.epr'),'utf8');
+  // the template Preset Builder edits, read from the tool itself
+  const tpl=JSON.parse(fs.readFileSync(path.resolve(__dirname,'..','tool_presetbuilder.html'),'utf8').match(/^\s*prores:\s*(".*")\s*,?\s*$/m)[1]);
   r=await make(b,'1920x1080, ProRes 422 HQ, 25fps, progressive');
   const a=tpl.split('\n'), c=r.epr.split('\n'); const diff=a.filter((l,i)=>l!==c[i]).length;
   ok('same line count as the template', a.length===c.length, a.length+' vs '+c.length);

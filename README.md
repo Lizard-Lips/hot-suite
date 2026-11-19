@@ -23,7 +23,7 @@ row back to `TOOLS` in `build_hub.py` returns it to the suite.
 | `sync_engine.py` | Copies the three shared files into every tool that uses them. Run by the build. |
 | `toolify.py` | Turns a standalone tool into a panel for the suite. |
 | `detoolify.py` | The reverse. Only needed to recover a tool from a built `index.html`. |
-| `monday-app/` | The spec checks as a monday.com item view. Zip this folder to install it. |
+| `monday-app/` | The spec checks as a monday.com item view. Kept out of this repo; the build skips it when it isn't there. |
 | `tests/` | The test suite. |
 
 ## Building

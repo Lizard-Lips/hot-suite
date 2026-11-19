@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE xmeml><xmeml version="4"><sequence id="seq"><name>September Promo Range</name>
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE xmeml><xmeml version="4"><sequence id="seq"><name>Autumn Promo Range</name>
 <rate><timebase>25</timebase><ntsc>FALSE</ntsc></rate>
 <timecode><rate><timebase>25</timebase></rate><string>10:00:00:00</string><frame>900000</frame><displayformat>NDF</displayformat></timecode>
-<media><video><track><clipitem id="c1"><name>RO_Soc_ACQ_AWA_SeptemberPromoRange_M_NA_9x16_15.mov</name><start>0</start><end>375</end><in>0</in><out>375</out>
-<file id="f1"><name>RO_Soc_ACQ_AWA_SeptemberPromoRange_M_NA_9x16_15.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem><clipitem id="c2"><name>POR_Soc_ACQ_AWA_SeptemberPromoRange_M_NA_9x16_15.mov</name><start>375</start><end>750</end><in>500</in><out>875</out>
-<file id="f2"><name>POR_Soc_ACQ_AWA_SeptemberPromoRange_M_NA_9x16_15.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem><clipitem id="c3"><name>DUT_Soc_ACQ_AWA_SeptemberPromoRangeGFX_M_NA_1x1_06.mov</name><start>750</start><end>900</end><in>0</in><out>150</out>
-<file id="f3"><name>DUT_Soc_ACQ_AWA_SeptemberPromoRangeGFX_M_NA_1x1_06.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem></track></video></media></sequence></xmeml>
+<media><video><track><clipitem id="c1"><name>RO_Promo_Autumn_Clean_9x16_15.mov</name><start>0</start><end>375</end><in>0</in><out>375</out>
+<file id="f1"><name>RO_Promo_Autumn_Clean_9x16_15.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem><clipitem id="c2"><name>PT_Promo_Autumn_Clean_9x16_15.mov</name><start>375</start><end>750</end><in>500</in><out>875</out>
+<file id="f2"><name>PT_Promo_Autumn_Clean_9x16_15.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem><clipitem id="c3"><name>NL_Promo_Autumn_GFX_1x1_06.mov</name><start>750</start><end>900</end><in>0</in><out>150</out>
+<file id="f3"><name>NL_Promo_Autumn_GFX_1x1_06.mov</name><timecode><rate><timebase>25</timebase></rate><frame>90000</frame><displayformat>NDF</displayformat></timecode></file></clipitem></track></video></media></sequence></xmeml>
